@@ -30,6 +30,6 @@ To deploy this project run
 
 ## Authors
 
-- [@estebanfern](https://www.github.com/estebanfern)
-- [@fabri10roman](https://www.github.com/fabri10roman)
-- [@pomberto](https://www.github.com/pomberto)
+- [Esteban Fernández](https://www.github.com/estebanfern)
+- [Fabrizio Román](https://www.github.com/fabri10roman)
+- [Roberto Acosta](https://www.github.com/robertodayudis)
