@@ -32,5 +32,4 @@ To deploy this project run
 
 - [@estebanfern](https://www.github.com/estebanfern)
 - [@fabri10roman](https://www.github.com/fabri10roman)
-- [@estebanfern](https://www.github.com/estebanfern)
-
+- [@pomberto](https://www.github.com/pomberto)
