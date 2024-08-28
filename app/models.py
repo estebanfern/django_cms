@@ -31,6 +31,7 @@ class Role(models.Model):
             ("create_content", "Crear contenidos"),
             ("edit_content", "Editar contenidos"),
             ("publish_content", "Publicar contenidos"),
+            ("manage_roles", "Gestionar roles"),
         ]
 
 # def get_default_role():
