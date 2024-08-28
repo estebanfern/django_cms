@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from django.contrib.auth import login, authenticate
 from django.shortcuts import render, redirect
 from .forms import CustomUserCreationForm, CustomAuthenticationForm
@@ -6,7 +5,7 @@ from .forms import CustomUserCreationForm, CustomAuthenticationForm
 # Create your views here.
 
 def home_view(request):
-    return render(request, 'base.html')
+    return render(request, 'inicio.html')
 
 
 def register_view(request):
