@@ -1,5 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.models import Group
+
 from .models import CustomUser
 
 class CustomUserCreationForm(UserCreationForm):
@@ -26,12 +28,20 @@ class CustomUserCreationForm(UserCreationForm):
             },
         }
 
-        def __init__(self, *args, **kwargs):
-            super(CustomUserCreationForm, self).__init__(*args, **kwargs)
-            self.fields['name'].widget.attrs.update({'placeholder': 'Nombre*'})
-            self.fields['email'].widget.attrs.update({'placeholder': 'Correo Electrónico*'})
-            self.fields['password1'].widget.attrs.update({'placeholder': 'Contraseña*'})
-            self.fields['password2'].widget.attrs.update({'placeholder': 'Repetir contraseña*'})
+    def __init__(self, *args, **kwargs):
+        super(CustomUserCreationForm, self).__init__(*args, **kwargs)
+        self.fields['name'].widget.attrs.update({'placeholder': 'Nombre*'})
+        self.fields['email'].widget.attrs.update({'placeholder': 'Correo Electrónico*'})
+        self.fields['password1'].widget.attrs.update({'placeholder': 'Contraseña*'})
+        self.fields['password2'].widget.attrs.update({'placeholder': 'Repetir contraseña*'})
+
+    def save(self, commit=True):
+        user = CustomUser.objects.create_user(
+            email=self.cleaned_data['email'],
+            name=self.cleaned_data['name'],
+            password=self.cleaned_data['password1']
+        )
+        return user
 
 class CustomAuthenticationForm(AuthenticationForm):
     username = forms.EmailField(label='Correo Electrónico', widget=forms.EmailInput(attrs={
