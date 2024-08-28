@@ -1,7 +1,8 @@
+from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
+from django.contrib.auth.models import Group
 from django.contrib import admin, messages
 from app.models import CustomUser
 
-# Register your models here.
 
 
 @admin.action(description="Bloquear usuario/s")
@@ -24,7 +25,42 @@ def desbloquear_usuarios(self, request, queryset):
 
 @admin.register(CustomUser)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('name', 'email', 'role', 'is_active')
+    list_display = ('name', 'email', 'is_active')
     actions = [bloquear_usuarios, desbloquear_usuarios]
+    def has_module_permission(self, request):
+        return request.user.is_staff and request.user.has_perm('app.manage_users')
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_staff and request.user.has_perm('app.manage_users')
+
+    def has_add_permission(self, request):
+        return request.user.is_staff and request.user.has_perm('app.manage_users')
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_staff and request.user.has_perm('app.manage_users')
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_staff and request.user.has_perm('app.manage_users')
 
 
+class CustomGroupAdmin(BaseGroupAdmin):
+    def has_module_permission(self, request):
+        return request.user.is_staff and request.user.has_perm('app.manage_roles')
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_staff and request.user.has_perm('app.manage_roles')
+
+    def has_add_permission(self, request):
+        return request.user.is_staff and request.user.has_perm('app.manage_roles')
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_staff and request.user.has_perm('app.manage_roles')
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_staff and request.user.has_perm('app.manage_roles')
+
+# Desregistrar el modelo Group
+admin.site.unregister(Group)
+
+# Registrar el modelo Group con la clase CustomGroupAdmin
+admin.site.register(Group, CustomGroupAdmin)
