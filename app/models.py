@@ -19,22 +19,6 @@ class CustomUserManager(BaseUserManager):
     #     extra_fields.setdefault('is_superuser', True)
     #     return self.create_user(email, name, password, **extra_fields)
 
-'''''''''''
-class Role(models.Model):
-    name = models.CharField(max_length=255)
-    permissions = models.ManyToManyField('auth.Permission')
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        permissions = [
-            ("create_content", "Crear contenidos"),
-            ("edit_content", "Editar contenidos"),
-            ("publish_content", "Publicar contenidos"),
-            ("manage_roles", "Gestionar roles"),
-        ]
-'''''''''''
 # def get_default_role():
 #     return Role.objects.get_or_create(name='SUSCRIPTOR')[0]
 
@@ -52,16 +36,17 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name']
 
-    def __str__(self):
-        return self.email
-
-class Permission(models.Model):
-    name = models.CharField(max_length=255)
-
     class Meta:
         permissions = [
             ("create_content", "Crear contenidos"),
             ("edit_content", "Editar contenidos"),
             ("publish_content", "Publicar contenidos"),
             ("manage_roles", "Gestionar roles"),
+            ("manage_users","Gestionar usuarios"),
         ]
+
+    def __str__(self):
+        return self.email
+
+
+

@@ -25,8 +25,22 @@ def desbloquear_usuarios(self, request, queryset):
 
 @admin.register(CustomUser)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('name', 'email', 'role', 'is_active')
+    list_display = ('name', 'email', 'is_active')
     actions = [bloquear_usuarios, desbloquear_usuarios]
+    def has_module_permission(self, request):
+        return request.user.is_staff and request.user.has_perm('app.manage_users')
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_staff and request.user.has_perm('app.manage_users')
+
+    def has_add_permission(self, request):
+        return request.user.is_staff and request.user.has_perm('app.manage_users')
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_staff and request.user.has_perm('app.manage_users')
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_staff and request.user.has_perm('app.manage_users')
 
 
 class CustomGroupAdmin(BaseGroupAdmin):
