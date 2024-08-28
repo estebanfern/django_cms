@@ -1,18 +1,32 @@
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.models import Group
-#from app.models import Role, CustomUser
+from django.contrib import admin, messages
+from app.models import CustomUser
 
 
-# from app.models import User
 
-# Register your models here.
+@admin.action(description="Bloquear usuario/s")
+def bloquear_usuarios(self, request, queryset):
+    for usuario in queryset:
+        if usuario.is_active:
+            usuario.is_active = False
+            usuario.save()
+            self.message_user(request, f'El usuario {usuario.name} ha sido bloqueado.', messages.SUCCESS)
 
-# @admin.register(User)
-# class UserAdmin(admin.ModelAdmin):
-#     list_display = ('nombre', 'email')
+
+@admin.action(description="Desbloquear usuario/s")
+def desbloquear_usuarios(self, request, queryset):
+    for usuario in queryset:
+        if not usuario.is_active:
+            usuario.is_active = True
+            usuario.save()
+            self.message_user(request, f'El usuario {usuario.name} ha sido desbloqueado.', messages.SUCCESS)
+
+
+@admin.register(CustomUser)
+class UserAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'role', 'is_active')
+    actions = [bloquear_usuarios, desbloquear_usuarios]
 
 
 class CustomGroupAdmin(BaseGroupAdmin):
