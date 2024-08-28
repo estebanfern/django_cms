@@ -1,7 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-
-from app.models import Role, CustomUser
+from django.contrib import admin
+from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
+from django.contrib.auth.models import Group
+#from app.models import Role, CustomUser
 
 
 # from app.models import User
@@ -13,11 +15,7 @@ from app.models import Role, CustomUser
 #     list_display = ('nombre', 'email')
 
 
-@admin.register(Role)
-class RoleAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    filter_horizontal = ('permissions',)
-
+class CustomGroupAdmin(BaseGroupAdmin):
     def has_module_permission(self, request):
         return request.user.is_staff and request.user.has_perm('app.manage_roles')
 
@@ -32,3 +30,9 @@ class RoleAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return request.user.is_staff and request.user.has_perm('app.manage_roles')
+
+# Desregistrar el modelo Group
+admin.site.unregister(Group)
+
+# Registrar el modelo Group con la clase CustomGroupAdmin
+admin.site.register(Group, CustomGroupAdmin)
