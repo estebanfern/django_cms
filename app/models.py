@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
+from django.contrib.auth.models import Group
+
 
 # Create your models here.
 
@@ -12,21 +14,19 @@ class CustomUserManager(BaseUserManager):
         user = self.model(email=email, name=name, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
-        return user
-    
-    # def create_superuser(self, email, name, password=None, **extra_fields):
-    #     extra_fields.setdefault('is_staff', True)
-    #     extra_fields.setdefault('is_superuser', True)
-    #     return self.create_user(email, name, password, **extra_fields)
 
-# def get_default_role():
-#     return Role.objects.get_or_create(name='SUSCRIPTOR')[0]
+        try:
+            default_group = Group.objects.get(name='Suscriptor')
+            user.groups.add(default_group)
+        except Group.DoesNotExist:
+            raise ValueError('El grupo "Suscriptor" no existe.')
+
+        return user
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=255)
     photo = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
-   # role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
