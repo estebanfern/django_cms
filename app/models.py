@@ -38,11 +38,31 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         permissions = [
+            # Permisos para contenido
             ("create_content", "Crear contenidos"),
             ("edit_content", "Editar contenidos"),
             ("publish_content", "Publicar contenidos"),
-            ("manage_roles", "Gestionar roles"),
-            ("manage_users","Gestionar usuarios"),
+            ("comment_post", "Comentar contenidos"),
+            ("react_to_post", "Reaccionar a contenidos"),
+            ("report_post","Reportar contenidos"),
+
+            # Permisos para roles
+            ("create_roles", "Crear roles"),
+            ("edit_roles", "Editar roles"),
+            ("delete_roles", "Eliminar roles"),
+            ("assign_roles", "Asignar roles a usuarios"),
+            ("remove_roles", "Quitar roles a usuarios"),
+            ("view_roles", "Ver roles"),
+
+            # Permisos para usuarios
+            ("create_users", "Crear usuarios"),
+            ("edit_users", "Editar usuarios"),
+            ("delete_users", "Eliminar usuarios"),
+            ("block_users", "Bloquear usuarios"),
+            ("unblock_users", "Desbloquear usuarios"),
+            ("reset_passwords", "Restablecer contraseñas"),
+            ("view_users", "Ver usuarios"),
+
         ]
 
     def __str__(self):
