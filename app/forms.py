@@ -3,6 +3,7 @@ from django.conf.global_settings import MEDIA_URL, MEDIA_ROOT
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import Group
 from cms.settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME, AWS_S3_ENDPOINT_URL, DEFAULT_FILE_STORAGE
+
 from .models import CustomUser
 
 class CustomUserCreationForm(UserCreationForm):

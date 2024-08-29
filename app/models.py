@@ -2,9 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
 from django.contrib.auth.models import Group
-
 from cms.store_backends import PublicMediaStorage
-
 
 # Create your models here.
 
