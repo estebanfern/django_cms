@@ -1,10 +1,8 @@
-from time import sleep
 from django.test import TestCase, override_settings
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
-from app.forms import CustomUserCreationForm
-from app.models import CustomUser
+from app.forms import ChangePasswordForm, CustomUserCreationForm, ProfileUpdateForm
 from django.contrib.auth import get_user_model
 from app.forms import CustomAuthenticationForm
 import os
@@ -120,3 +118,91 @@ class CustomAuthenticationFormTest(TestCase):
         form = CustomAuthenticationForm(data=form_data)
         self.assertFalse(form.is_valid(), "El formulario no debería ser válido si el usuario está desactivado")
 
+
+class ProfileUpdateFormTest(TestCase):
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            email='testuser@example.com',
+            name='Test User',
+            password='testpassword123',
+            about='Old about me',
+        )
+
+    def test_update_name_and_about(self):
+        form_data = {
+            'name': 'Updated Name',
+            'about': 'Updated about me'
+        }
+        form = ProfileUpdateForm(data=form_data, instance=self.user)
+        self.assertTrue(form.is_valid(), "El formulario debería ser válido con nombre y about actualizados")
+        form.save()
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.name, 'Updated Name')
+        self.assertEqual(self.user.about, 'Updated about me')
+
+class ChangePasswordFormTest(TestCase):
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            email='testuser@example.com',
+            name='Test User',
+            password='oldpassword123'
+        )
+
+    def test_valid_password_change(self):
+        form_data = {
+            'current_password': 'oldpassword123',
+            'new_password': 'newpassword123',
+            'confirm_new_password': 'newpassword123'
+        }
+        form = ChangePasswordForm(user=self.user, data=form_data)
+        self.assertTrue(form.is_valid(), "El formulario debería ser válido con las contraseñas correctas")
+        form.save()
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('newpassword123'), "La contraseña debería haber sido cambiada")
+
+    def test_incorrect_current_password(self):
+        form_data = {
+            'current_password': 'wrongpassword123',
+            'new_password': 'newpassword123',
+            'confirm_new_password': 'newpassword123'
+        }
+        form = ChangePasswordForm(user=self.user, data=form_data)
+        self.assertFalse(form.is_valid(), "El formulario debería ser inválido con la contraseña actual incorrecta")
+
+    def test_new_passwords_do_not_match(self):
+        form_data = {
+            'current_password': 'oldpassword123',
+            'new_password': 'newpassword123',
+            'confirm_new_password': 'differentpassword123'
+        }
+        form = ChangePasswordForm(user=self.user, data=form_data)
+        self.assertFalse(form.is_valid(), "El formulario debería ser inválido si las nuevas contraseñas no coinciden")
+
+    def test_new_password_same_as_current(self):
+        form_data = {
+            'current_password': 'oldpassword123',
+            'new_password': 'oldpassword123',
+            'confirm_new_password': 'oldpassword123'
+        }
+        form = ChangePasswordForm(user=self.user, data=form_data)
+        self.assertFalse(form.is_valid(), "El formulario debería ser inválido si la nueva contraseña es igual a la actual")
+
+    def test_missing_current_password(self):
+        form_data = {
+            'current_password': '',
+            'new_password': 'newpassword123',
+            'confirm_new_password': 'newpassword123'
+        }
+        form = ChangePasswordForm(user=self.user, data=form_data)
+        self.assertFalse(form.is_valid(), "El formulario debería ser inválido si falta la contraseña actual")
+
+    def test_missing_new_password(self):
+        form_data = {
+            'current_password': 'oldpassword123',
+            'new_password': '',
+            'confirm_new_password': ''
+        }
+        form = ChangePasswordForm(user=self.user, data=form_data)
+        self.assertFalse(form.is_valid(), "El formulario debería ser inválido si faltan las nuevas contraseñas")

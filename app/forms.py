@@ -4,7 +4,6 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import Group
 from django.contrib.auth import authenticate
-
 from .models import CustomUser
 
 class CustomUserCreationForm(UserCreationForm):
@@ -91,21 +90,14 @@ class ProfileUpdateForm(forms.ModelForm):
             self.fields[field].required = False
 
     def save(self, commit=True):
-        # print(F'AWS_ACCESS_KEY_ID: {AWS_ACCESS_KEY_ID}')
-        # print(F'AWS_SECRET_ACCESS_KEY: {AWS_SECRET_ACCESS_KEY}')
-        # print(F'AWS_STORAGE_BUCKET_NAME: {AWS_STORAGE_BUCKET_NAME}')
-        # print(F'AWS_S3_ENDPOINT_URL: {AWS_S3_ENDPOINT_URL}')
-        # print(F'MEDIA_URL: {MEDIA_URL}')
-        # print(F'MEDIA_ROOT: {MEDIA_ROOT}')
-        # print(F'DEFAULT_FILE_STORAGE: {DEFAULT_FILE_STORAGE}')
         user = super(ProfileUpdateForm, self).save(commit=False)
-        # Verifica si los campos están vacíos antes de actualizar
-        if not self.cleaned_data.get('name'):
-            user.name = self.instance.name
-        if not self.cleaned_data.get('about'):
-            user.about = self.instance.about
-        if not self.cleaned_data.get('photo'):
-            user.photo = self.instance.photo
+        # Actualiza solo si los campos no son nulos y no son cadenas vacías
+        if self.cleaned_data.get('name') not in [None, ""]:
+            user.name = self.cleaned_data['name']
+        if self.cleaned_data.get('about') not in [None, ""]:
+            user.about = self.cleaned_data['about']
+        if self.cleaned_data.get('photo'):
+            user.photo = self.cleaned_data['photo']
 
         if commit:
             user.save()
@@ -159,4 +151,3 @@ class ChangePasswordForm(forms.Form):
         if commit:
             self.user.save()
         return self.user
-
