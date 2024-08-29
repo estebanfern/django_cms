@@ -3,7 +3,7 @@ from django.conf.global_settings import MEDIA_URL, MEDIA_ROOT
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import Group
-from cms.settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME, AWS_S3_ENDPOINT_URL, DEFAULT_FILE_STORAGE
+from django.contrib.auth import authenticate
 
 from .models import CustomUser
 
@@ -59,6 +59,25 @@ class CustomAuthenticationForm(AuthenticationForm):
         'id': 'yourPassword',
         'required': True,
     }))
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if not username:
+            raise forms.ValidationError("El correo electrónico es obligatorio.")
+        return username
+
+    def clean(self):
+        cleaned_data = super().clean()
+        username = cleaned_data.get('username')
+        password = cleaned_data.get('password')
+
+        if username and password:
+            user = authenticate(username=username, password=password)
+            if not user:
+                raise forms.ValidationError("Las credenciales no son correctas.")
+            if not user.is_active:
+                raise forms.ValidationError("Esta cuenta está desactivada.")
+        return cleaned_data
 
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
