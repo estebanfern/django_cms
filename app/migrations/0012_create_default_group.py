@@ -181,5 +181,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(create_groups_and_permissions),
+        # migrations.RunPython(create_groups_and_permissions),
     ]
