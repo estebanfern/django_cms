@@ -12,6 +12,23 @@
 </div><!-- End Page Title -->
 
 <section class="section profile">
+  {% if messages %}
+    {% for message in messages %}
+      {% if message.tags == 'success' %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="bi bi-check-circle me-1"></i>
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% elif message.tags == 'error' %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="bi bi-exclamation-octagon me-1"></i>
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
   <div class="row">
     <div class="col-xl-4">
 
@@ -27,7 +44,6 @@
     </div>
 
     <div class="col-xl-8">
-
       <div class="card">
         <div class="card-body pt-3">
           <!-- Bordered Tabs -->
@@ -76,15 +92,6 @@
                   <div class="col-md-8 col-lg-9">
                     <input class="form-control" type="file" id="photo" name="photo">
                   </div>
-                  <!-- <div class="col-md-8 col-lg-9">
-                    <img src="{% static 'assets/img/profile-img.jpg' %}" alt="Profile">
-                    <div class="pt-2">
-                      <input type="file" id="photo" class="d-none" name="photo"/>
-                      <label for="photo" class="btn btn-primary btn-sm" title="Sube una nueva imagen de perfil">
-                        <i class="bi bi-upload" style="color: white;"></i>
-                      </label>
-                    </div>
-                  </div> -->
                 </div>
                 <div class="row mb-3">
                   <label for="name" class="col-md-4 col-lg-3 col-form-label">Nombre</label>
@@ -106,26 +113,26 @@
 
             <div class="tab-pane fade pt-3" id="profile-change-password">
               <!-- Change Password Form -->
-              <form>
-
+              <form method="post" action="{% url 'change_password' %}">
+                {% csrf_token %}
                 <div class="row mb-3">
-                  <label for="currentPassword" class="col-md-4 col-lg-3 col-form-label">Contraseña actual</label>
+                  <label for="current_password" class="col-md-4 col-lg-3 col-form-label">Contraseña actual</label>
                   <div class="col-md-8 col-lg-9">
-                    <input name="password" type="password" class="form-control" id="currentPassword">
+                    <input name="current_password" type="password" class="form-control" id="current_password">
                   </div>
                 </div>
 
                 <div class="row mb-3">
-                  <label for="newPassword" class="col-md-4 col-lg-3 col-form-label">Nueva contraseña</label>
+                  <label for="new_password" class="col-md-4 col-lg-3 col-form-label">Nueva contraseña</label>
                   <div class="col-md-8 col-lg-9">
-                    <input name="newpassword" type="password" class="form-control" id="newPassword">
+                    <input name="new_password" type="password" class="form-control" id="new_password">
                   </div>
                 </div>
 
                 <div class="row mb-3">
-                  <label for="renewPassword" class="col-md-4 col-lg-3 col-form-label">Repetir nueva contraseña</label>
+                  <label for="confirm_new_password" class="col-md-4 col-lg-3 col-form-label">Repetir nueva contraseña</label>
                   <div class="col-md-8 col-lg-9">
-                    <input name="renewpassword" type="password" class="form-control" id="renewPassword">
+                    <input name="confirm_new_password" type="password" class="form-control" id="confirm_new_password">
                   </div>
                 </div>
 
