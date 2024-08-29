@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'storages',
     'app',
     'crispy_forms',
     'crispy_bootstrap5',
@@ -139,5 +140,27 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'app.CustomUser'
 
-
-
+# Espacio de almacenamiento compatible con S3
+AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_ENDPOINT_URL = config('AWS_S3_ENDPOINT_URL')
+# AWS_S3_OBJECT_PARAMETERS = {
+#     'CacheControl': 'max-age=86400',
+# }
+AWS_LOCATION = 'media'
+AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME')
+AWS_DEFAULT_ACL = 'public-read'
+AWS_QUERYSTRING_AUTH = False
+AWS_S3_CONNECTION_TIMEOUT = 60
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/{AWS_LOCATION}/'
+MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com/{AWS_LOCATION}/"
+# MEDIA_ROOT = None
+print(F'AWS_ACCESS_KEY_ID: {AWS_ACCESS_KEY_ID}')
+print(F'AWS_SECRET_ACCESS_KEY: {AWS_SECRET_ACCESS_KEY}')
+print(F'AWS_STORAGE_BUCKET_NAME: {AWS_STORAGE_BUCKET_NAME}')
+print(F'AWS_S3_ENDPOINT_URL: {AWS_S3_ENDPOINT_URL}')
+print(F'MEDIA_URL: {MEDIA_URL}')
+# print(F'MEDIA_ROOT: {MEDIA_ROOT}')
+print(F'DEFAULT_FILE_STORAGE: {DEFAULT_FILE_STORAGE}')
