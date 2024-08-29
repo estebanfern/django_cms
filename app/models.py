@@ -3,6 +3,8 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.utils import timezone
 from django.contrib.auth.models import Group
 
+from cms.store_backends import PublicMediaStorage
+
 
 # Create your models here.
 
@@ -26,7 +28,7 @@ class CustomUserManager(BaseUserManager):
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=255)
-    photo = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+    photo = models.ImageField(upload_to='profile_pics/', storage=PublicMediaStorage, null=True, blank=True)
     about = models.CharField(max_length=255, null=True, blank=True, default='')
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
