@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.db.backends.base.schema import logger
+from cms.settings import DEFAULT_PROFILE_PHOTO
 from django.utils import timezone
 from django.contrib.auth.models import Group
 from cms.store_backends import PublicMediaStorage
@@ -13,13 +15,17 @@ class CustomUserManager(BaseUserManager):
         email = self.normalize_email(email)
         user = self.model(email=email, name=name, **extra_fields)
         user.set_password(password)
+        user.photo = DEFAULT_PROFILE_PHOTO
         user.save(using=self._db)
 
         try:
             default_group = Group.objects.get(name='Suscriptor')
             user.groups.add(default_group)
         except Group.DoesNotExist:
-            raise ValueError('El grupo "Suscriptor" no existe.')
+            Group.objects.create(name='Suscriptor')
+            default_group = Group.objects.get(name='Suscriptor')
+            user.groups.add(default_group)
+            logger.warn(f'Group Suscriptor not exists, creating...')
 
         return user
 

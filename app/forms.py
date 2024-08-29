@@ -1,6 +1,7 @@
 from django import forms
 from django.conf.global_settings import MEDIA_URL, MEDIA_ROOT
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import Group
 from cms.settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME, AWS_S3_ENDPOINT_URL, DEFAULT_FILE_STORAGE
 
@@ -91,4 +92,52 @@ class ProfileUpdateForm(forms.ModelForm):
             user.save()
 
         return user
+
+class ChangePasswordForm(forms.Form):
+    current_password = forms.CharField(
+        label='Contraseña Actual',
+        widget=forms.PasswordInput(attrs={'placeholder': 'Contraseña Actual'}),
+        required=True
+    )
+    new_password = forms.CharField(
+        label='Nueva Contraseña',
+        widget=forms.PasswordInput(attrs={'placeholder': 'Nueva Contraseña'}),
+        required=True
+    )
+    confirm_new_password = forms.CharField(
+        label='Confirmar Nueva Contraseña',
+        widget=forms.PasswordInput(attrs={'placeholder': 'Confirmar Nueva Contraseña'}),
+        required=True
+    )
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super(ChangePasswordForm, self).__init__(*args, **kwargs)
+
+    def clean_current_password(self):
+        current_password = self.cleaned_data.get('current_password')
+        if not check_password(current_password, self.user.password):
+            raise forms.ValidationError('La contraseña actual es incorrecta.')
+        return current_password
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_password = cleaned_data.get('new_password')
+        confirm_new_password = cleaned_data.get('confirm_new_password')
+
+        if new_password and confirm_new_password:
+            if new_password != confirm_new_password:
+                raise forms.ValidationError('Las nuevas contraseñas no coinciden.')
+
+        if check_password(new_password, self.user.password):
+            raise forms.ValidationError('La nueva contraseña no puede ser igual a la actual.')
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        new_password = self.cleaned_data['new_password']
+        self.user.set_password(new_password)
+        if commit:
+            self.user.save()
+        return self.user
 
