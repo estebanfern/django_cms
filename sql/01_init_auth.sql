@@ -114,25 +114,25 @@ BEGIN
 	--
 
 	--Suscriptor
-	INSERT INTO public.app_customuser (password, email, name, photo, is_active, is_staff, date_joined, about, is_superuser)
+	INSERT INTO public.app_customuser (password, email, name, photo, is_active, date_joined, about, is_superuser)
 	VALUES ('pbkdf2_sha256$870000$FGoSCplr3LwAJGHvtT2Nck$gnDoOSio6SeB3ryqZ7OQ4blsoMHm9+Fj2SezR2B1r04=', 'suscriptor@mail.com',
-	'Suscriptor González', 'profile_pics/perfil.png', true, false, CURRENT_TIMESTAMP, 'Soy un suscriptor', false);
+	'Suscriptor González', 'profile_pics/perfil.png', true, CURRENT_TIMESTAMP, 'Soy un suscriptor', false);
 	--Autor
-	INSERT INTO public.app_customuser (password, email, name, photo, is_active, is_staff, date_joined, about, is_superuser)
+	INSERT INTO public.app_customuser (password, email, name, photo, is_active, date_joined, about, is_superuser)
 	VALUES ('pbkdf2_sha256$870000$FGoSCplr3LwAJGHvtT2Nck$gnDoOSio6SeB3ryqZ7OQ4blsoMHm9+Fj2SezR2B1r04=', 'autor@mail.com',
-	'Autor Perez', 'profile_pics/perfil.png', true, false, CURRENT_TIMESTAMP, 'Soy un autor', false);
+	'Autor Perez', 'profile_pics/perfil.png', true, CURRENT_TIMESTAMP, 'Soy un autor', false);
 	--Editor
-	INSERT INTO public.app_customuser (password, email, name, photo, is_active, is_staff, date_joined, about, is_superuser)
+	INSERT INTO public.app_customuser (password, email, name, photo, is_active, date_joined, about, is_superuser)
 	VALUES ('pbkdf2_sha256$870000$FGoSCplr3LwAJGHvtT2Nck$gnDoOSio6SeB3ryqZ7OQ4blsoMHm9+Fj2SezR2B1r04=', 'editor@mail.com',
-	'Editor Rodriguez', 'profile_pics/perfil.png', true, false, CURRENT_TIMESTAMP, 'Soy un editor', false);
+	'Editor Rodriguez', 'profile_pics/perfil.png', true, CURRENT_TIMESTAMP, 'Soy un editor', false);
 	--Publicador
-	INSERT INTO public.app_customuser (password, email, name, photo, is_active, is_staff, date_joined, about, is_superuser)
+	INSERT INTO public.app_customuser (password, email, name, photo, is_active, date_joined, about, is_superuser)
 	VALUES ('pbkdf2_sha256$870000$FGoSCplr3LwAJGHvtT2Nck$gnDoOSio6SeB3ryqZ7OQ4blsoMHm9+Fj2SezR2B1r04=', 'publicador@mail.com',
-	'Publicador Gómez', 'profile_pics/perfil.png', true, false, CURRENT_TIMESTAMP, 'Soy un publicador', false);
+	'Publicador Gómez', 'profile_pics/perfil.png', true, CURRENT_TIMESTAMP, 'Soy un publicador', false);
 	--Administrador
-	INSERT INTO public.app_customuser (password, email, name, photo, is_active, is_staff, date_joined, about, is_superuser)
+	INSERT INTO public.app_customuser (password, email, name, photo, is_active, date_joined, about, is_superuser)
 	VALUES ('pbkdf2_sha256$870000$FGoSCplr3LwAJGHvtT2Nck$gnDoOSio6SeB3ryqZ7OQ4blsoMHm9+Fj2SezR2B1r04=', 'administrador@mail.com',
-	'Administrador Cartes', 'profile_pics/perfil.png', true, true, CURRENT_TIMESTAMP, 'Soy un administrador', false);
+	'Administrador Cartes', 'profile_pics/perfil.png', true, CURRENT_TIMESTAMP, 'Soy un administrador', false);
 END $$;
 
 --Relación entre usuarios base y roles
