@@ -25,7 +25,6 @@ END $$;
 --Adjudicación de permsos
 DO $$
 BEGIN
-	DELETE FROM public.auth_group_permissions;
 	--crear contenido a autor
 	INSERT INTO public.auth_group_permissions (group_id, permission_id) VALUES (
 		(SELECT id FROM public.auth_group WHERE name = 'Autor'),
