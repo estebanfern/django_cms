@@ -35,7 +35,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     photo = models.ImageField(upload_to='profile_pics/', storage=PublicMediaStorage, null=True, blank=True)
     about = models.CharField(max_length=255, null=True, blank=True, default='')
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
+    # is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
 
     objects = CustomUserManager()
@@ -71,6 +71,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             ("view_users", "Ver usuarios"),
 
         ]
+
+    @property
+    def is_staff(self):
+        return self.is_admin()
 
     def __str__(self):
         return self.email
