@@ -35,5 +35,5 @@ def logout_view(request):
 
 
 def reset_password_view(request):
-    form = CustomUserCreationForm()
+    form = CustomAuthenticationForm()
     return render(request, 'password-reset.html', {'form': form})
