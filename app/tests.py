@@ -206,3 +206,12 @@ class ChangePasswordFormTest(TestCase):
         }
         form = ChangePasswordForm(user=self.user, data=form_data)
         self.assertFalse(form.is_valid(), "El formulario debería ser inválido si faltan las nuevas contraseñas")
+
+    def test_short_new_password(self):
+        form_data = {
+            'current_password': 'oldpassword123',
+            'new_password': 'corto',
+            'confirm_new_password': 'corto'
+        }
+        form = ChangePasswordForm(user=self.user, data=form_data)
+        self.assertFalse(form.is_valid(), "El formulario debería ser inválido si la contraseña nueva tiene menos de 8 carácteres.")

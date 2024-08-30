@@ -1,5 +1,3 @@
-from django import forms
-from django.conf.global_settings import MEDIA_URL, MEDIA_ROOT
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import Group
@@ -7,6 +5,9 @@ from django.contrib.auth import authenticate
 from .models import CustomUser
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django import forms
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
@@ -133,6 +134,14 @@ class ChangePasswordForm(forms.Form):
             raise forms.ValidationError('La contraseña actual es incorrecta.')
         return current_password
 
+    def clean_new_password(self):
+        new_password = self.cleaned_data.get('new_password')
+        try:
+            validate_password(new_password, self.user)
+        except ValidationError as e:
+            raise forms.ValidationError(e.messages)
+        return new_password
+
     def clean(self):
         cleaned_data = super().clean()
         new_password = cleaned_data.get('new_password')
@@ -146,6 +155,13 @@ class ChangePasswordForm(forms.Form):
             raise forms.ValidationError('La nueva contraseña no puede ser igual a la actual.')
 
         return cleaned_data
+
+    def save(self, commit=True):
+        new_password = self.cleaned_data['new_password']
+        self.user.set_password(new_password)
+        if commit:
+            self.user.save()
+        return self.user
 
     def save(self, commit=True):
         new_password = self.cleaned_data['new_password']
