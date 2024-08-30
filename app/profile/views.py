@@ -1,9 +1,9 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib import messages
 from app.forms import ProfileUpdateForm, ChangePasswordForm
-
+from app.models import CustomUser
 
 @login_required
 def profile_view(request):
@@ -33,3 +33,7 @@ def change_password(request):
                     messages.error(request, error)
             return redirect('profile')
     return redirect('profile')
+
+def other_profile_view(request, id):
+    user_profile = get_object_or_404(CustomUser, id=id)
+    return render(request, 'profile/view_profile.html', {'user_profile' : user_profile})
