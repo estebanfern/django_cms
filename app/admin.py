@@ -4,6 +4,8 @@ from django.contrib import admin, messages
 from app.models import CustomUser
 from django.utils.translation import gettext_lazy as _
 from django.forms.models import fields_for_model
+from django.contrib.admin.widgets import FilteredSelectMultiple
+from django import forms
 
 @admin.action(description="Bloquear usuario/s")
 def bloquear_usuarios(self, request, queryset):
@@ -22,8 +24,23 @@ def desbloquear_usuarios(self, request, queryset):
             self.message_user(request, f'El usuario {usuario.name} ha sido desbloqueado.', messages.SUCCESS)
 
 
+class CustomUserForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = '__all__'
+        widgets = {
+            'groups': FilteredSelectMultiple('groups', is_stacked=False)
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Eliminar la opción de agregar nuevos grupos
+        self.fields['groups'].widget.can_add_related = False
+        self.fields['groups'].widget.can_change_related = False
 
 class CustomUserAdmin(UserAdmin):
+
+    form = CustomUserForm
 
     list_display = ('email', 'name', 'is_active')
     list_filter = ('is_active', 'groups')
