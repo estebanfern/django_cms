@@ -133,33 +133,33 @@ BEGIN
 	--Administrador
 	INSERT INTO public.app_customuser (password, email, name, photo, is_active, is_staff, date_joined, about, is_superuser)
 	VALUES ('pbkdf2_sha256$870000$FGoSCplr3LwAJGHvtT2Nck$gnDoOSio6SeB3ryqZ7OQ4blsoMHm9+Fj2SezR2B1r04=', 'administrador@mail.com',
-	'Administrador Cartes', 'profile_pics/perfil.png', true, false, CURRENT_TIMESTAMP, 'Soy un administrador', false);
+	'Administrador Cartes', 'profile_pics/perfil.png', true, true, CURRENT_TIMESTAMP, 'Soy un administrador', false);
 END $$;
 
 --Relación entre usuarios base y roles
 DO $$
 BEGIN
-	INSERT INTO public.app_customuser_user_permissions (customuser_id, permission_id) VALUES(
+	INSERT INTO public.app_customuser_groups (customuser_id, group_id) VALUES(
 		(SELECT id FROM public.app_customuser WHERE email = 'suscriptor@mail.com'),
 		(SELECT id FROM auth_group WHERE name = 'Suscriptor')
 	);
 
-	INSERT INTO public.app_customuser_user_permissions (customuser_id, permission_id) VALUES(
+	INSERT INTO public.app_customuser_groups (customuser_id, group_id) VALUES(
 		(SELECT id FROM public.app_customuser WHERE email = 'autor@mail.com'),
 		(SELECT id FROM auth_group WHERE name = 'Autor')
 	);
 
-	INSERT INTO public.app_customuser_user_permissions (customuser_id, permission_id) VALUES(
+	INSERT INTO public.app_customuser_groups (customuser_id, group_id) VALUES(
 		(SELECT id FROM public.app_customuser WHERE email = 'editor@mail.com'),
 		(SELECT id FROM auth_group WHERE name = 'Editor')
 	);
 
-	INSERT INTO public.app_customuser_user_permissions (customuser_id, permission_id) VALUES(
+	INSERT INTO public.app_customuser_groups (customuser_id, group_id) VALUES(
 		(SELECT id FROM public.app_customuser WHERE email = 'publicador@mail.com'),
 		(SELECT id FROM auth_group WHERE name = 'Publicador')
 	);
 
-	INSERT INTO public.app_customuser_user_permissions (customuser_id, permission_id) VALUES(
+	INSERT INTO public.app_customuser_groups (customuser_id, group_id) VALUES(
 		(SELECT id FROM public.app_customuser WHERE email = 'administrador@mail.com'),
 		(SELECT id FROM auth_group WHERE name = 'Administrador')
 	);
