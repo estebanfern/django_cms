@@ -35,22 +35,24 @@
 
 </head>
 
-<body>
+<body {% if not user.is_creator %} class="toggle-sidebar" {% endif %}>
 
   <!-- ======= Header ======= -->
   <header id="header" class="header fixed-top d-flex align-items-center">
 
     <div class="d-flex align-items-center justify-content-between">
-      <a href="#" class="logo d-flex align-items-center">
+      <a href="/" class="logo d-flex align-items-center">
         <img src="{% static 'assets/img/logo.png' %}" alt="">
         <span class="d-none d-lg-block">CMS</span>
       </a>
-      <i class="bi bi-list toggle-sidebar-btn"></i>
+      {% if user.is_creator %}
+        <i class="bi bi-list toggle-sidebar-btn"></i> <!-- Side bar toggle button -->
+      {% endif %}
     </div><!-- End Logo -->
 
     <div class="search-bar">
       <form class="search-form d-flex align-items-center" method="POST" action="#">
-        <input type="text" name="query" placeholder="Search" title="Enter search keyword">
+        <input type="text" name="query" placeholder="Buscar" title="Enter search keyword">
         <button type="submit" title="Search"><i class="bi bi-search"></i></button>
       </form>
     </div><!-- End Search Bar -->
@@ -73,7 +75,7 @@
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
             <li class="dropdown-header">
               <h6>{{ user.name }}</h6>
-              <span>{{ user.role }}</span>
+              <span>{{ user.get_groups_string }}</span>
             </li>
             <li>
               <hr class="dropdown-divider">
@@ -117,29 +119,44 @@
 
   </header><!-- End Header -->
 
-  <!-- ======= Sidebar ======= -->
-  <aside id="sidebar" class="sidebar">
+  {% if user.is_creator %}
+    <!-- ======= Sidebar ======= -->
+    <aside id="sidebar" class="sidebar">
 
-    <ul class="sidebar-nav" id="sidebar-nav">
+      <ul class="sidebar-nav" id="sidebar-nav">
 
-      <li class="nav-heading">Panel de Creadores</li>
+        <li class="nav-heading">Panel de Creadores</li>
+        
+        {% if perms.app.create_content %}
+        <li class="nav-item">
+          <a class="nav-link collapsed" href="#">
+            <i class="bi bi-journal-plus"></i>
+            <span>Crear Articulo</span> 
+          </a>
+        </li>
+        {% endif %}
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-grid"></i>
-          <span>Tablero</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="/admin">
-          <i class="bi bi-menu-button-wide"></i>
-          <span>Administración</span>
-        </a>
-      </li>
+        <li class="nav-item">
+          <a class="nav-link collapsed" href="#">
+            <i class="bi bi-grid"></i>
+            <span>Tablero</span>
+          </a>
+        </li>
+        
+        {% if user.is_admin %}
+        <li class="nav-item">
+          <a class="nav-link collapsed" href="/admin">
+            <i class="bi bi-menu-button-wide"></i>
+            <span>Administración</span>
+          </a>
+        </li>
+        {% endif %}
 
-    </ul>
+      </ul>
 
-  </aside><!-- End Sidebar-->
+    </aside>
+    <!-- End Sidebar-->
+  {% endif %}
 
   <main id="main" class="main">
 
@@ -155,7 +172,7 @@
       &copy; Copyright <strong><span>CMS</span></strong>. All Rights Reserved
     </div>
     <div class="credits">
-      Designed by <a href="https://github.com/estebanfern/django_cms" target="_blank">Esteban, Fabrizio y Roberto</a>
+      Designed by <a href="https://github.com/estebanfern/django_cms" target="_blank">Esteban, Fabrizio, Roberto y Abigail</a>
     </div>
   </footer><!-- End Footer -->
 

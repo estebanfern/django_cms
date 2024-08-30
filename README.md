@@ -33,3 +33,4 @@ To deploy this project run
 - [Esteban Fernández](https://www.github.com/estebanfern)
 - [Fabrizio Román](https://www.github.com/fabri10roman)
 - [Roberto Acosta](https://www.github.com/robertodayudis)
+- [Abigail Nuñez](https://www.github.com/Abinues)
