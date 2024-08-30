@@ -6,7 +6,6 @@ from django.utils import timezone
 from django.contrib.auth.models import Group
 from cms.store_backends import PublicMediaStorage
 
-# Create your models here.
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, name, password=None, **extra_fields):
@@ -30,13 +29,12 @@ class CustomUserManager(BaseUserManager):
         return user
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(unique=True)
-    name = models.CharField(max_length=255)
-    photo = models.ImageField(upload_to='profile_pics/', storage=PublicMediaStorage, null=True, blank=True)
-    about = models.CharField(max_length=255, null=True, blank=True, default='')
+    email = models.EmailField(unique=True, verbose_name=('Correo Electrónico'))
+    name = models.CharField(max_length=255, verbose_name=('Nombre'))
+    photo = models.ImageField(upload_to='profile_pics/', storage=PublicMediaStorage, null=True, blank=True,verbose_name=('Foto de perfil'))
+    about = models.CharField(max_length=255, null=True, blank=True, default='', verbose_name=('Acerca de'))
     is_active = models.BooleanField(default=True, verbose_name='Activo')
-    # is_staff = models.BooleanField(default=False)
-    date_joined = models.DateTimeField(default=timezone.now)
+    date_joined = models.DateTimeField(default=timezone.now, verbose_name=('Fecha de registro'))
 
     objects = CustomUserManager()
 
@@ -44,6 +42,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['name']
 
     class Meta:
+        verbose_name = 'Usuario'
+        verbose_name_plural = 'Usuarios'
         permissions = [
             # Permisos para contenido
             ("create_content", "Crear contenidos"),
