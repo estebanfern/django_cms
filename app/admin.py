@@ -90,3 +90,5 @@ admin.site.unregister(Group)
 
 # Registrar el modelo Group con la clase CustomGroupAdmin
 admin.site.register(Group, CustomGroupAdmin)
+
+admin.site.site_header = "Administración del Sistema"
