@@ -133,7 +133,7 @@ BEGIN
 	--Administrador
 	INSERT INTO public.app_customuser (password, email, name, photo, is_active, is_staff, date_joined, about, is_superuser)
 	VALUES ('pbkdf2_sha256$870000$FGoSCplr3LwAJGHvtT2Nck$gnDoOSio6SeB3ryqZ7OQ4blsoMHm9+Fj2SezR2B1r04=', 'administrador@mail.com',
-	'Administrador Cartes', 'profile_pics/perfil.png', true, false, CURRENT_TIMESTAMP, 'Soy un administrador', false);
+	'Administrador Cartes', 'profile_pics/perfil.png', true, true, CURRENT_TIMESTAMP, 'Soy un administrador', false);
 END $$;
 
 --Relación entre usuarios base y roles
