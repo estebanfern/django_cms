@@ -34,7 +34,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     photo = models.ImageField(upload_to='profile_pics/', storage=PublicMediaStorage, null=True, blank=True)
     about = models.CharField(max_length=255, null=True, blank=True, default='')
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, verbose_name='Activo')
     # is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
 
