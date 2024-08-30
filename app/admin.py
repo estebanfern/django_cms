@@ -26,13 +26,15 @@ class CustomUserAdmin(UserAdmin):
 
     fieldsets = (
         (None, {'fields': ()}),
-        (_('Personal Info'), {'fields': ('name', 'email' ,'photo', 'about')}),
-        (_('Permissions'), {'fields': ('is_active', 'groups')}),
-        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
+        (_('Informacion personal'), {'fields': ('name', 'email' ,'photo', 'about')}),
+        (_('Grupos y estado'), {'fields': ('is_active', 'groups')}),
+        (_('Fechas relevantes'), {'fields': ('last_login', 'date_joined')}),
     )
     search_fields = ('email', 'name')
     ordering = ('email',)
     filter_horizontal = ('groups', 'user_permissions',)
+
+    readonly_fields = ('name', 'email', 'photo', 'about', 'last_login', 'date_joined')
 
     def has_module_permission(self, request):
         return request.user.is_staff and request.user.has_perm('app.view_users')
