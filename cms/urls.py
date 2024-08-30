@@ -19,7 +19,7 @@ from django.contrib.auth.views import LogoutView
 from django.urls import path
 
 from app.auth.views import register_view, login_view, logout_view
-from app.profile.views import profile_view, change_password
+from app.profile.views import other_profile_view, profile_view, change_password
 from app.views import *
 
 urlpatterns = [
@@ -34,6 +34,7 @@ urlpatterns = [
 
     # Profile
     path('profile/', profile_view, name='profile'),
+    path('profile/<int:id>/', other_profile_view, name='profile_view'),
     path('change-password/', change_password, name='change_password'),
 
 ]
