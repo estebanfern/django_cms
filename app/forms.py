@@ -5,6 +5,8 @@ from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import Group
 from django.contrib.auth import authenticate
 from .models import CustomUser
+from django.contrib.admin.widgets import FilteredSelectMultiple
+from django import forms
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
@@ -151,3 +153,17 @@ class ChangePasswordForm(forms.Form):
         if commit:
             self.user.save()
         return self.user
+
+class CustomUserFormAdmin(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = '__all__'
+        widgets = {
+            'groups': FilteredSelectMultiple('groups', is_stacked=False)
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Eliminar la opción de agregar nuevos grupos
+        self.fields['groups'].widget.can_add_related = False
+        self.fields['groups'].widget.can_change_related = False
