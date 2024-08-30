@@ -159,7 +159,7 @@ class CustomUserFormAdmin(forms.ModelForm):
         model = CustomUser
         fields = '__all__'
         widgets = {
-            'groups': FilteredSelectMultiple('groups', is_stacked=False)
+            'groups': FilteredSelectMultiple('Grupos', is_stacked=False)
         }
 
     def __init__(self, *args, **kwargs):

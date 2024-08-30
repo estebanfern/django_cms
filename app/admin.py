@@ -67,9 +67,8 @@ class CustomUserAdmin(UserAdmin):
         return super().get_readonly_fields(request, obj)
 
 
-admin.site.register(CustomUser, CustomUserAdmin)
-
 class CustomGroupAdmin(BaseGroupAdmin):
+
     def has_module_permission(self, request):
         return request.user.is_staff and request.user.has_perm('app.view_roles')
 
@@ -90,3 +89,8 @@ admin.site.unregister(Group)
 
 # Registrar el modelo Group con la clase CustomGroupAdmin
 admin.site.register(Group, CustomGroupAdmin)
+
+# Registrar CustomUser con CustomUserAdmin
+admin.site.register(CustomUser, CustomUserAdmin)
+
+admin.site.site_header = "Administración del Sistema"
