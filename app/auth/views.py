@@ -32,3 +32,8 @@ def logout_view(request):
     logout(request)
     messages.success(request, '¡Sesión cerrada exitosamente!')
     return redirect('/')
+
+
+def reset_password_view(request):
+    form = CustomAuthenticationForm()
+    return render(request, 'password-reset.html', {'form': form})
