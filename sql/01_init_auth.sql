@@ -139,27 +139,27 @@ END $$;
 --Relación entre usuarios base y roles
 DO $$
 BEGIN
-	INSERT INTO public.app_customuser_user_permissions (customuser_id, permission_id) VALUES(
+	INSERT INTO public.app_customuser_groups (customuser_id, group_id) VALUES(
 		(SELECT id FROM public.app_customuser WHERE email = 'suscriptor@mail.com'),
 		(SELECT id FROM auth_group WHERE name = 'Suscriptor')
 	);
 
-	INSERT INTO public.app_customuser_user_permissions (customuser_id, permission_id) VALUES(
+	INSERT INTO public.app_customuser_groups (customuser_id, group_id) VALUES(
 		(SELECT id FROM public.app_customuser WHERE email = 'autor@mail.com'),
 		(SELECT id FROM auth_group WHERE name = 'Autor')
 	);
 
-	INSERT INTO public.app_customuser_user_permissions (customuser_id, permission_id) VALUES(
+	INSERT INTO public.app_customuser_groups (customuser_id, group_id) VALUES(
 		(SELECT id FROM public.app_customuser WHERE email = 'editor@mail.com'),
 		(SELECT id FROM auth_group WHERE name = 'Editor')
 	);
 
-	INSERT INTO public.app_customuser_user_permissions (customuser_id, permission_id) VALUES(
+	INSERT INTO public.app_customuser_groups (customuser_id, group_id) VALUES(
 		(SELECT id FROM public.app_customuser WHERE email = 'publicador@mail.com'),
 		(SELECT id FROM auth_group WHERE name = 'Publicador')
 	);
 
-	INSERT INTO public.app_customuser_user_permissions (customuser_id, permission_id) VALUES(
+	INSERT INTO public.app_customuser_groups (customuser_id, group_id) VALUES(
 		(SELECT id FROM public.app_customuser WHERE email = 'administrador@mail.com'),
 		(SELECT id FROM auth_group WHERE name = 'Administrador')
 	);
