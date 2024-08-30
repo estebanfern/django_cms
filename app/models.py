@@ -75,5 +75,48 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
+    # Agreguen los permisos que habilitan ver el sidebar
+    __creator_perms = {
+        "app.create_content",
+        "app.edit_content",
+        "app.publish_content",
+        "app.create_roles",
+        "app.edit_roles",
+        "app.delete_roles",
+        "app.assign_roles",
+        "app.remove_roles",
+        "app.view_roles",
+        "app.edit_users",
+        "app.delete_users",
+        "app.block_users",
+        "app.unblock_users",
+        "app.view_users",
+    }
+    def is_creator(self):
+        for auth in self.__creator_perms:
+            if self.has_perm(auth):
+                return True
+        return False
 
+    # Agreguen los permisos que habilitan ver el panel de administración
+    __admin_perms = {
+        "app.create_roles",
+        "app.edit_roles",
+        "app.delete_roles",
+        "app.assign_roles",
+        "app.remove_roles",
+        "app.view_roles",
+        "app.edit_users",
+        "app.delete_users",
+        "app.block_users",
+        "app.unblock_users",
+        "app.view_users",
+    }
+    def is_admin(self):
+        for auth in self.__admin_perms:
+            if self.has_perm(auth):
+                return True
+        return False
 
+    def get_groups_string(self):
+        return ' - '.join(self.groups.values_list('name', flat=True))
