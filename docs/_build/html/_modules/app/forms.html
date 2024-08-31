@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app.forms &mdash; documentación de CMS - 0.0.1</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=6fcc102b"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../_static/translations.js?v=d190bf04"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            CMS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">Sistema CMS</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">CMS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">app.forms</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para app.forms</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">django.contrib.auth.forms</span> <span class="kn">import</span> <span class="n">UserCreationForm</span><span class="p">,</span> <span class="n">AuthenticationForm</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth.hashers</span> <span class="kn">import</span> <span class="n">check_password</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">Group</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth</span> <span class="kn">import</span> <span class="n">authenticate</span><span class="p">,</span> <span class="n">get_user_model</span>
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">CustomUser</span>
+<span class="kn">from</span> <span class="nn">django.contrib.admin.widgets</span> <span class="kn">import</span> <span class="n">FilteredSelectMultiple</span>
+<span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth.password_validation</span> <span class="kn">import</span> <span class="n">validate_password</span>
+<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
+
+
+<div class="viewcode-block" id="CustomUserCreationForm">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomUserCreationForm">[documentos]</a>
+<span class="k">class</span> <span class="nc">CustomUserCreationForm</span><span class="p">(</span><span class="n">UserCreationForm</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Formulario personalizado para la creación de usuarios.</span>
+
+<span class="sd">    Hereda de:</span>
+<span class="sd">        UserCreationForm: El formulario base para la creación de usuarios en Django.</span>
+
+<span class="sd">    Atributos:</span>
+<span class="sd">        Meta: Clase interna para definir el modelo y los campos utilizados en el formulario.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CustomUserCreationForm.Meta">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomUserCreationForm.Meta">[documentos]</a>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">CustomUser</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;email&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;password1&#39;</span><span class="p">,</span> <span class="s1">&#39;password2&#39;</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;Nombre&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;email&#39;</span><span class="p">:</span> <span class="s1">&#39;Correo Electrónico&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;password1&#39;</span><span class="p">:</span> <span class="s1">&#39;Contraseña&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;password2&#39;</span><span class="p">:</span> <span class="s1">&#39;Repetir contraseña&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">help_texts</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">&#39;password1&#39;</span><span class="p">:</span> <span class="s1">&#39;Su contraseña debe tener al menos 8 caracteres.&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;password2&#39;</span><span class="p">:</span> <span class="s1">&#39;Ingrese la misma contraseña que antes, para verificación.&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">error_messages</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;password1&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;password_too_similar&#39;</span><span class="p">:</span> <span class="s2">&quot;Su contraseña no puede ser demasiado similar a su información personal.&quot;</span><span class="p">,</span>
+                <span class="s1">&#39;password_too_short&#39;</span><span class="p">:</span> <span class="s2">&quot;Su contraseña debe contener al menos 8 caracteres.&quot;</span><span class="p">,</span>
+                <span class="s1">&#39;password_too_common&#39;</span><span class="p">:</span> <span class="s2">&quot;Su contraseña no puede ser una contraseña comúnmente utilizada.&quot;</span><span class="p">,</span>
+                <span class="s1">&#39;password_entirely_numeric&#39;</span><span class="p">:</span> <span class="s2">&quot;Su contraseña no puede ser completamente numérica.&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inicializa el formulario y establece los atributos de los campos para mostrar los placeholders personalizados.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Actualiza los atributos de los campos de nombre, correo electrónico, contraseña y repetición de contraseña.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">CustomUserCreationForm</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">widget</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;placeholder&#39;</span><span class="p">:</span> <span class="s1">&#39;Nombre*&#39;</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">&#39;email&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">widget</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;placeholder&#39;</span><span class="p">:</span> <span class="s1">&#39;Correo Electrónico*&#39;</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">&#39;password1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">widget</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;placeholder&#39;</span><span class="p">:</span> <span class="s1">&#39;Contraseña*&#39;</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">&#39;password2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">widget</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;placeholder&#39;</span><span class="p">:</span> <span class="s1">&#39;Repetir contraseña*&#39;</span><span class="p">})</span>
+
+<div class="viewcode-block" id="CustomUserCreationForm.save">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomUserCreationForm.save">[documentos]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Guarda el usuario creado con los datos ingresados en el formulario.</span>
+
+<span class="sd">        Parámetros:</span>
+<span class="sd">            commit (bool): Define si se guarda el usuario inmediatamente en la base de datos.</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            user (CustomUser): El objeto de usuario creado.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">user</span> <span class="o">=</span> <span class="n">CustomUser</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span>
+            <span class="n">email</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">&#39;email&#39;</span><span class="p">],</span>
+            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span>
+            <span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">&#39;password1&#39;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">user</span></div>
+</div>
+
+
+<div class="viewcode-block" id="CustomAuthenticationForm">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomAuthenticationForm">[documentos]</a>
+<span class="k">class</span> <span class="nc">CustomAuthenticationForm</span><span class="p">(</span><span class="n">AuthenticationForm</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Formulario de autenticación personalizado para iniciar sesión con correo electrónico y contraseña.</span>
+
+<span class="sd">    Hereda de:</span>
+<span class="sd">        AuthenticationForm: El formulario base de autenticación en Django.</span>
+
+<span class="sd">    Atributos:</span>
+<span class="sd">        username (EmailField): Campo para ingresar el correo electrónico del usuario.</span>
+<span class="sd">        password (CharField): Campo para ingresar la contraseña del usuario.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">username</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">EmailField</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;Correo Electrónico&#39;</span><span class="p">,</span> <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">EmailInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;form-control&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;placeholder&#39;</span><span class="p">:</span> <span class="s1">&#39;Correo Electrónico&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;yourUsername&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;required&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">}))</span>
+    <span class="n">password</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;Contraseña&#39;</span><span class="p">,</span> <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">PasswordInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;form-control&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;placeholder&#39;</span><span class="p">:</span> <span class="s1">&#39;Contraseña&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;yourPassword&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;required&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">}))</span>
+
+<div class="viewcode-block" id="CustomAuthenticationForm.clean_username">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomAuthenticationForm.clean_username">[documentos]</a>
+    <span class="k">def</span> <span class="nf">clean_username</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Valida el campo de correo electrónico.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Verifica si el campo de correo electrónico está vacío.</span>
+
+<span class="sd">        Lanza:</span>
+<span class="sd">            ValidationError: Si el correo electrónico no es proporcionado.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">username</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;username&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">username</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;El correo electrónico es obligatorio.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">username</span></div>
+
+
+<div class="viewcode-block" id="CustomAuthenticationForm.clean">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomAuthenticationForm.clean">[documentos]</a>
+    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Valida el formulario de inicio de sesión.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Autentica al usuario con las credenciales proporcionadas.</span>
+<span class="sd">            - Verifica si la cuenta del usuario está activa.</span>
+
+<span class="sd">        Lanza:</span>
+<span class="sd">            ValidationError: Si las credenciales no son correctas o si la cuenta está desactivada.</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            dict: Los datos limpios del formulario.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">cleaned_data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+        <span class="n">username</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;username&#39;</span><span class="p">)</span>
+        <span class="n">password</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;password&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">username</span> <span class="ow">and</span> <span class="n">password</span><span class="p">:</span>
+            <span class="n">user</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="n">password</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Las credenciales no son correctas.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="o">.</span><span class="n">is_active</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Esta cuenta está desactivada.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cleaned_data</span></div>
+</div>
+
+
+<div class="viewcode-block" id="ProfileUpdateForm">
+<a class="viewcode-back" href="../../app.html#app.admin.ProfileUpdateForm">[documentos]</a>
+<span class="k">class</span> <span class="nc">ProfileUpdateForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ModelForm</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Formulario para actualizar el perfil del usuario.</span>
+
+<span class="sd">    Hereda de:</span>
+<span class="sd">        ModelForm: Formulario base para trabajar con modelos en Django.</span>
+
+<span class="sd">    Atributos:</span>
+<span class="sd">        Meta: Clase interna para definir el modelo y los campos utilizados en el formulario.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ProfileUpdateForm.Meta">
+<a class="viewcode-back" href="../../app.html#app.admin.ProfileUpdateForm.Meta">[documentos]</a>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">CustomUser</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;photo&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;about&#39;</span><span class="p">]</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inicializa el formulario y establece todos los campos como opcionales.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Actualiza los campos del formulario para que no sean obligatorios.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">ProfileUpdateForm</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># Evita que los campos vacíos sobrescriban datos existentes</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">field</span><span class="p">]</span><span class="o">.</span><span class="n">required</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="ProfileUpdateForm.save">
+<a class="viewcode-back" href="../../app.html#app.admin.ProfileUpdateForm.save">[documentos]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Guarda los cambios en el perfil del usuario.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Actualiza solo los campos que no están vacíos o nulos.</span>
+<span class="sd">            - Guarda el usuario si `commit` es True.</span>
+
+<span class="sd">        Parámetros:</span>
+<span class="sd">            commit (bool): Define si se guarda el usuario inmediatamente en la base de datos.</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            user (CustomUser): El objeto de usuario actualizado.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">user</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">ProfileUpdateForm</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">commit</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="c1"># Actualiza solo si los campos no son nulos y no son cadenas vacías</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]:</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;about&#39;</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]:</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">about</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">&#39;about&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;photo&#39;</span><span class="p">):</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">photo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">&#39;photo&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">commit</span><span class="p">:</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">user</span></div>
+</div>
+
+
+<div class="viewcode-block" id="ChangePasswordForm">
+<a class="viewcode-back" href="../../app.html#app.admin.ChangePasswordForm">[documentos]</a>
+<span class="k">class</span> <span class="nc">ChangePasswordForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Formulario para cambiar la contraseña del usuario.</span>
+
+<span class="sd">    Atributos:</span>
+<span class="sd">        current_password (CharField): Campo para ingresar la contraseña actual del usuario.</span>
+<span class="sd">        new_password (CharField): Campo para ingresar la nueva contraseña del usuario.</span>
+<span class="sd">        confirm_new_password (CharField): Campo para confirmar la nueva contraseña del usuario.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">current_password</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Contraseña Actual&#39;</span><span class="p">,</span>
+        <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">PasswordInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;placeholder&#39;</span><span class="p">:</span> <span class="s1">&#39;Contraseña Actual&#39;</span><span class="p">}),</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="n">new_password</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Nueva Contraseña&#39;</span><span class="p">,</span>
+        <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">PasswordInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;placeholder&#39;</span><span class="p">:</span> <span class="s1">&#39;Nueva Contraseña&#39;</span><span class="p">}),</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="n">confirm_new_password</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Confirmar Nueva Contraseña&#39;</span><span class="p">,</span>
+        <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">PasswordInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;placeholder&#39;</span><span class="p">:</span> <span class="s1">&#39;Confirmar Nueva Contraseña&#39;</span><span class="p">}),</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inicializa el formulario con el usuario actual.</span>
+
+<span class="sd">        Parámetros:</span>
+<span class="sd">            user (CustomUser): El usuario que está cambiando la contraseña.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">user</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ChangePasswordForm</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ChangePasswordForm.clean_current_password">
+<a class="viewcode-back" href="../../app.html#app.admin.ChangePasswordForm.clean_current_password">[documentos]</a>
+    <span class="k">def</span> <span class="nf">clean_current_password</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Valida que la contraseña actual proporcionada sea correcta.</span>
+
+<span class="sd">        Lanza:</span>
+<span class="sd">            ValidationError: Si la contraseña actual es incorrecta.</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            str: La contraseña actual validada.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">current_password</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;current_password&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">check_password</span><span class="p">(</span><span class="n">current_password</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">password</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">&#39;La contraseña actual es incorrecta.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">current_password</span></div>
+
+
+<div class="viewcode-block" id="ChangePasswordForm.clean_new_password">
+<a class="viewcode-back" href="../../app.html#app.admin.ChangePasswordForm.clean_new_password">[documentos]</a>
+    <span class="k">def</span> <span class="nf">clean_new_password</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Valida la nueva contraseña con las políticas de validación de Django.</span>
+
+<span class="sd">        Lanza:</span>
+<span class="sd">            ValidationError: Si la nueva contraseña no cumple con las políticas de validación.</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            str: La nueva contraseña validada.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">new_password</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;new_password&#39;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">validate_password</span><span class="p">(</span><span class="n">new_password</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">messages</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_password</span></div>
+
+
+<div class="viewcode-block" id="ChangePasswordForm.clean">
+<a class="viewcode-back" href="../../app.html#app.admin.ChangePasswordForm.clean">[documentos]</a>
+    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Valida el formulario de cambio de contraseña.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Verifica que las nuevas contraseñas coincidan.</span>
+<span class="sd">            - Verifica que la nueva contraseña no sea igual a la actual.</span>
+
+<span class="sd">        Lanza:</span>
+<span class="sd">            ValidationError: Si las nuevas contraseñas no coinciden o si es igual a la actual.</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            dict: Los datos limpios del formulario.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">cleaned_data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+        <span class="n">new_password</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;new_password&#39;</span><span class="p">)</span>
+        <span class="n">confirm_new_password</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;confirm_new_password&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">new_password</span> <span class="ow">and</span> <span class="n">confirm_new_password</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">new_password</span> <span class="o">!=</span> <span class="n">confirm_new_password</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">&#39;Las nuevas contraseñas no coinciden.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">check_password</span><span class="p">(</span><span class="n">new_password</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">password</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">&#39;La nueva contraseña no puede ser igual a la actual.&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cleaned_data</span></div>
+
+
+<div class="viewcode-block" id="ChangePasswordForm.save">
+<a class="viewcode-back" href="../../app.html#app.admin.ChangePasswordForm.save">[documentos]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Guarda la nueva contraseña del usuario.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Establece la nueva contraseña en el usuario.</span>
+<span class="sd">            - Guarda el usuario si `commit` es True.</span>
+
+<span class="sd">        Parámetros:</span>
+<span class="sd">            commit (bool): Define si se guarda el usuario inmediatamente en la base de datos.</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            user (CustomUser): El usuario con la nueva contraseña.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">new_password</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">&#39;new_password&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">set_password</span><span class="p">(</span><span class="n">new_password</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">commit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span></div>
+</div>
+
+
+<div class="viewcode-block" id="CustomUserFormAdmin">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomUserFormAdmin">[documentos]</a>
+<span class="k">class</span> <span class="nc">CustomUserFormAdmin</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ModelForm</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Formulario personalizado para la administración de usuarios en el panel de administración de Django.</span>
+
+<span class="sd">    Hereda de:</span>
+<span class="sd">        ModelForm: Formulario base para trabajar con modelos en Django.</span>
+
+<span class="sd">    Atributos:</span>
+<span class="sd">        Meta: Clase interna para definir el modelo y los campos utilizados en el formulario.</span>
+<span class="sd">        widgets: Define el widget personalizado para el campo de grupos.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CustomUserFormAdmin.Meta">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomUserFormAdmin.Meta">[documentos]</a>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">CustomUser</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="s1">&#39;__all__&#39;</span>
+        <span class="n">widgets</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;groups&#39;</span><span class="p">:</span> <span class="n">FilteredSelectMultiple</span><span class="p">(</span><span class="s1">&#39;Grupos&#39;</span><span class="p">,</span> <span class="n">is_stacked</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inicializa el formulario y deshabilita las opciones de agregar o cambiar grupos desde el widget.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Establece que no se puedan agregar o cambiar grupos desde el campo correspondiente.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># Eliminar la opción de agregar nuevos grupos</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">&#39;groups&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">widget</span><span class="o">.</span><span class="n">can_add_related</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">&#39;groups&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">widget</span><span class="o">.</span><span class="n">can_change_related</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="PasswordResetForm">
+<a class="viewcode-back" href="../../app.html#app.admin.PasswordResetForm">[documentos]</a>
+<span class="k">class</span> <span class="nc">PasswordResetForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Formulario para solicitar el restablecimiento de contraseña.</span>
+
+<span class="sd">    Atributos:</span>
+<span class="sd">        email (EmailField): Campo para ingresar el correo electrónico del usuario.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">email</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">EmailField</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;Correo Electrónico&#39;</span><span class="p">,</span> <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">EmailInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;form-control&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;placeholder&#39;</span><span class="p">:</span> <span class="s1">&#39;Correo Electrónico&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;yourUsername&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;required&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">}))</span>
+
+<div class="viewcode-block" id="PasswordResetForm.clean_email">
+<a class="viewcode-back" href="../../app.html#app.admin.PasswordResetForm.clean_email">[documentos]</a>
+    <span class="k">def</span> <span class="nf">clean_email</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Valida que el correo electrónico proporcionado esté asociado a un usuario existente.</span>
+
+<span class="sd">        Lanza:</span>
+<span class="sd">            ValidationError: Si no se encuentra un usuario con el correo electrónico proporcionado.</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            str: El correo electrónico validado.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">email</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;email&#39;</span><span class="p">)</span>
+        <span class="n">user_model</span> <span class="o">=</span> <span class="n">get_user_model</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">user_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">email</span><span class="o">=</span><span class="n">email</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s1">&#39;No se encontró ningún usuario con este correo electrónico.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">email</span></div>
+
+
+<div class="viewcode-block" id="PasswordResetForm.send_password_reset_email">
+<a class="viewcode-back" href="../../app.html#app.admin.PasswordResetForm.send_password_reset_email">[documentos]</a>
+    <span class="k">def</span> <span class="nf">send_password_reset_email</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Envía un correo electrónico para restablecer la contraseña.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Implementa la lógica para enviar un correo electrónico de restablecimiento de contraseña.</span>
+<span class="sd">            - Se puede usar `send_mail` o integraciones con servicios de correo.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Aquí puedes incluir la lógica para enviar el correo electrónico de restablecimiento de contraseña.</span>
+        <span class="c1"># Normalmente, usarías la función `send_mail` o integraciones con servicios de correo.</span>
+        <span class="c1"># Esto también puede interactuar con la vista que maneje la lógica de recuperación de contraseñas.</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;email sended&quot;</span><span class="p">)</span></div>
+</div>
+
+
+<div class="viewcode-block" id="SetPasswordForm">
+<a class="viewcode-back" href="../../app.html#app.admin.SetPasswordForm">[documentos]</a>
+<span class="k">class</span> <span class="nc">SetPasswordForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Formulario para establecer una nueva contraseña.</span>
+
+<span class="sd">    Atributos:</span>
+<span class="sd">        new_password (CharField): Campo para ingresar la nueva contraseña del usuario.</span>
+<span class="sd">        confirm_new_password (CharField): Campo para confirmar la nueva contraseña del usuario.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">new_password</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Nueva Contraseña&#39;</span><span class="p">,</span>
+        <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">PasswordInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;placeholder&#39;</span><span class="p">:</span> <span class="s1">&#39;Nueva Contraseña&#39;</span><span class="p">}),</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="n">confirm_new_password</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Confirmar Nueva Contraseña&#39;</span><span class="p">,</span>
+        <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">PasswordInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;placeholder&#39;</span><span class="p">:</span> <span class="s1">&#39;Confirmar Nueva Contraseña&#39;</span><span class="p">}),</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="SetPasswordForm.clean_new_password">
+<a class="viewcode-back" href="../../app.html#app.admin.SetPasswordForm.clean_new_password">[documentos]</a>
+    <span class="k">def</span> <span class="nf">clean_new_password</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Valida la nueva contraseña con las políticas de validación de Django.</span>
+
+<span class="sd">        Lanza:</span>
+<span class="sd">            ValidationError: Si la nueva contraseña no cumple con las políticas de validación.</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            str: La nueva contraseña validada.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">new_password</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;new_password&#39;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">validate_password</span><span class="p">(</span><span class="n">new_password</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">messages</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_password</span></div>
+
+
+<div class="viewcode-block" id="SetPasswordForm.clean">
+<a class="viewcode-back" href="../../app.html#app.admin.SetPasswordForm.clean">[documentos]</a>
+    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Valida que las nuevas contraseñas coincidan.</span>
+
+<span class="sd">        Lanza:</span>
+<span class="sd">            ValidationError: Si las contraseñas no coinciden.</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            dict: Los datos limpios del formulario.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">cleaned_data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+        <span class="n">new_password</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;new_password&#39;</span><span class="p">)</span>
+        <span class="n">confirm_new_password</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;confirm_new_password&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">new_password</span> <span class="ow">and</span> <span class="n">confirm_new_password</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">new_password</span> <span class="o">!=</span> <span class="n">confirm_new_password</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">&#39;Las contraseñas no coinciden.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cleaned_data</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2024, Roberto Acosta, Esteban Fernandez, Fabrizio Roman, Abigail Nuñez.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
