@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app.admin &mdash; documentación de CMS - 0.0.1</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=6fcc102b"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../_static/translations.js?v=d190bf04"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            CMS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">Sistema CMS</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">CMS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">app.admin</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para app.admin</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">django.contrib.auth.admin</span> <span class="kn">import</span> <span class="n">GroupAdmin</span> <span class="k">as</span> <span class="n">BaseGroupAdmin</span><span class="p">,</span> <span class="n">UserAdmin</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">Group</span>
+<span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span><span class="p">,</span> <span class="n">messages</span>
+<span class="kn">from</span> <span class="nn">app.models</span> <span class="kn">import</span> <span class="n">CustomUser</span>
+<span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">gettext_lazy</span> <span class="k">as</span> <span class="n">_</span>
+<span class="kn">from</span> <span class="nn">django.forms.models</span> <span class="kn">import</span> <span class="n">fields_for_model</span>
+<span class="kn">from</span> <span class="nn">app.forms</span> <span class="kn">import</span> <span class="n">CustomUserFormAdmin</span>
+
+<div class="viewcode-block" id="bloquear_usuarios">
+<a class="viewcode-back" href="../../app.html#app.admin.bloquear_usuarios">[documentos]</a>
+<span class="nd">@admin</span><span class="o">.</span><span class="n">action</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Bloquear usuario/s&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">bloquear_usuarios</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Bloquea los usuarios seleccionados en el panel de administración.</span>
+
+<span class="sd">    Parámetros:</span>
+<span class="sd">        self: Referencia al objeto actual.</span>
+<span class="sd">        request: Objeto de solicitud HTTP que contiene metadatos sobre la solicitud.</span>
+<span class="sd">        queryset: QuerySet que contiene los usuarios seleccionados para la acción.</span>
+
+<span class="sd">    Acciones:</span>
+<span class="sd">        - Itera sobre los usuarios seleccionados y desactiva su cuenta.</span>
+<span class="sd">        - Muestra un mensaje de éxito por cada usuario bloqueado.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">usuario</span> <span class="ow">in</span> <span class="n">queryset</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">usuario</span><span class="o">.</span><span class="n">is_active</span><span class="p">:</span>
+            <span class="n">usuario</span><span class="o">.</span><span class="n">is_active</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">usuario</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message_user</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;El usuario </span><span class="si">{</span><span class="n">usuario</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1"> ha sido bloqueado.&#39;</span><span class="p">,</span> <span class="n">messages</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="desbloquear_usuarios">
+<a class="viewcode-back" href="../../app.html#app.admin.desbloquear_usuarios">[documentos]</a>
+<span class="nd">@admin</span><span class="o">.</span><span class="n">action</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Desbloquear usuario/s&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">desbloquear_usuarios</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Desbloquea los usuarios seleccionados en el panel de administración.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        self: Referencia al objeto actual.</span>
+
+<span class="sd">        request: Objeto de solicitud HTTP que contiene metadatos sobre la solicitud.</span>
+
+<span class="sd">        queryset: QuerySet que contiene los usuarios seleccionados para la acción.</span>
+
+<span class="sd">    Acciones:</span>
+<span class="sd">        - Itera sobre los usuarios seleccionados y activa su cuenta.</span>
+<span class="sd">        - Muestra un mensaje de éxito por cada usuario desbloqueado.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">usuario</span> <span class="ow">in</span> <span class="n">queryset</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">usuario</span><span class="o">.</span><span class="n">is_active</span><span class="p">:</span>
+            <span class="n">usuario</span><span class="o">.</span><span class="n">is_active</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">usuario</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message_user</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;El usuario </span><span class="si">{</span><span class="n">usuario</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1"> ha sido desbloqueado.&#39;</span><span class="p">,</span> <span class="n">messages</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CustomUserAdmin">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomUserAdmin">[documentos]</a>
+<span class="k">class</span> <span class="nc">CustomUserAdmin</span><span class="p">(</span><span class="n">UserAdmin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configuración personalizada para la administración de usuarios en el panel de administración de Django.</span>
+
+<span class="sd">    Atributos:</span>
+<span class="sd">        form (ModelForm): Formulario personalizado utilizado para editar usuarios.</span>
+<span class="sd">        list_display (tuple): Campos que se mostrarán en la lista de usuarios.</span>
+<span class="sd">        list_filter (tuple): Filtros disponibles en la lista de usuarios.</span>
+<span class="sd">        fieldsets (tuple): Estructura y agrupación de los campos en el formulario de edición de usuarios.</span>
+<span class="sd">        search_fields (tuple): Campos por los cuales se puede buscar en la lista de usuarios.</span>
+<span class="sd">        ordering (tuple): Orden por defecto de la lista de usuarios.</span>
+<span class="sd">        filter_horizontal (tuple): Campos de selección múltiple que se muestran de manera horizontal.</span>
+<span class="sd">        readonly_fields (tuple): Campos que son de solo lectura en el formulario de edición.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">form</span> <span class="o">=</span> <span class="n">CustomUserFormAdmin</span>
+
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;email&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;is_active&#39;</span><span class="p">)</span>
+    <span class="n">list_filter</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;is_active&#39;</span><span class="p">,</span> <span class="s1">&#39;groups&#39;</span><span class="p">)</span>
+
+    <span class="n">fieldsets</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">()}),</span>
+        <span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Informacion personal&#39;</span><span class="p">),</span> <span class="p">{</span><span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;email&#39;</span> <span class="p">,</span><span class="s1">&#39;photo&#39;</span><span class="p">,</span> <span class="s1">&#39;about&#39;</span><span class="p">)}),</span>
+        <span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Grupos y estado&#39;</span><span class="p">),</span> <span class="p">{</span><span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;is_active&#39;</span><span class="p">,</span> <span class="s1">&#39;groups&#39;</span><span class="p">)}),</span>
+        <span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Fechas relevantes&#39;</span><span class="p">),</span> <span class="p">{</span><span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;last_login&#39;</span><span class="p">,</span> <span class="s1">&#39;date_joined&#39;</span><span class="p">)}),</span>
+    <span class="p">)</span>
+    <span class="n">search_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;email&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">)</span>
+    <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;email&#39;</span><span class="p">,)</span>
+    <span class="n">filter_horizontal</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;groups&#39;</span><span class="p">,</span> <span class="s1">&#39;user_permissions&#39;</span><span class="p">,)</span>
+
+    <span class="n">readonly_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;email&#39;</span><span class="p">,</span> <span class="s1">&#39;photo&#39;</span><span class="p">,</span> <span class="s1">&#39;about&#39;</span><span class="p">,</span> <span class="s1">&#39;last_login&#39;</span><span class="p">,</span> <span class="s1">&#39;date_joined&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CustomUserAdmin.has_module_permission">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomUserAdmin.has_module_permission">[documentos]</a>
+    <span class="k">def</span> <span class="nf">has_module_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica si el usuario actual tiene permisos para acceder al módulo de administración de usuarios.</span>
+
+<span class="sd">        Parámetros:</span>
+<span class="sd">            request: Objeto de solicitud HTTP.</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            bool: True si el usuario tiene permisos de visualización, de lo contrario False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">has_perm</span><span class="p">(</span><span class="s1">&#39;app.view_users&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CustomUserAdmin.has_view_permission">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomUserAdmin.has_view_permission">[documentos]</a>
+    <span class="k">def</span> <span class="nf">has_view_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica si el usuario actual tiene permisos para ver usuarios específicos.</span>
+
+<span class="sd">        Parámetros:</span>
+<span class="sd">            request: Objeto de solicitud HTTP.</span>
+<span class="sd">            obj: Objeto usuario específico (opcional).</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            bool: True si el usuario tiene permisos de visualización, de lo contrario False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">has_perm</span><span class="p">(</span><span class="s1">&#39;app.view_users&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CustomUserAdmin.has_add_permission">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomUserAdmin.has_add_permission">[documentos]</a>
+    <span class="k">def</span> <span class="nf">has_add_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica si el usuario actual tiene permisos para añadir nuevos usuarios.</span>
+
+<span class="sd">        Parámetros:</span>
+<span class="sd">            request: Objeto de solicitud HTTP.</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            bool: True si el usuario tiene permisos para añadir usuarios, de lo contrario False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">has_perm</span><span class="p">(</span><span class="s1">&#39;app.create_users&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CustomUserAdmin.has_change_permission">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomUserAdmin.has_change_permission">[documentos]</a>
+    <span class="k">def</span> <span class="nf">has_change_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica si el usuario actual tiene permisos para cambiar usuarios.</span>
+
+<span class="sd">        Parámetros:</span>
+<span class="sd">            request: Objeto de solicitud HTTP.</span>
+<span class="sd">            obj: Objeto usuario específico (opcional).</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            bool: True si el usuario tiene permisos para cambiar usuarios, de lo contrario False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">has_perm</span><span class="p">(</span><span class="s1">&#39;app.edit_roles&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CustomUserAdmin.has_delete_permission">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomUserAdmin.has_delete_permission">[documentos]</a>
+    <span class="k">def</span> <span class="nf">has_delete_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica si el usuario actual tiene permisos para eliminar usuarios.</span>
+
+<span class="sd">        Parámetros:</span>
+<span class="sd">            request: Objeto de solicitud HTTP.</span>
+<span class="sd">            obj: Objeto usuario específico (opcional).</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            bool: True si el usuario tiene permisos para eliminar usuarios, de lo contrario False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">has_perm</span><span class="p">(</span><span class="s1">&#39;app.delete_users&#39;</span><span class="p">)</span></div>
+
+
+ <span class="c1"># Restringir la edición solo a &#39;groups&#39; e &#39;is_active&#39;</span>
+<div class="viewcode-block" id="CustomUserAdmin.get_readonly_fields">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomUserAdmin.get_readonly_fields">[documentos]</a>
+    <span class="k">def</span> <span class="nf">get_readonly_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Restringe la edición a solo los campos &#39;groups&#39; e &#39;is_active&#39;, dejando los demás como solo lectura.</span>
+
+<span class="sd">        Parámetros:</span>
+<span class="sd">            request: Objeto de solicitud HTTP.</span>
+<span class="sd">            obj: Objeto usuario específico (opcional).</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            list: Lista de campos de solo lectura.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">obj</span><span class="p">:</span>
+            <span class="c1"># Obtener todos los campos del modelo</span>
+            <span class="n">all_fields</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">fields_for_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="n">editable_fields</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;groups&#39;</span><span class="p">,</span> <span class="s1">&#39;is_active&#39;</span><span class="p">}</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">field</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">all_fields</span> <span class="k">if</span> <span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">editable_fields</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_readonly_fields</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CustomGroupAdmin">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomGroupAdmin">[documentos]</a>
+<span class="k">class</span> <span class="nc">CustomGroupAdmin</span><span class="p">(</span><span class="n">BaseGroupAdmin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configuración personalizada para la administración de grupos en el panel de administración de Django.</span>
+
+<span class="sd">    Hereda de:</span>
+<span class="sd">        BaseGroupAdmin: La clase base de administración para grupos.</span>
+
+<span class="sd">    Métodos:</span>
+<span class="sd">        has_module_permission: Verifica si el usuario tiene permisos para acceder al módulo de grupos.</span>
+<span class="sd">        has_view_permission: Verifica si el usuario tiene permisos para ver grupos específicos.</span>
+<span class="sd">        has_add_permission: Verifica si el usuario tiene permisos para añadir nuevos grupos.</span>
+<span class="sd">        has_change_permission: Verifica si el usuario tiene permisos para cambiar grupos.</span>
+<span class="sd">        has_delete_permission: Verifica si el usuario tiene permisos para eliminar grupos.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CustomGroupAdmin.has_module_permission">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomGroupAdmin.has_module_permission">[documentos]</a>
+    <span class="k">def</span> <span class="nf">has_module_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica si el usuario actual tiene permisos para acceder al módulo de administración de grupos.</span>
+
+<span class="sd">        Parámetros:</span>
+<span class="sd">            request: Objeto de solicitud HTTP.</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            bool: True si el usuario tiene permisos de visualización, de lo contrario False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">has_perm</span><span class="p">(</span><span class="s1">&#39;app.view_roles&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CustomGroupAdmin.has_view_permission">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomGroupAdmin.has_view_permission">[documentos]</a>
+    <span class="k">def</span> <span class="nf">has_view_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica si el usuario actual tiene permisos para ver grupos específicos.</span>
+
+<span class="sd">        Parámetros:</span>
+<span class="sd">            request: Objeto de solicitud HTTP.</span>
+<span class="sd">            obj: Objeto grupo específico (opcional).</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            bool: True si el usuario tiene permisos de visualización, de lo contrario False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">has_perm</span><span class="p">(</span><span class="s1">&#39;app.view_roles&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CustomGroupAdmin.has_add_permission">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomGroupAdmin.has_add_permission">[documentos]</a>
+    <span class="k">def</span> <span class="nf">has_add_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica si el usuario actual tiene permisos para añadir nuevos grupos.</span>
+
+<span class="sd">        Parámetros:</span>
+<span class="sd">            request: Objeto de solicitud HTTP.</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            bool: True si el usuario tiene permisos para añadir grupos, de lo contrario False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">has_perm</span><span class="p">(</span><span class="s1">&#39;app.create_roles&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CustomGroupAdmin.has_change_permission">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomGroupAdmin.has_change_permission">[documentos]</a>
+    <span class="k">def</span> <span class="nf">has_change_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica si el usuario actual tiene permisos para cambiar grupos.</span>
+
+<span class="sd">        Parámetros:</span>
+<span class="sd">            request: Objeto de solicitud HTTP.</span>
+<span class="sd">            obj: Objeto grupo específico (opcional).</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            bool: True si el usuario tiene permisos para cambiar grupos, de lo contrario False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">has_perm</span><span class="p">(</span><span class="s1">&#39;app.edit_roles&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CustomGroupAdmin.has_delete_permission">
+<a class="viewcode-back" href="../../app.html#app.admin.CustomGroupAdmin.has_delete_permission">[documentos]</a>
+    <span class="k">def</span> <span class="nf">has_delete_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica si el usuario actual tiene permisos para eliminar grupos.</span>
+
+<span class="sd">        Parámetros:</span>
+<span class="sd">            request: Objeto de solicitud HTTP.</span>
+<span class="sd">            obj: Objeto grupo específico (opcional).</span>
+
+<span class="sd">        Retorna:</span>
+<span class="sd">            bool: True si el usuario tiene permisos para eliminar grupos, de lo contrario False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">has_perm</span><span class="p">(</span><span class="s1">&#39;app.delete_roles&#39;</span><span class="p">)</span></div>
+</div>
+
+
+<span class="c1"># Desregistrar el modelo Group</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">unregister</span><span class="p">(</span><span class="n">Group</span><span class="p">)</span>
+
+<span class="c1"># Registrar el modelo Group con la clase CustomGroupAdmin</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Group</span><span class="p">,</span> <span class="n">CustomGroupAdmin</span><span class="p">)</span>
+
+<span class="c1"># Registrar CustomUser con CustomUserAdmin</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">CustomUser</span><span class="p">,</span> <span class="n">CustomUserAdmin</span><span class="p">)</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">site_header</span> <span class="o">=</span> <span class="s2">&quot;Administración del Sistema&quot;</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2024, Roberto Acosta, Esteban Fernandez, Fabrizio Roman, Abigail Nuñez.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
