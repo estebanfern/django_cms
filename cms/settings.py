@@ -25,10 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-onb703_t0zi+l^vm#(rn2-tdh4uef2ub4y7gvzy@g8*zc1)1zb'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
+DEBUG = config('DJANGO_DEBUG', default='False').lower() in ['true', '1', 't']
+ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost').split(',')
+print(f'Running server with DEBUG={DEBUG} and ALLOWED_HOSTS={ALLOWED_HOSTS}')
 
 # Application definition
 
@@ -122,17 +121,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -140,28 +128,42 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'app.CustomUser'
 
-# Espacio de almacenamiento compatible con S3
+# Media files (Images, Videos, etc)
 AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
 AWS_S3_ENDPOINT_URL = config('AWS_S3_ENDPOINT_URL')
-# AWS_S3_OBJECT_PARAMETERS = {
-#     'CacheControl': 'max-age=86400',
-# }
-AWS_LOCATION = 'media'
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+AWS_MEDIA_LOCATION = 'media'
 AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME')
 AWS_DEFAULT_ACL = 'public-read'
 AWS_QUERYSTRING_AUTH = False
 AWS_S3_CONNECTION_TIMEOUT = 60
-# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com/{AWS_LOCATION}/"
+MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com/{AWS_MEDIA_LOCATION}/"
 PUBLIC_MEDIA_LOCATION = 'media'
 DEFAULT_FILE_STORAGE = 'cms.storage_backends.PublicMediaStorage'
 DEFAULT_PROFILE_PHOTO=config('DEFAULT_PROFILE_PHOTO')
 
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.1/howto/static-files/
+CMS_STATIC_LOCAL_STORAGE = config('CMS_STATIC_LOCAL_STORAGE', default='True').lower() in ['true', '1', 't']
+print('Static Local Storage: ', CMS_STATIC_LOCAL_STORAGE)
+AWS_STATIC_LOCATION = 'static'
+STATIC_ROOT = config( '', default=os.path.join(BASE_DIR, 'staticfiles'))
+if CMS_STATIC_LOCAL_STORAGE:
+    STATIC_URL = '/static/'
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, 'static'),
+    ]
+else:
+    STATIC_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com/{AWS_STATIC_LOCATION}/"
+    STATICFILES_STORAGE = 'cms.storage_backends.StaticStorage'
+    
 LOGIN_URL = '/login'
 
-#EMAIL SETTINGS
+# Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
