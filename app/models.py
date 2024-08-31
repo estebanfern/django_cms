@@ -70,6 +70,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             ("reset_passwords", "Restablecer contraseñas"),
             ("view_users", "Ver usuarios"),
 
+            # Permisos para categorías
+            ("create_category", "Crear categorías"),
+            ("view_category", "Ver categorías"),
+            ("edit_category", "Editar categorías"),
+            ("delete_category", "Eliminar categorías"),
+            ("activate_category", "Activar categorías"),
+            ("deactivate_category", "Desactivar categorías"),
+
         ]
 
     @property
