@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app.tests &mdash; documentación de CMS - 0.0.1</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=6fcc102b"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../_static/translations.js?v=d190bf04"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            CMS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">Sistema CMS</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">CMS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">app.tests</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para app.tests</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">django.test</span> <span class="kn">import</span> <span class="n">TestCase</span><span class="p">,</span> <span class="n">override_settings</span>
+<span class="kn">from</span> <span class="nn">django.core.files.storage</span> <span class="kn">import</span> <span class="n">default_storage</span>
+<span class="kn">from</span> <span class="nn">django.core.files.uploadedfile</span> <span class="kn">import</span> <span class="n">SimpleUploadedFile</span>
+<span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">app.forms</span> <span class="kn">import</span> <span class="n">ChangePasswordForm</span><span class="p">,</span> <span class="n">CustomUserCreationForm</span><span class="p">,</span> <span class="n">ProfileUpdateForm</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth</span> <span class="kn">import</span> <span class="n">get_user_model</span>
+<span class="kn">from</span> <span class="nn">app.forms</span> <span class="kn">import</span> <span class="n">CustomAuthenticationForm</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<div class="viewcode-block" id="ProfilePictureUploadTest">
+<a class="viewcode-back" href="../../app.html#app.tests.ProfilePictureUploadTest">[documentos]</a>
+<span class="nd">@override_settings</span><span class="p">(</span><span class="n">DEFAULT_FILE_STORAGE</span><span class="o">=</span><span class="s1">&#39;storages.backends.s3boto3.S3Boto3Storage&#39;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">ProfilePictureUploadTest</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pruebas para la subida de fotos de perfil de usuario.</span>
+
+<span class="sd">    Hereda de:</span>
+<span class="sd">        TestCase: Clase base para las pruebas unitarias en Django.</span>
+
+<span class="sd">    Métodos:</span>
+<span class="sd">        setUp: Configura un usuario de prueba antes de cada test.</span>
+<span class="sd">        test_profile_picture_upload: Verifica que se pueda subir una foto de perfil correctamente.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ProfilePictureUploadTest.setUp">
+<a class="viewcode-back" href="../../app.html#app.tests.ProfilePictureUploadTest.setUp">[documentos]</a>
+    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Configura un usuario de prueba antes de cada test.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Crea un usuario con un correo electrónico, nombre y contraseña específicos.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Crea un usuario de prueba</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">get_user_model</span><span class="p">()</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span>
+            <span class="n">email</span><span class="o">=</span><span class="s1">&#39;testuser@example.com&#39;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Test User&#39;</span><span class="p">,</span>
+            <span class="n">password</span><span class="o">=</span><span class="s1">&#39;testpassword123&#39;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProfilePictureUploadTest.test_profile_picture_upload">
+<a class="viewcode-back" href="../../app.html#app.tests.ProfilePictureUploadTest.test_profile_picture_upload">[documentos]</a>
+    <span class="nd">@override_settings</span><span class="p">(</span><span class="n">DEFAULT_FILE_STORAGE</span><span class="o">=</span><span class="s1">&#39;storages.backends.s3boto3.S3Boto3Storage&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">test_profile_picture_upload</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica que se pueda subir una foto de perfil correctamente.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Carga una imagen de prueba y la asigna al campo `photo` del usuario.</span>
+<span class="sd">            - Guarda el usuario con la imagen subida.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Ruta de la imagen de prueba</span>
+        <span class="n">image_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s1">&#39;static&#39;</span><span class="p">,</span> <span class="s1">&#39;test.jpg&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Carga la imagen en un SimpleUploadedFile</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">image_file</span><span class="p">:</span>
+            <span class="n">uploaded_image</span> <span class="o">=</span> <span class="n">SimpleUploadedFile</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;test.jpg&#39;</span><span class="p">,</span>
+                <span class="n">content</span><span class="o">=</span><span class="n">image_file</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span>
+                <span class="n">content_type</span><span class="o">=</span><span class="s1">&#39;image/jpeg&#39;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Asigna la imagen al campo `photo` del usuario</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">photo</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;test.jpg&#39;</span><span class="p">,</span> <span class="n">uploaded_image</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
+</div>
+
+
+<div class="viewcode-block" id="CustomUserCreationFormTest">
+<a class="viewcode-back" href="../../app.html#app.tests.CustomUserCreationFormTest">[documentos]</a>
+<span class="k">class</span> <span class="nc">CustomUserCreationFormTest</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pruebas para el formulario de creación de usuarios personalizados.</span>
+
+<span class="sd">    Hereda de:</span>
+<span class="sd">        TestCase: Clase base para las pruebas unitarias en Django.</span>
+
+<span class="sd">    Métodos:</span>
+<span class="sd">        test_valid_form: Verifica que el formulario sea válido con datos correctos.</span>
+<span class="sd">        test_invalid_password_confirmation: Verifica que el formulario sea inválido si las contraseñas no coinciden.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CustomUserCreationFormTest.test_valid_form">
+<a class="viewcode-back" href="../../app.html#app.tests.CustomUserCreationFormTest.test_valid_form">[documentos]</a>
+    <span class="k">def</span> <span class="nf">test_valid_form</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica que el formulario sea válido con datos correctos.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Rellena el formulario con datos válidos.</span>
+<span class="sd">            - Guarda el usuario y verifica que los datos guardados sean correctos.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">form_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;email&#39;</span><span class="p">:</span> <span class="s1">&#39;testuser@example.com&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;Test User&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;password1&#39;</span><span class="p">:</span> <span class="s1">&#39;strong_password_123&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;password2&#39;</span><span class="p">:</span> <span class="s1">&#39;strong_password_123&#39;</span>
+        <span class="p">}</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">CustomUserCreationForm</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">form_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">())</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">,</span> <span class="s1">&#39;testuser@example.com&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;Test User&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CustomUserCreationFormTest.test_invalid_password_confirmation">
+<a class="viewcode-back" href="../../app.html#app.tests.CustomUserCreationFormTest.test_invalid_password_confirmation">[documentos]</a>
+    <span class="k">def</span> <span class="nf">test_invalid_password_confirmation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica que el formulario sea inválido si las contraseñas no coinciden.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Rellena el formulario con contraseñas diferentes.</span>
+<span class="sd">            - Verifica que el formulario no sea válido y que el error se encuentre en el campo `password2`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">form_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;email&#39;</span><span class="p">:</span> <span class="s1">&#39;testuser@example.com&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;Test User&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;password1&#39;</span><span class="p">:</span> <span class="s1">&#39;strong_password_123&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;password2&#39;</span><span class="p">:</span> <span class="s1">&#39;different_password&#39;</span>
+        <span class="p">}</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">CustomUserCreationForm</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">form_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s1">&#39;password2&#39;</span><span class="p">,</span> <span class="n">form</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CustomAuthenticationFormTest">
+<a class="viewcode-back" href="../../app.html#app.tests.CustomAuthenticationFormTest">[documentos]</a>
+<span class="k">class</span> <span class="nc">CustomAuthenticationFormTest</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pruebas para el formulario de autenticación personalizado.</span>
+
+<span class="sd">    Hereda de:</span>
+<span class="sd">        TestCase: Clase base para las pruebas unitarias en Django.</span>
+
+<span class="sd">    Métodos:</span>
+<span class="sd">        setUp: Configura un usuario de prueba antes de cada test.</span>
+<span class="sd">        test_valid_form: Verifica que el formulario sea válido con credenciales correctas.</span>
+<span class="sd">        test_invalid_password: Verifica que el formulario sea inválido con una contraseña incorrecta.</span>
+<span class="sd">        test_missing_username: Verifica que el formulario sea inválido si falta el correo electrónico.</span>
+<span class="sd">        test_missing_password: Verifica que el formulario sea inválido si falta la contraseña.</span>
+<span class="sd">        test_inactive_user: Verifica que el formulario sea inválido si el usuario está desactivado.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CustomAuthenticationFormTest.setUp">
+<a class="viewcode-back" href="../../app.html#app.tests.CustomAuthenticationFormTest.setUp">[documentos]</a>
+    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Configura un usuario de prueba antes de cada test.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Crea un usuario con un correo electrónico, nombre y contraseña específicos.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Crear un usuario de prueba</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">get_user_model</span><span class="p">()</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span>
+            <span class="n">email</span><span class="o">=</span><span class="s1">&#39;testuser@example.com&#39;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Test User&#39;</span><span class="p">,</span>
+            <span class="n">password</span><span class="o">=</span><span class="s1">&#39;testpassword123&#39;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CustomAuthenticationFormTest.test_valid_form">
+<a class="viewcode-back" href="../../app.html#app.tests.CustomAuthenticationFormTest.test_valid_form">[documentos]</a>
+    <span class="k">def</span> <span class="nf">test_valid_form</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica que el formulario sea válido con credenciales correctas.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Rellena el formulario con un correo electrónico y contraseña válidos.</span>
+<span class="sd">            - Verifica que el formulario sea válido.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">form_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;testuser@example.com&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="s1">&#39;testpassword123&#39;</span>
+        <span class="p">}</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">CustomAuthenticationForm</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">form_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(),</span> <span class="s2">&quot;El formulario debería ser válido con credenciales correctas&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CustomAuthenticationFormTest.test_invalid_password">
+<a class="viewcode-back" href="../../app.html#app.tests.CustomAuthenticationFormTest.test_invalid_password">[documentos]</a>
+    <span class="k">def</span> <span class="nf">test_invalid_password</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica que el formulario sea inválido con una contraseña incorrecta.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Rellena el formulario con una contraseña incorrecta.</span>
+<span class="sd">            - Verifica que el formulario no sea válido y que haya un error general de autenticación.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">form_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;testuser@example.com&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="s1">&#39;wrongpassword&#39;</span>
+        <span class="p">}</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">CustomAuthenticationForm</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">form_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(),</span> <span class="s2">&quot;El formulario no debería ser válido con una contraseña incorrecta&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s1">&#39;__all__&#39;</span><span class="p">,</span> <span class="n">form</span><span class="o">.</span><span class="n">errors</span><span class="p">,</span> <span class="s2">&quot;Debería haber un error relacionado con la autenticación incorrecta&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CustomAuthenticationFormTest.test_missing_username">
+<a class="viewcode-back" href="../../app.html#app.tests.CustomAuthenticationFormTest.test_missing_username">[documentos]</a>
+    <span class="k">def</span> <span class="nf">test_missing_username</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica que el formulario sea inválido si falta el correo electrónico.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Rellena el formulario sin un correo electrónico.</span>
+<span class="sd">            - Verifica que el formulario no sea válido y que el error se encuentre en el campo `username`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">form_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="s1">&#39;testpassword123&#39;</span>
+        <span class="p">}</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">CustomAuthenticationForm</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">form_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(),</span> <span class="s2">&quot;El formulario no debería ser válido si falta el correo electrónico&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s1">&#39;username&#39;</span><span class="p">,</span> <span class="n">form</span><span class="o">.</span><span class="n">errors</span><span class="p">,</span> <span class="s2">&quot;Debería haber un error relacionado con la falta del correo electrónico&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CustomAuthenticationFormTest.test_missing_password">
+<a class="viewcode-back" href="../../app.html#app.tests.CustomAuthenticationFormTest.test_missing_password">[documentos]</a>
+    <span class="k">def</span> <span class="nf">test_missing_password</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica que el formulario sea inválido si falta la contraseña.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Rellena el formulario sin una contraseña.</span>
+<span class="sd">            - Verifica que el formulario no sea válido y que el error se encuentre en el campo `password`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">form_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;testuser@example.com&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span>
+        <span class="p">}</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">CustomAuthenticationForm</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">form_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(),</span> <span class="s2">&quot;El formulario no debería ser válido si falta la contraseña&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s1">&#39;password&#39;</span><span class="p">,</span> <span class="n">form</span><span class="o">.</span><span class="n">errors</span><span class="p">,</span> <span class="s2">&quot;Debería haber un error relacionado con la falta de contraseña&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CustomAuthenticationFormTest.test_inactive_user">
+<a class="viewcode-back" href="../../app.html#app.tests.CustomAuthenticationFormTest.test_inactive_user">[documentos]</a>
+    <span class="k">def</span> <span class="nf">test_inactive_user</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica que el formulario sea inválido si el usuario está desactivado.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Desactiva el usuario de prueba.</span>
+<span class="sd">            - Rellena el formulario con credenciales válidas.</span>
+<span class="sd">            - Verifica que el formulario no sea válido.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_active</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="n">form_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;testuser@example.com&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="s1">&#39;testpassword123&#39;</span>
+        <span class="p">}</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">CustomAuthenticationForm</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">form_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(),</span> <span class="s2">&quot;El formulario no debería ser válido si el usuario está desactivado&quot;</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ProfileUpdateFormTest">
+<a class="viewcode-back" href="../../app.html#app.tests.ProfileUpdateFormTest">[documentos]</a>
+<span class="k">class</span> <span class="nc">ProfileUpdateFormTest</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pruebas para el formulario de actualización de perfil.</span>
+
+<span class="sd">    Hereda de:</span>
+<span class="sd">        TestCase: Clase base para las pruebas unitarias en Django.</span>
+
+<span class="sd">    Métodos:</span>
+<span class="sd">        setUp: Configura un usuario de prueba antes de cada test.</span>
+<span class="sd">        test_update_name_and_about: Verifica que se puedan actualizar los campos `name` y `about`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ProfileUpdateFormTest.setUp">
+<a class="viewcode-back" href="../../app.html#app.tests.ProfileUpdateFormTest.setUp">[documentos]</a>
+    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Configura un usuario de prueba antes de cada test.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Crea un usuario con un correo electrónico, nombre, contraseña y descripción específicos.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">get_user_model</span><span class="p">()</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span>
+            <span class="n">email</span><span class="o">=</span><span class="s1">&#39;testuser@example.com&#39;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Test User&#39;</span><span class="p">,</span>
+            <span class="n">password</span><span class="o">=</span><span class="s1">&#39;testpassword123&#39;</span><span class="p">,</span>
+            <span class="n">about</span><span class="o">=</span><span class="s1">&#39;Old about me&#39;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProfileUpdateFormTest.test_update_name_and_about">
+<a class="viewcode-back" href="../../app.html#app.tests.ProfileUpdateFormTest.test_update_name_and_about">[documentos]</a>
+    <span class="k">def</span> <span class="nf">test_update_name_and_about</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica que se puedan actualizar los campos `name` y `about`.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Rellena el formulario con un nuevo nombre y descripción.</span>
+<span class="sd">            - Guarda el formulario y verifica que los datos del usuario se actualicen correctamente.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">form_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;Updated Name&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;about&#39;</span><span class="p">:</span> <span class="s1">&#39;Updated about me&#39;</span>
+        <span class="p">}</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">ProfileUpdateForm</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">form_data</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(),</span> <span class="s2">&quot;El formulario debería ser válido con nombre y about actualizados&quot;</span><span class="p">)</span>
+        <span class="n">form</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">refresh_from_db</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;Updated Name&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">about</span><span class="p">,</span> <span class="s1">&#39;Updated about me&#39;</span><span class="p">)</span></div>
+</div>
+
+
+<div class="viewcode-block" id="ChangePasswordFormTest">
+<a class="viewcode-back" href="../../app.html#app.tests.ChangePasswordFormTest">[documentos]</a>
+<span class="k">class</span> <span class="nc">ChangePasswordFormTest</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pruebas para el formulario de cambio de contraseña.</span>
+
+<span class="sd">    Hereda de:</span>
+<span class="sd">        TestCase: Clase base para las pruebas unitarias en Django.</span>
+
+<span class="sd">    Métodos:</span>
+<span class="sd">        setUp: Configura un usuario de prueba antes de cada test.</span>
+<span class="sd">        test_valid_password_change: Verifica que el formulario sea válido con las contraseñas correctas.</span>
+<span class="sd">        test_incorrect_current_password: Verifica que el formulario sea inválido si la contraseña actual es incorrecta.</span>
+<span class="sd">        test_new_passwords_do_not_match: Verifica que el formulario sea inválido si las nuevas contraseñas no coinciden.</span>
+<span class="sd">        test_new_password_same_as_current: Verifica que el formulario sea inválido si la nueva contraseña es igual a la actual.</span>
+<span class="sd">        test_missing_current_password: Verifica que el formulario sea inválido si falta la contraseña actual.</span>
+<span class="sd">        test_missing_new_password: Verifica que el formulario sea inválido si faltan las nuevas contraseñas.</span>
+<span class="sd">        test_short_new_password: Verifica que el formulario sea inválido si la nueva contraseña es demasiado corta.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ChangePasswordFormTest.setUp">
+<a class="viewcode-back" href="../../app.html#app.tests.ChangePasswordFormTest.setUp">[documentos]</a>
+    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Configura un usuario de prueba antes de cada test.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Crea un usuario con un correo electrónico, nombre y contraseña específicos.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">get_user_model</span><span class="p">()</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span>
+            <span class="n">email</span><span class="o">=</span><span class="s1">&#39;testuser@example.com&#39;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Test User&#39;</span><span class="p">,</span>
+            <span class="n">password</span><span class="o">=</span><span class="s1">&#39;oldpassword123&#39;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ChangePasswordFormTest.test_valid_password_change">
+<a class="viewcode-back" href="../../app.html#app.tests.ChangePasswordFormTest.test_valid_password_change">[documentos]</a>
+    <span class="k">def</span> <span class="nf">test_valid_password_change</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica que el formulario sea válido con las contraseñas correctas.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Rellena el formulario con la contraseña actual y nuevas contraseñas válidas.</span>
+<span class="sd">            - Guarda el formulario y verifica que la contraseña del usuario haya cambiado.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">form_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;current_password&#39;</span><span class="p">:</span> <span class="s1">&#39;oldpassword123&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;new_password&#39;</span><span class="p">:</span> <span class="s1">&#39;newpassword123&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;confirm_new_password&#39;</span><span class="p">:</span> <span class="s1">&#39;newpassword123&#39;</span>
+        <span class="p">}</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">ChangePasswordForm</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">form_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(),</span> <span class="s2">&quot;El formulario debería ser válido con las contraseñas correctas&quot;</span><span class="p">)</span>
+        <span class="n">form</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">refresh_from_db</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">check_password</span><span class="p">(</span><span class="s1">&#39;newpassword123&#39;</span><span class="p">),</span> <span class="s2">&quot;La contraseña debería haber sido cambiada&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ChangePasswordFormTest.test_incorrect_current_password">
+<a class="viewcode-back" href="../../app.html#app.tests.ChangePasswordFormTest.test_incorrect_current_password">[documentos]</a>
+    <span class="k">def</span> <span class="nf">test_incorrect_current_password</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica que el formulario sea inválido si la contraseña actual es incorrecta.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Rellena el formulario con una contraseña actual incorrecta.</span>
+<span class="sd">            - Verifica que el formulario no sea válido.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">form_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;current_password&#39;</span><span class="p">:</span> <span class="s1">&#39;wrongpassword123&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;new_password&#39;</span><span class="p">:</span> <span class="s1">&#39;newpassword123&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;confirm_new_password&#39;</span><span class="p">:</span> <span class="s1">&#39;newpassword123&#39;</span>
+        <span class="p">}</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">ChangePasswordForm</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">form_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(),</span> <span class="s2">&quot;El formulario debería ser inválido con la contraseña actual incorrecta&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ChangePasswordFormTest.test_new_passwords_do_not_match">
+<a class="viewcode-back" href="../../app.html#app.tests.ChangePasswordFormTest.test_new_passwords_do_not_match">[documentos]</a>
+    <span class="k">def</span> <span class="nf">test_new_passwords_do_not_match</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica que el formulario sea inválido si las nuevas contraseñas no coinciden.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Rellena el formulario con contraseñas nuevas diferentes.</span>
+<span class="sd">            - Verifica que el formulario no sea válido.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">form_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;current_password&#39;</span><span class="p">:</span> <span class="s1">&#39;oldpassword123&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;new_password&#39;</span><span class="p">:</span> <span class="s1">&#39;newpassword123&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;confirm_new_password&#39;</span><span class="p">:</span> <span class="s1">&#39;differentpassword123&#39;</span>
+        <span class="p">}</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">ChangePasswordForm</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">form_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(),</span> <span class="s2">&quot;El formulario debería ser inválido si las nuevas contraseñas no coinciden&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ChangePasswordFormTest.test_new_password_same_as_current">
+<a class="viewcode-back" href="../../app.html#app.tests.ChangePasswordFormTest.test_new_password_same_as_current">[documentos]</a>
+    <span class="k">def</span> <span class="nf">test_new_password_same_as_current</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica que el formulario sea inválido si la nueva contraseña es igual a la actual.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Rellena el formulario con una nueva contraseña igual a la actual.</span>
+<span class="sd">            - Verifica que el formulario no sea válido.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">form_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;current_password&#39;</span><span class="p">:</span> <span class="s1">&#39;oldpassword123&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;new_password&#39;</span><span class="p">:</span> <span class="s1">&#39;oldpassword123&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;confirm_new_password&#39;</span><span class="p">:</span> <span class="s1">&#39;oldpassword123&#39;</span>
+        <span class="p">}</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">ChangePasswordForm</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">form_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(),</span> <span class="s2">&quot;El formulario debería ser inválido si la nueva contraseña es igual a la actual&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ChangePasswordFormTest.test_missing_current_password">
+<a class="viewcode-back" href="../../app.html#app.tests.ChangePasswordFormTest.test_missing_current_password">[documentos]</a>
+    <span class="k">def</span> <span class="nf">test_missing_current_password</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica que el formulario sea inválido si falta la contraseña actual.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Rellena el formulario sin la contraseña actual.</span>
+<span class="sd">            - Verifica que el formulario no sea válido.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">form_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;current_password&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;new_password&#39;</span><span class="p">:</span> <span class="s1">&#39;newpassword123&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;confirm_new_password&#39;</span><span class="p">:</span> <span class="s1">&#39;newpassword123&#39;</span>
+        <span class="p">}</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">ChangePasswordForm</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">form_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(),</span> <span class="s2">&quot;El formulario debería ser inválido si falta la contraseña actual&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ChangePasswordFormTest.test_missing_new_password">
+<a class="viewcode-back" href="../../app.html#app.tests.ChangePasswordFormTest.test_missing_new_password">[documentos]</a>
+    <span class="k">def</span> <span class="nf">test_missing_new_password</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica que el formulario sea inválido si faltan las nuevas contraseñas.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Rellena el formulario sin las nuevas contraseñas.</span>
+<span class="sd">            - Verifica que el formulario no sea válido.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">form_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;current_password&#39;</span><span class="p">:</span> <span class="s1">&#39;oldpassword123&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;new_password&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;confirm_new_password&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span>
+        <span class="p">}</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">ChangePasswordForm</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">form_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(),</span> <span class="s2">&quot;El formulario debería ser inválido si faltan las nuevas contraseñas&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ChangePasswordFormTest.test_short_new_password">
+<a class="viewcode-back" href="../../app.html#app.tests.ChangePasswordFormTest.test_short_new_password">[documentos]</a>
+    <span class="k">def</span> <span class="nf">test_short_new_password</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verifica que el formulario sea inválido si la nueva contraseña es demasiado corta.</span>
+
+<span class="sd">        Acciones:</span>
+<span class="sd">            - Rellena el formulario con una nueva contraseña que tiene menos de 8 caracteres.</span>
+<span class="sd">            - Verifica que el formulario no sea válido.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">form_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;current_password&#39;</span><span class="p">:</span> <span class="s1">&#39;oldpassword123&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;new_password&#39;</span><span class="p">:</span> <span class="s1">&#39;corto&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;confirm_new_password&#39;</span><span class="p">:</span> <span class="s1">&#39;corto&#39;</span>
+        <span class="p">}</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">ChangePasswordForm</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">form_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(),</span> <span class="s2">&quot;El formulario debería ser inválido si la contraseña nueva tiene menos de 8 carácteres.&quot;</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2024, Roberto Acosta, Esteban Fernandez, Fabrizio Roman, Abigail Nuñez.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
