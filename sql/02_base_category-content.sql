@@ -5,7 +5,7 @@ VALUES
 ('Educación', 'Categoría de recursos educativos gratuitos', TRUE, TRUE, NULL, NOW(), 'Publico'),
 ('Entretenimiento', 'Categoría de contenido para suscriptores', TRUE, TRUE, NULL, NOW(), 'Suscriptor');
 
--- Inserción de datos en la tabla `content` usando PostgreSQL
+-- Inserción de datos en la tabla `content`
 INSERT INTO content (title, summary, category_id, autor_id, is_active, date_create, date_expire, state)
 VALUES
 ('Introducción a la IA', 'Un resumen sobre los fundamentos de la inteligencia artificial', 1, 1, TRUE, NOW(), NOW() + INTERVAL '1 year', 'Publicado'),
