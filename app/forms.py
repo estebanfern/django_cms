@@ -1,12 +1,13 @@
-from django import forms
-from django.conf.global_settings import MEDIA_URL, MEDIA_ROOT
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import Group
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from .models import CustomUser
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django import forms
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
@@ -133,6 +134,14 @@ class ChangePasswordForm(forms.Form):
             raise forms.ValidationError('La contraseña actual es incorrecta.')
         return current_password
 
+    def clean_new_password(self):
+        new_password = self.cleaned_data.get('new_password')
+        try:
+            validate_password(new_password, self.user)
+        except ValidationError as e:
+            raise forms.ValidationError(e.messages)
+        return new_password
+
     def clean(self):
         cleaned_data = super().clean()
         new_password = cleaned_data.get('new_password')
@@ -167,3 +176,53 @@ class CustomUserFormAdmin(forms.ModelForm):
         # Eliminar la opción de agregar nuevos grupos
         self.fields['groups'].widget.can_add_related = False
         self.fields['groups'].widget.can_change_related = False
+
+class PasswordResetForm(forms.Form):
+    email = forms.EmailField(label='Correo Electrónico', widget=forms.EmailInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'Correo Electrónico',
+        'id': 'yourUsername',
+        'required': True,
+    }))
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        user_model = get_user_model()
+        if not user_model.objects.filter(email=email).exists():
+            raise ValidationError('No se encontró ningún usuario con este correo electrónico.')
+        return email
+
+    def send_password_reset_email(self):
+        # Aquí puedes incluir la lógica para enviar el correo electrónico de restablecimiento de contraseña.
+        # Normalmente, usarías la función `send_mail` o integraciones con servicios de correo.
+        # Esto también puede interactuar con la vista que maneje la lógica de recuperación de contraseñas.
+        print("email sended")
+
+class SetPasswordForm(forms.Form):
+    new_password = forms.CharField(
+        label='Nueva Contraseña',
+        widget=forms.PasswordInput(attrs={'placeholder': 'Nueva Contraseña'}),
+        required=True
+    )
+    confirm_new_password = forms.CharField(
+        label='Confirmar Nueva Contraseña',
+        widget=forms.PasswordInput(attrs={'placeholder': 'Confirmar Nueva Contraseña'}),
+        required=True
+    )
+
+    def clean_new_password(self):
+        new_password = self.cleaned_data.get('new_password')
+        try:
+            validate_password(new_password)
+        except ValidationError as e:
+            raise forms.ValidationError(e.messages)
+        return new_password
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_password = cleaned_data.get('new_password')
+        confirm_new_password = cleaned_data.get('confirm_new_password')
+        if new_password and confirm_new_password:
+            if new_password != confirm_new_password:
+                raise forms.ValidationError('Las contraseñas no coinciden.')
+        return cleaned_data
