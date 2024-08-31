@@ -5,7 +5,13 @@ class Category(models.Model):
     description = models.TextField(max_length=255, verbose_name=('Descripción'))
     is_active = models.BooleanField(default=True, verbose_name='Activo')
     is_moderated = models.BooleanField(default=True, verbose_name='Moderado')
-    price = models.DecimalField(max_digits=100, decimal_places=2, verbose_name=('Costo'))
+    price = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,        # Permite valores nulos en la base de datos
+        blank=True,       # Permite que el campo esté vacío en formularios
+        verbose_name=('Costo')
+    )
     date_create= models.DateTimeField(auto_now_add=True, verbose_name=('Fecha de creacion'))
 
     class TypeChoices(models.TextChoices):
