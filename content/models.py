@@ -29,6 +29,8 @@ class Content (models.Model):
     class Meta:
         verbose_name = 'Contenido'
         verbose_name_plural = 'Contenidos'
+        db_table = 'content'
+
 
     def __str__(self):
         return f"{self.title} ({self.get_state_display()})"
