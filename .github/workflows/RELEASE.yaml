@@ -18,7 +18,7 @@ jobs:
           python-version: '3.11.9'
       - name: Create Tag
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          USER_TOKEN: ${{ secrets.USER_TOKEN }}
           VERSION: ${{ github.event.inputs.version }}
           REPOSITORY: ${{ github.repository }}
           PROJECT_NAME: CMS | IS2 | Equipo 10
@@ -30,7 +30,7 @@ jobs:
           ./release.sh $VERSION
       - name: Create Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          USER_TOKEN: ${{ secrets.USER_TOKEN }}
           VERSION: ${{ github.event.inputs.version }}
           REPOSITORY: ${{ github.repository }}
           PROJECT_NAME: CMS | IS2 | Equipo 10
@@ -39,7 +39,7 @@ jobs:
           CODE=$(
               curl  --location https://api.github.com/repos/$REPOSITORY/releases --write-out '%{http_code}' --output /dev/null \
                   --header "Accept: application/vnd.github+json" \
-                  --header "Authorization: Bearer $GITHUB_TOKEN" --data "{\"tag_name\": \"$VERSION\",\"target_commitish\": \"main\",\"name\": \"$PROJECT_NAME Release $VERSION\",\"body\": \"$PROJECT_NAME Release $VERSION\",\"draft\": false,\"prerelease\": false,\"generate_release_notes\":false}"
+                  --header "Authorization: Bearer $USER_TOKEN" --data "{\"tag_name\": \"$VERSION\",\"target_commitish\": \"main\",\"name\": \"$PROJECT_NAME Release $VERSION\",\"body\": \"$PROJECT_NAME Release $VERSION\",\"draft\": false,\"prerelease\": false,\"generate_release_notes\":false}"
           )
           if [ $CODE -eq 201 ];
           then
