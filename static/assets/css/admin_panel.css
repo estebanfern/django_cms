@@ -104,3 +104,20 @@ h6 {
 .btn-sm {
     margin-bottom: 15px !important;
 }
+
+.selector-chooser {
+    margin-top: 0 !important;
+    margin-left: 50% !important;
+
+}
+
+
+.selector-available {
+    width: 100% !important;
+
+}
+
+.selector-chosen {
+    width: 100% !important;
+
+}
