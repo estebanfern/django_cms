@@ -1,6 +1,8 @@
 from django.contrib import admin, messages
 from .models import Category
 from .forms import CategoryForm
+from django.utils.translation import gettext_lazy as _
+from django.urls import reverse
 
 class CategoryAdmin(admin.ModelAdmin):
     form = CategoryForm
@@ -30,6 +32,20 @@ class CategoryAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+
+    # Boton de Cancelar al modificar
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
+        extra_context['cancel_url'] = cancel_url
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
+    
+    # Boton de Cancelar al agregar
+    def add_view(self, request, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
+        extra_context['cancel_url'] = cancel_url
+        return super().add_view(request, form_url, extra_context=extra_context)
 
     # Acción personalizada para moderar categorías
     @admin.action(description='Moderar categorías seleccionadas')
@@ -100,3 +116,5 @@ class CategoryAdmin(admin.ModelAdmin):
 
 # Registrar el modelo con el admin
 admin.site.register(Category, CategoryAdmin)
+Category._meta.verbose_name = _("Categoría")  # Singular: "Categoría"
+Category._meta.verbose_name_plural = _("Categorías")  # Plural: "Categorías"
