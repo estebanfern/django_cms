@@ -1,10 +1,8 @@
 name: CMS Image Release
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'CMS Version'
-        required: true
+  push:
+    tags:
+      - "*"
 jobs:
   build-and-push-app:
     runs-on: ubuntu-latest
