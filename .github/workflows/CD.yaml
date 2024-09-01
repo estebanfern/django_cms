@@ -1,7 +1,7 @@
 name: CMS App & Docs CD
 on:
   workflow_run:
-    workflows: ["CMS App CI", "CMS Docs CI"]
+    workflows: ["CMS Tag & Release"]
     types:
       - completed
 jobs:
@@ -20,6 +20,6 @@ jobs:
           ssh-keyscan -t rsa ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
       - name: Deploy to Production
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.WORK_DIR }} && docker-compose pull && docker-compose up -d && exit"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.WORK_DIR }} && docker compose pull && docker compose up -d && exit"
       - name: Cleanup
         run: rm -rf ~/.ssh
