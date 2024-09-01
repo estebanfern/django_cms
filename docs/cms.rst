@@ -12,10 +12,10 @@ cms.asgi module
    :undoc-members:
    :show-inheritance:
 
-cms.settings module
+cms.profile module
 -------------------
 
-.. automodule:: cms.settings
+.. automodule:: cms.profile
    :members:
    :undoc-members:
    :show-inheritance:
