@@ -1,10 +1,12 @@
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin, UserAdmin
 from django.contrib.auth.models import Group
 from django.contrib import admin, messages
+from app import models
 from app.models import CustomUser
 from django.utils.translation import gettext_lazy as _
 from django.forms.models import fields_for_model
 from app.forms import CustomUserFormAdmin
+from django.urls import reverse
 
 @admin.action(description="Bloquear usuario/s")
 def bloquear_usuarios(self, request, queryset):
@@ -42,6 +44,13 @@ class CustomUserAdmin(UserAdmin):
 
     readonly_fields = ('name', 'email', 'photo', 'about', 'last_login', 'date_joined')
 
+    # Boton de Cancelar al modificar
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
+        extra_context['cancel_url'] = cancel_url
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
+
     def has_module_permission(self, request):
         return request.user.is_staff and request.user.has_perm('app.view_users')
 
@@ -68,6 +77,19 @@ class CustomUserAdmin(UserAdmin):
 
 
 class CustomGroupAdmin(BaseGroupAdmin):
+    # Boton de Cancelar al modificar
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
+        extra_context['cancel_url'] = cancel_url
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
+    
+    # Boton de Cancelar al agregar
+    def add_view(self, request, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
+        extra_context['cancel_url'] = cancel_url
+        return super().add_view(request, form_url, extra_context=extra_context)
 
     def has_module_permission(self, request):
         return request.user.is_staff and request.user.has_perm('app.view_roles')
@@ -94,3 +116,6 @@ admin.site.register(Group, CustomGroupAdmin)
 admin.site.register(CustomUser, CustomUserAdmin)
 
 admin.site.site_header = "Administración del Sistema"
+
+Group._meta.verbose_name = _("Rol")  # Singular: "Rol"
+Group._meta.verbose_name_plural = _("Roles")  # Plural: "Roles"
