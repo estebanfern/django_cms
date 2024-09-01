@@ -4,7 +4,8 @@ DEBUG=False
 AWS_STATIC_LOCATION = 'static'
 STATIC_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com/{AWS_STATIC_LOCATION}/"
 STATICFILES_STORAGE = 'cms.store_backends.StaticStorage'
-
+CSRF_TRUSTED_ORIGINS = ['https://is2equipo10.me', 'https://www.is2equipo10.me']
+# CSRF_TRUSTED_ORIGINS = config('DJANGO_ALLOWED_HOSTS', default='localhost').split(',')
 # Logging
 LOGGING = {
     'version': 1,
