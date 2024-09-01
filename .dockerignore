@@ -140,6 +140,7 @@ GitHub.sublime-settings
 media/
 profile_pics/
 staticfiles/
-docs/
+docs/_build/
 .gitignore
 README.md
+logs/
