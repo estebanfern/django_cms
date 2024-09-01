@@ -121,7 +121,7 @@ class CategoryAdmin(admin.ModelAdmin):
         else:
             super().delete_model(request, obj)
             # Mostrar mensaje de éxito personalizado
-            self.message_user(request, f"La categoría “{obj}” fue eliminada con éxito.", level=messages.SUCCESS)
+            # self.message_user(request, f"La categoría “{obj}” fue eliminada con éxito.", level=messages.SUCCESS)
 
     # Métodos para verificar permisos personalizados
     def has_module_permission(self, request):
