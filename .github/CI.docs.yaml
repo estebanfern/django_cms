@@ -1,0 +1,19 @@
+name: CMS Docs CI
+on:
+  push:
+    tags:
+      - "*"
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build & Push Docker Image to DockerHub
+      uses: mr-smithers-excellent/docker-build-push@v6
+      with:
+        image: estebanfern/cms-docs
+        tags: ${{ github.ref_name }}, latest
+        registry: docker.io
+        dockerfile: docs.Dockerfile
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
