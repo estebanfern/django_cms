@@ -46,7 +46,7 @@ Puedes desplegar el proyecto en modo desarrollo con estos comandos
 
 # Historial de Cambios
 
-Para ver el historial de cambios visita [CHANGELOG.md](https://github.com/estebanfern/django_cms/blob/feature/deployment/CHANGELOG.md)
+Para ver el historial de cambios visita [CHANGELOG.md](https://github.com/estebanfern/django_cms/tree/main/CHANGELOG.md)
 
 
 # Authors
