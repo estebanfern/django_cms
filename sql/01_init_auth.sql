@@ -101,7 +101,7 @@ BEGIN
  -- Obtener el content_type_id del modelo 'CustomUser'
     SELECT id INTO customuser_content_type_id
     FROM public.django_content_type
-    WHERE app_label = 'app' AND model = 'customuser';  -- Ajusta 'app' si tu modelo CustomUser está en una app diferente
+    WHERE app_label = 'app' AND model = 'customuser';
 
     -- Crear categoría a Administrador
     INSERT INTO public.auth_group_permissions (group_id, permission_id) VALUES (
@@ -130,6 +130,21 @@ BEGIN
         (SELECT id FROM public.auth_permission
          WHERE codename = 'delete_category' AND content_type_id = customuser_content_type_id)
     );
+
+    -- Ver contenidos a Administador
+    INSERT INTO public.auth_group_permissions (group_id, permission_id) VALUES (
+        (SELECT id FROM public.auth_group WHERE name = 'Administrador'),
+        (SELECT id FROM public.auth_permission
+         WHERE codename = 'view_content' AND content_type_id = customuser_content_type_id)
+    );
+
+    -- Editar activo de contenidos a Administador
+    INSERT INTO public.auth_group_permissions (group_id, permission_id) VALUES (
+        (SELECT id FROM public.auth_group WHERE name = 'Administrador'),
+        (SELECT id FROM public.auth_permission
+         WHERE codename = 'edit_is_active' AND content_type_id = customuser_content_type_id)
+    );
+
 
 	--Verificar en el futuro
 	--comment_post
