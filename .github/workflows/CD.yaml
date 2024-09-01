@@ -1,7 +1,7 @@
 name: CMS App & Docs CD
 on:
   workflow_run:
-    workflows: ["CMS Tag & Release"]
+    workflows: ["CMS Image Release"]
     types:
       - completed
 jobs:
