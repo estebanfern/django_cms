@@ -21,31 +21,38 @@ LOGGING = {
     },
     'handlers': {
         'file': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': os.getenv('CMS_LOG_FILENAME', '/app/logs/app.log'),
             'formatter': 'verbose',
         },
         'console': {
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
     },
     'loggers': {
         'django': {
+            'level': 'DEBUG',
             'handlers': ['file', 'console'],
-            'level': 'INFO',
             'propagate': True,
         },
         'gunicorn.error': {
             'level': 'ERROR',
-            'handlers': ['file'],
+            'handlers': ['file', 'console'],
             'propagate': True,
         },
         'gunicorn.access': {
             'level': 'INFO',
-            'handlers': ['file'],
+            'handlers': ['file', 'console'],
             'propagate': True,
+        },
+        # Este logger captura todos los mensajes no capturados por loggers específicos
+        '': {
+            'level': 'DEBUG',
+            'handlers': ['file', 'console'],
+            'propagate': False,
         },
     },
 }
