@@ -1,4 +1,4 @@
-name: CMS Tag & Release
+name: CMS Tag and Release
 on:
   workflow_dispatch:
     inputs:

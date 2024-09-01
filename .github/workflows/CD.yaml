@@ -1,7 +1,7 @@
-name: CMS App & Docs CD
+name: CMS Continuous Deployment
 on:
   workflow_run:
-    workflows: ["CMS Image Release"]
+    workflows: ["CMS Continuous Integration"]
     types:
       - completed
 jobs:

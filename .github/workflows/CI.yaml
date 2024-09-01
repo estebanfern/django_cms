@@ -1,4 +1,4 @@
-name: CMS Image Release
+name: CMS Continuous Integration
 on:
   push:
     tags:
