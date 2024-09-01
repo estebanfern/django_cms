@@ -75,7 +75,7 @@ class CustomUserAdmin(UserAdmin):
     fieldsets = (
         (None, {'fields': ()}),
         (_('Informacion personal'), {'fields': ('name', 'email' ,'photo', 'about')}),
-        (_('Grupos y estado'), {'fields': ('is_active', 'groups')}),
+        (_('Roles y estado'), {'fields': ('is_active', 'groups')}),
         (_('Fechas relevantes'), {'fields': ('last_login', 'date_joined')}),
     )
     search_fields = ('email', 'name')

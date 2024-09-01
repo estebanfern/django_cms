@@ -101,7 +101,7 @@ BEGIN
  -- Obtener el content_type_id del modelo 'CustomUser'
     SELECT id INTO customuser_content_type_id
     FROM public.django_content_type
-    WHERE app_label = 'app' AND model = 'customuser';  -- Ajusta 'app' si tu modelo CustomUser está en una app diferente
+    WHERE app_label = 'app' AND model = 'customuser';
 
     -- Crear categoría a Administrador
     INSERT INTO public.auth_group_permissions (group_id, permission_id) VALUES (

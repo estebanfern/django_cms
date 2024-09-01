@@ -336,7 +336,7 @@ class CustomUserFormAdmin(forms.ModelForm):
         model = CustomUser
         fields = '__all__'
         widgets = {
-            'groups': FilteredSelectMultiple('Grupos', is_stacked=False)
+            'groups': FilteredSelectMultiple('Roles', is_stacked=False)
         }
 
     def __init__(self, *args, **kwargs):
