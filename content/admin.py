@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from .models import Content
 
 class ContentAdmin(admin.ModelAdmin):
@@ -16,6 +16,33 @@ class ContentAdmin(admin.ModelAdmin):
 
     # Hacer todos los campos de solo lectura, excepto 'is_active'
     readonly_fields = ('title', 'summary', 'category', 'autor', 'state', 'date_create', 'date_expire')
+
+    # Definir acciones personalizadas
+    actions = ['activar_contenidos', 'desactivar_contenidos']
+
+    # Acción para activar contenidos seleccionados
+    @admin.action(description='Activar contenidos seleccionados')
+    def activar_contenidos(self, request, queryset):
+        # Verificar el permiso 'edit_is_active'
+        if not request.user.has_perm('app.edit_is_active'):
+            self.message_user(request, "No tienes permiso para activar contenidos.", level=messages.ERROR)
+            return
+        # Actualizar y obtener los títulos de los contenidos activados
+        updated = queryset.update(is_active=True)
+        nombres = ', '.join([content.title for content in queryset])
+        self.message_user(request, f"Contenidos activados: {nombres}.", level=messages.SUCCESS)
+
+    # Acción para desactivar contenidos seleccionados
+    @admin.action(description='Desactivar contenidos seleccionados')
+    def desactivar_contenidos(self, request, queryset):
+        # Verificar el permiso 'edit_is_active'
+        if not request.user.has_perm('app.edit_is_active'):
+            self.message_user(request, "No tienes permiso para desactivar contenidos.", level=messages.ERROR)
+            return
+        # Actualizar y obtener los títulos de los contenidos desactivados
+        updated = queryset.update(is_active=False)
+        nombres = ', '.join([content.title for content in queryset])
+        self.message_user(request, f"Contenidos desactivados: {nombres}.", level=messages.SUCCESS)
 
     def has_add_permission(self, request):
         # No permitir agregar nuevos contenidos desde el admin
