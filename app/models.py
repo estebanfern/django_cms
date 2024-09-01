@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db.backends.base.schema import logger
-from cms.settings import DEFAULT_PROFILE_PHOTO
+from cms.profile.base import DEFAULT_PROFILE_PHOTO
 from django.utils import timezone
 from django.contrib.auth.models import Group
 from cms.store_backends import PublicMediaStorage

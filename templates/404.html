@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block content %}
+
+{% if messages %}
+  {% for message in messages %}
+    {% if message.tags == 'success' %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-1"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% elif message.tags == 'error' %}
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-octagon me-1"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% elif message.tags == 'warning' %}
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endif %}
+<section class="section error-404 min-vh-100 d-flex flex-column align-items-center justify-content-center">
+  <h1>404</h1>
+  <h2>La página que estas buscando no existe.</h2>
+  <a class="btn" href="/">Volver al inicio</a>
+  <!-- <img src="{% static 'assets/svg/error.svg' %}" class="img-fluid py-5" alt="Page Not Found"> -->
+</section>
+{% endblock content %}

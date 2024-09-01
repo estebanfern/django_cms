@@ -10,7 +10,7 @@ import os
 import sys
 import django
 sys.path.insert(0, os.path.abspath('..'))
-os.environ['DJANGO_SETTINGS_MODULE'] = 'cms.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'cms.profile.dev'
 django.setup()
 
 project = 'CMS'
