@@ -99,6 +99,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             ("comment_post", "Comentar contenidos"),
             ("react_to_post", "Reaccionar a contenidos"),
             ("report_post","Reportar contenidos"),
+            ("view_content", "Ver contenidos"),
+            ("edit_is_active", "Editar estado de contenidos"),
 
             # Permisos para roles
             ("create_roles", "Crear roles"),

@@ -47,31 +47,54 @@ class CategoryAdmin(admin.ModelAdmin):
         extra_context['cancel_url'] = cancel_url
         return super().add_view(request, form_url, extra_context=extra_context)
 
-    # Acción personalizada para moderar categorías
+    # Acción para moderar categorías
     @admin.action(description='Moderar categorías seleccionadas')
     def moderar_categorias(self, request, queryset):
+        if not request.user.has_perm('app.edit_category'):
+            self.message_user(request, "No tienes permiso para moderar categorías.", level=messages.ERROR)
+            return
         queryset.update(is_moderated=True)
-        self.message_user(request, "Categorías seleccionadas moderadas.", level=messages.SUCCESS)
+        nombres = ', '.join([category.name for category in queryset])
+        self.message_user(request, f"Categorías moderadas: {nombres}.", level=messages.SUCCESS)
 
-    # Acción personalizada para quitar la moderación de categorías
+    # Acción para quitar la moderación de categorías
     @admin.action(description='Quitar moderación de categorías seleccionadas')
     def quitar_moderacion_categorias(self, request, queryset):
+        if not request.user.has_perm('app.edit_category'):
+            self.message_user(request, "No tienes permiso para quitar la moderación de categorías.",
+                              level=messages.ERROR)
+            return
         queryset.update(is_moderated=False)
-        self.message_user(request, "Moderación quitada de las categorías seleccionadas.", level=messages.SUCCESS)
+        nombres = ', '.join([category.name for category in queryset])
+        self.message_user(request, f"Moderación quitada de las categorías: {nombres}.", level=messages.SUCCESS)
 
+    # Acción para activar categorías
     @admin.action(description='Activar categorías seleccionadas')
     def activar_categorias(self, request, queryset):
+        if not request.user.has_perm('app.edit_category'):
+            self.message_user(request, "No tienes permiso para activar categorías.", level=messages.ERROR)
+            return
         queryset.update(is_active=True)
-        self.message_user(request, "Categorías seleccionadas activadas.", level=messages.SUCCESS)
+        nombres = ', '.join([category.name for category in queryset])
+        self.message_user(request, f"Categorías activadas: {nombres}.", level=messages.SUCCESS)
 
+    # Acción para desactivar categorías
     @admin.action(description='Desactivar categorías seleccionadas')
     def desactivar_categorias(self, request, queryset):
+        if not request.user.has_perm('app.edit_category'):
+            self.message_user(request, "No tienes permiso para desactivar categorías.", level=messages.ERROR)
+            return
         queryset.update(is_active=False)
-        self.message_user(request, "Categorías seleccionadas desactivadas.", level=messages.SUCCESS)
+        nombres = ', '.join([category.name for category in queryset])
+        self.message_user(request, f"Categorías desactivadas: {nombres}.", level=messages.SUCCESS)
 
     # Definir una acción personalizada para la eliminación
     @admin.action(description='Eliminar categorías seleccionadas')
     def delete_selected_categories(self, request, queryset):
+        if not request.user.has_perm('app.delete_category'):
+            self.message_user(request, "No tienes permiso para eliminar categorías.", level=messages.ERROR)
+            return
+
         # Filtrar las categorías con contenidos asociados
         categories_with_content = queryset.filter(content__isnull=False).distinct()
 
@@ -83,15 +106,22 @@ class CategoryAdmin(admin.ModelAdmin):
                 level=messages.ERROR
             )
         else:
+            # Guardar los nombres antes de eliminar
+            nombres = ', '.join([str(cat) for cat in queryset])
             # Continuar con la eliminación solo si no hay categorías con contenidos
             super().delete_queryset(request, queryset)
+            # Mostrar mensaje de éxito después de eliminar
+            self.message_user(request, f"Categorías eliminadas con éxito: {nombres}.", level=messages.SUCCESS)
 
     # Sobrescribir delete_model para manejar la eliminación individual
     def delete_model(self, request, obj):
         if obj.content_set.exists():
-            self.message_user(request, "No se puede eliminar esta categoría porque tiene contenidos asociados.", level=messages.ERROR)
+            self.message_user(request, "No se puede eliminar esta categoría porque tiene contenidos asociados.",
+                              level=messages.ERROR)
         else:
             super().delete_model(request, obj)
+            # Mostrar mensaje de éxito personalizado
+            # self.message_user(request, f"La categoría “{obj}” fue eliminada con éxito.", level=messages.SUCCESS)
 
     # Métodos para verificar permisos personalizados
     def has_module_permission(self, request):
