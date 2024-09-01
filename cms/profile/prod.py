@@ -34,7 +34,7 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'handlers': ['file', 'console'],
             'propagate': True,
         },
@@ -50,7 +50,7 @@ LOGGING = {
         },
         # Este logger captura todos los mensajes no capturados por loggers específicos
         '': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'handlers': ['file', 'console'],
             'propagate': False,
         },
