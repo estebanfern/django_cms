@@ -289,3 +289,4 @@ admin.site.site_header = "Administración del Sistema"
 
 Group._meta.verbose_name = _("Rol")  # Singular: "Rol"
 Group._meta.verbose_name_plural = _("Roles")  # Plural: "Roles"
+
