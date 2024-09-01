@@ -141,4 +141,6 @@ media/
 profile_pics/
 staticfiles/
 docs/_build/
+.gitignore
+README.md
 logs/

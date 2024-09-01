@@ -1,0 +1,51 @@
+name: CMS Tag and Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'CMS Version'
+        required: true
+jobs:
+  tag-and-release:
+    name: Tag and Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.9'
+      - name: Create Tag
+        env:
+          USER_TOKEN: ${{ secrets.USER_TOKEN }}
+          VERSION: ${{ github.event.inputs.version }}
+          REPOSITORY: ${{ github.repository }}
+          PROJECT_NAME: CMS | IS2 | Equipo 10
+        run: |
+          echo "Creating tag $VERSION on $REPOSITORY"
+          git config --local user.email "estebangfernandeza@gmail.com"
+          git config --local user.name "Esteban Fernandez"
+          chmod +x release.sh
+          ./release.sh $VERSION
+      - name: Create Release
+        env:
+          USER_TOKEN: ${{ secrets.USER_TOKEN }}
+          VERSION: ${{ github.event.inputs.version }}
+          REPOSITORY: ${{ github.repository }}
+          PROJECT_NAME: CMS | IS2 | Equipo 10
+        run: |
+          echo "Creating Release $VERSION"
+          CODE=$(
+              curl  --location https://api.github.com/repos/$REPOSITORY/releases --write-out '%{http_code}' --output /dev/null \
+                  --header "Accept: application/vnd.github+json" \
+                  --header "Authorization: Bearer $USER_TOKEN" --data "{\"tag_name\": \"$VERSION\",\"target_commitish\": \"main\",\"name\": \"$PROJECT_NAME Release $VERSION\",\"body\": \"$PROJECT_NAME Release $VERSION\",\"draft\": false,\"prerelease\": false,\"generate_release_notes\":false}"
+          )
+          if [ $CODE -eq 201 ];
+          then
+              echo "SUCCESS - $CODE"
+              exit 0
+          else
+              echo "FAILURE - $CODE"
+              exit 1
+          fi
