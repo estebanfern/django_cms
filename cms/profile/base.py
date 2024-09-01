@@ -162,6 +162,8 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='secretemail')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='secretpassword')
 
+CMS_DOCS_URL = config('CMS_DOCS_URL', default='https://docs.is2equipo10.me')
+
 JAZZMIN_SETTINGS = {
     "site_logo": "assets/img/favicon.png",
     "site_logo_classes": "img-circle",
@@ -173,6 +175,7 @@ JAZZMIN_SETTINGS = {
     "custom_css": "assets/css/admin_panel.css",  
     "topmenu_links":  [
         {"name": "Volver al sitio", "url": "/", "new_window": False},
+        {"name": "Documentación", "url": f"{CMS_DOCS_URL}", "new_window": False},
     ],
    
 }
