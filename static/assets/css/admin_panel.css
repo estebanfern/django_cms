@@ -78,3 +78,46 @@ h6 {
 .dropdown-item:hover {
     background-color: #f6f9ff !important;
 }
+
+.nav-item {
+    color: #012970 !important;
+}
+
+.nav-item:hover {
+    background-color: #f6f9ff !important;
+}
+
+.nav-link.active {
+    background-color: #f6f9ff !important;
+}
+
+.cancel {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+
+.cancel:hover {
+    background-color: #c82333 !important;
+    border-color: #bd2130 !important;
+}
+
+.btn-sm {
+    margin-bottom: 15px !important;
+}
+
+.selector-chooser {
+    margin-top: 0 !important;
+    margin-left: 50% !important;
+
+}
+
+
+.selector-available {
+    width: 100% !important;
+
+}
+
+.selector-chosen {
+    width: 100% !important;
+
+}

@@ -168,9 +168,12 @@ JAZZMIN_SETTINGS = {
     "site_icon": "assets/img/favicon.png",
     "copyright": None,
     "show_ui_builder": False,
-    "show_sidebar": False,
+    "show_sidebar": True,
     "changeform_format": "single",
     "custom_css": "assets/css/admin_panel.css",  
+    "topmenu_links":  [
+        {"name": "Volver al sitio", "url": "/", "new_window": False},
+    ],
    
 }
 JAZZMIN_UI_TWEAKS = {
