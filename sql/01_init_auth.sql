@@ -131,6 +131,21 @@ BEGIN
          WHERE codename = 'delete_category' AND content_type_id = customuser_content_type_id)
     );
 
+    -- Ver contenidos a Administador
+    INSERT INTO public.auth_group_permissions (group_id, permission_id) VALUES (
+        (SELECT id FROM public.auth_group WHERE name = 'Administrador'),
+        (SELECT id FROM public.auth_permission
+         WHERE codename = 'view_content' AND content_type_id = customuser_content_type_id)
+    );
+
+    -- Editar activo de contenidos a Administador
+    INSERT INTO public.auth_group_permissions (group_id, permission_id) VALUES (
+        (SELECT id FROM public.auth_group WHERE name = 'Administrador'),
+        (SELECT id FROM public.auth_permission
+         WHERE codename = 'edit_is_active' AND content_type_id = customuser_content_type_id)
+    );
+
+
 	--Verificar en el futuro
 	--comment_post
 	--react_to_post
