@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Build & Push Docker Image to DockerHub
+    - name: Build & Push Docker Image to DockerHub - App
       uses: mr-smithers-excellent/docker-build-push@v6
       with:
         image: estebanfern/cms-app
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Build & Push Docker Image to DockerHub
+    - name: Build & Push Docker Image to DockerHub - Docs
       uses: mr-smithers-excellent/docker-build-push@v6
       with:
         image: estebanfern/cms-docs
