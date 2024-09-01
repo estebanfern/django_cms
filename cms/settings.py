@@ -171,15 +171,15 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
 JAZZMIN_SETTINGS = {
-    "site_logo": None,
-    "login_logo": None,
-    "login_logo_dark": None,
+    "site_logo": "assets/img/favicon.png",
     "site_logo_classes": "img-circle",
-    "site_icon": None,
+    "site_icon": "assets/img/favicon.png",
     "copyright": None,
     "show_ui_builder": False,
     "show_sidebar": False,
     "changeform_format": "single",
+    "custom_css": "assets/css/admin_panel.css",  
+   
 }
 JAZZMIN_UI_TWEAKS = {
     "navbar_small_text": False,
