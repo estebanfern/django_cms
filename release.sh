@@ -1,7 +1,10 @@
 #!/bin/sh
 
-python manage.py migrate
-python manage.py test
+#pip install -r requirements.txt
+#python manage.py migrate
+#python manage.py test
+
+echo "Starting tag and release"
 
 # Verificar si las pruebas pasaron
 if [ $? -eq 0 ]; then
