@@ -67,3 +67,6 @@ class ContentAdmin(admin.ModelAdmin):
 
 # Registrar el modelo Content con la clase ContentAdmin
 admin.site.register(Content, ContentAdmin)
+
+Content._meta.verbose_name = ("Contenido")  # Singular: "Categoría"
+Content._meta.verbose_name_plural = ("Contenidos")  # Plural: "Categorías"
