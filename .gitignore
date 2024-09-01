@@ -141,3 +141,4 @@ media/
 profile_pics/
 staticfiles/
 docs/_build/
+logs/
