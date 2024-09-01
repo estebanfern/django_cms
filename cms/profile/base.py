@@ -171,6 +171,9 @@ JAZZMIN_SETTINGS = {
     "show_sidebar": True,
     "changeform_format": "single",
     "custom_css": "assets/css/admin_panel.css",  
+    "usermenu_links": [
+        {"name": "Volver al sitio", "url": "/", "new_window": False},
+    ],
    
 }
 JAZZMIN_UI_TWEAKS = {
