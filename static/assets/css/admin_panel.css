@@ -1,0 +1,80 @@
+body {
+    font-family: "Open Sans", sans-serif !important;
+    background-color: #f6f9ff !important;
+    color: #012970 !important;
+}
+
+.btn {
+    color: #fff !important;
+    background-color: #0d6efd !important;
+    border-color: #f6f9ff !important;
+}
+
+.btn:hover {
+    color: #fff !important;
+    background-color: #0b5ed7 !important;
+    border-color: #0a58ca !important;
+}
+
+.btn:focus {
+    color: #fff !important;
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    box-shadow: 0 0 0 0.25rem rgba(49, 132, 253, 0.5) !important;
+}
+
+.btn:active {
+    color: #fff !important;
+    background-color: #0a58ca !important;
+    border-color: #0a53be !important;
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125) !important;
+}
+
+.btn.disabled,
+.btn:disabled {
+    color: #fff !important;
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+}
+
+
+
+
+a {
+    color: #4154f1 !important;
+    text-decoration: none !important;
+}
+
+a:hover {
+    color: #717ff5 !important;
+    text-decoration: none !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: "Nunito", sans-serif !important;
+}
+
+.card-header {
+    background-color: white !important;
+}
+
+.content-wrapper {
+    background-color: #f6f9ff !important;
+}
+
+.dropdown-header {
+    color: #012970 !important;
+}
+
+.dropdown-item {
+    color: #012970 !important;
+}
+
+.dropdown-item:hover {
+    background-color: #f6f9ff !important;
+}
