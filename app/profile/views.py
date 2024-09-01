@@ -13,10 +13,12 @@ def profile_view(request):
             form.save()
             return redirect('profile')
         else:
-            print(form.errors)
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, error)
     else:
         form = ProfileUpdateForm(instance=request.user)
-        password_form = ChangePasswordForm(request.user)
+    password_form = ChangePasswordForm(request.user)
     return render(request, 'profile/profile.html', {'form': form, 'password_form': password_form})
 
 @login_required

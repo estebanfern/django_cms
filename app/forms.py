@@ -171,6 +171,24 @@ class ProfileUpdateForm(forms.ModelForm):
         for field in self.fields:
             self.fields[field].required = False
 
+    def clean_photo(self):
+        """
+        Valida que el archivo subido para la foto tenga una extensión valida.
+
+        Lanza:
+            ValidationError: Si el archivo no tiene una extensión valida.
+
+        Retorna:
+            El archivo validado.
+        """
+        photo = self.cleaned_data.get('photo')
+        if photo:
+            # Validar el tipo de archivo permitiendo solo .jpg, .jpeg y .png
+            valid_extensions = ['.jpg', '.jpeg', '.png']
+            if not any(photo.name.lower().endswith(ext) for ext in valid_extensions):
+                raise ValidationError('Solo se permiten archivos con extensión .jpg, .jpeg o .png.')
+        return photo
+
     def save(self, commit=True):
         """
         Guarda los cambios en el perfil del usuario.
