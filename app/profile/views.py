@@ -7,6 +7,20 @@ from app.models import CustomUser
 
 @login_required
 def profile_view(request):
+    """
+    Vista para la actualización del perfil del usuario autenticado.
+
+    Si el método de solicitud es POST, procesa el formulario de actualización del perfil.
+    Si el formulario es válido, guarda los cambios en el perfil del usuario.
+    También proporciona un formulario para cambiar la contraseña del usuario.
+
+    Parámetros:
+        request (HttpRequest): La solicitud HTTP recibida.
+
+    Retorna:
+        HttpResponse: Redirige a la vista de perfil después de actualizarlo o
+        renderiza la página de perfil con el formulario de actualización y el formulario de cambio de contraseña.
+    """
     if request.method == 'POST':
         form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
@@ -23,6 +37,19 @@ def profile_view(request):
 
 @login_required
 def change_password(request):
+    """
+    Vista para cambiar la contraseña del usuario autenticado.
+
+    Si el método de solicitud es POST, procesa el formulario de cambio de contraseña.
+    Si el formulario es válido, cambia la contraseña del usuario y muestra un mensaje de éxito.
+
+    Parámetros:
+        request (HttpRequest): La solicitud HTTP recibida.
+
+    Retorna:
+        HttpResponse: Redirige a la página de inicio de sesión si el cambio de contraseña es exitoso o
+        redirige a la vista de perfil si el formulario contiene errores.
+    """
     if request.method == 'POST':
         password_form = ChangePasswordForm(request.user, request.POST)
         if password_form.is_valid():
@@ -37,5 +64,17 @@ def change_password(request):
     return redirect('profile')
 
 def other_profile_view(request, id):
+    """
+    Vista para mostrar el perfil de otro usuario.
+
+    Obtiene el perfil de un usuario específico basado en su ID.
+
+    Parámetros:
+        request (HttpRequest): La solicitud HTTP recibida.
+        id (int): El ID del usuario cuyo perfil se desea mostrar.
+
+    Retorna:
+        HttpResponse: Renderiza la página del perfil del usuario especificado.
+    """
     user_profile = get_object_or_404(CustomUser, id=id)
     return render(request, 'profile/view_profile.html', {'user_profile' : user_profile})

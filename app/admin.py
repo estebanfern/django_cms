@@ -86,6 +86,21 @@ class CustomUserAdmin(UserAdmin):
 
     # Boton de Cancelar al modificar
     def change_view(self, request, object_id, form_url='', extra_context=None):
+        """
+        Modifica la vista de cambio en el panel de administración para agregar un botón de cancelar. En el panel
+        de administración añade un botón de cancelar que redirige a la lista de objetos del mismo tipo.
+
+        Parámetros:
+            request (HttpRequest): Objeto de solicitud HTTP.
+            object_id (str): ID del objeto que se va a modificar.
+            form_url (str, opcional): URL del formulario, si existe. Por defecto es una cadena vacía.
+            extra_context (dict, opcional): Contexto adicional para la plantilla. Por defecto es None.
+
+        Retorna:
+            HttpResponse: La respuesta HTTP renderizada para la vista de cambio del objeto,
+            incluyendo el contexto adicional con la URL de cancelación.
+        """
+
         extra_context = extra_context or {}
         cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
         extra_context['cancel_url'] = cancel_url
@@ -181,19 +196,6 @@ class CustomUserAdmin(UserAdmin):
 
 
 class CustomGroupAdmin(BaseGroupAdmin):
-    # Boton de Cancelar al modificar
-    def change_view(self, request, object_id, form_url='', extra_context=None):
-        extra_context = extra_context or {}
-        cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
-        extra_context['cancel_url'] = cancel_url
-        return super().change_view(request, object_id, form_url, extra_context=extra_context)
-    
-    # Boton de Cancelar al agregar
-    def add_view(self, request, form_url='', extra_context=None):
-        extra_context = extra_context or {}
-        cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
-        extra_context['cancel_url'] = cancel_url
-        return super().add_view(request, form_url, extra_context=extra_context)
     """
     Configuración personalizada para la administración de grupos en el panel de administración de Django.
 
@@ -207,6 +209,51 @@ class CustomGroupAdmin(BaseGroupAdmin):
         has_change_permission: Verifica si el usuario tiene permisos para cambiar grupos.
         has_delete_permission: Verifica si el usuario tiene permisos para eliminar grupos.
     """
+
+    # Boton de Cancelar al modificar
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        """
+        Modifica la vista de cambio en el panel de administración para agregar un botón de cancelar.
+
+        Esta función personaliza la vista de modificación de un objeto en el panel de administración,
+        añadiendo un botón de cancelar que redirige a la lista de objetos del mismo tipo.
+
+        Parámetros:
+            request (HttpRequest): Objeto de solicitud HTTP.
+            object_id (str): ID del objeto que se va a modificar.
+            form_url (str, opcional): URL del formulario, si existe. Por defecto es una cadena vacía.
+            extra_context (dict, opcional): Contexto adicional para la plantilla. Por defecto es None.
+
+        Retorna:
+            HttpResponse: La respuesta HTTP renderizada para la vista de cambio del objeto,
+            incluyendo el contexto adicional con la URL de cancelación.
+        """
+        extra_context = extra_context or {}
+        cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
+        extra_context['cancel_url'] = cancel_url
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
+
+    # Boton de Cancelar al agregar
+    def add_view(self, request, form_url='', extra_context=None):
+        """
+        Modifica la vista de adición en el panel de administración para agregar un botón de cancelar.
+
+        Esta función personaliza la vista de adición de un nuevo objeto en el panel de administración,
+        añadiendo un botón de cancelar que redirige a la lista de objetos del mismo tipo.
+
+        Parámetros:
+            request (HttpRequest): Objeto de solicitud HTTP.
+            form_url (str, opcional): URL del formulario, si existe. Por defecto es una cadena vacía.
+            extra_context (dict, opcional): Contexto adicional para la plantilla. Por defecto es None.
+
+        Retorna:
+            HttpResponse: La respuesta HTTP renderizada para la vista de adición del objeto,
+            incluyendo el contexto adicional con la URL de cancelación.
+        """
+        extra_context = extra_context or {}
+        cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
+        extra_context['cancel_url'] = cancel_url
+        return super().add_view(request, form_url, extra_context=extra_context)
 
     def has_module_permission(self, request):
         """

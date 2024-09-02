@@ -18,6 +18,32 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+"""
+Definición de rutas URL para la aplicación.
+
+Esta lista de patrones de URL define las rutas accesibles en la aplicación,
+incluyendo vistas de administración, autenticación, perfiles y restablecimiento de contraseñas.
+
+Rutas:
+    - 'admin/': Ruta para acceder al panel de administración de Django.
+    - '': Ruta para la página de inicio, que utiliza la vista `home_view`.
+
+    Autenticación (Auth):
+    - 'register/': Ruta para el registro de usuarios, utilizando `register_view`.
+    - 'login/': Ruta para el inicio de sesión de usuarios, utilizando `login_view`.
+    - 'logout/': Ruta para cerrar la sesión de usuarios, utilizando `logout_view`.
+    - 'password-reset/': Ruta para solicitar el restablecimiento de la contraseña, utilizando `reset_password_view`.
+    - 'reset/<uidb64>/<token>/': Ruta para confirmar el restablecimiento de la contraseña, utilizando `password_reset_confirm_view`.
+
+    Comentadas:
+    - Las rutas comentadas corresponden a vistas de restablecimiento de contraseña basadas en clases de Django, 
+      que pueden reemplazar a las vistas personalizadas si se desean utilizar las vistas predeterminadas de Django.
+
+    Perfil (Profile):
+    - 'profile/': Ruta para la vista del perfil del usuario autenticado, utilizando `profile_view`.
+    - 'profile/<int:id>/': Ruta para la vista de perfil de otro usuario, utilizando `other_profile_view`.
+    - 'change-password/': Ruta para cambiar la contraseña del usuario autenticado, utilizando `change_password`.
+"""
 
 from django.contrib import admin
 from django.urls import path
@@ -27,6 +53,7 @@ from app.views import *
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
+
     path('admin/', admin.site.urls),
 
     path('', home_view, name='home'),

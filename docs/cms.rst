@@ -1,6 +1,14 @@
 cms package
 ===========
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   cms.profile
+
 Submodules
 ----------
 
@@ -8,14 +16,6 @@ cms.asgi module
 ---------------
 
 .. automodule:: cms.asgi
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-cms.profile module
--------------------
-
-.. automodule:: cms.profile
    :members:
    :undoc-members:
    :show-inheritance:

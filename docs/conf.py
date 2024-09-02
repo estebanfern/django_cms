@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.abspath('..'))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'cms.profile.dev'
 django.setup()
 
+
 project = 'CMS'
 copyright = '2024, Roberto Acosta, Esteban Fernandez, Fabrizio Roman, Abigail Nuñez'
 author = 'Roberto Acosta, Esteban Fernandez, Fabrizio Roman, Abigail Nuñez'
@@ -24,7 +25,7 @@ release = '0.0.1'
 extensions = ["sphinx.ext.todo", "sphinx.ext.viewcode", "sphinx.ext.autodoc"]
 
 templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**/migrations/*']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**/migrations']
 
 language = 'es'
 
