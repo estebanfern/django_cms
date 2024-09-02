@@ -13,6 +13,19 @@ from django.contrib.auth import login, authenticate
 from django.contrib import messages
 
 def register_view(request):
+    """
+    Vista para el registro de nuevos usuarios.
+
+    Si el método de solicitud es POST, se procesa el formulario de creación de usuario.
+    Si el formulario es válido, se guarda el nuevo usuario y se inicia sesión automáticamente.
+
+    Parámetros:
+        request (HttpRequest): La solicitud HTTP recibida.
+
+    Retorna:
+        HttpResponse: Redirige a la página de inicio si el registro es exitoso o
+        renderiza la página de registro con el formulario correspondiente.
+    """
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST, request.FILES)
         if form.is_valid():
@@ -25,6 +38,19 @@ def register_view(request):
     return render(request, 'register.html', {'form': form})
 
 def login_view(request):
+    """
+    Vista para el inicio de sesión de usuarios.
+
+    Si el método de solicitud es POST, se procesa el formulario de autenticación.
+    Si el formulario es válido, se inicia sesión del usuario.
+
+    Parámetros:
+        request (HttpRequest): La solicitud HTTP recibida.
+
+    Retorna:
+        HttpResponse: Redirige a la página de inicio si el inicio de sesión es exitoso o
+        renderiza la página de inicio de sesión con el formulario correspondiente.
+    """
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -37,12 +63,34 @@ def login_view(request):
     return render(request, 'login.html', {'form': form})
 
 def logout_view(request):
+    """
+    Vista para cerrar la sesión del usuario actual.
+
+    Parámetros:
+        request (HttpRequest): La solicitud HTTP recibida.
+
+    Retorna:
+        HttpResponse: Redirige a la página principal después de cerrar la sesión.
+    """
     logout(request)
     messages.success(request, '¡Sesión cerrada exitosamente!')
     return redirect('/')
 
 
 def reset_password_view(request):
+    """
+    Vista para solicitar el restablecimiento de la contraseña del usuario.
+
+    Si el método de solicitud es POST, se procesa el formulario de restablecimiento de contraseña.
+    Si el formulario es válido, se envía un correo electrónico al usuario con un enlace para restablecer la contraseña.
+
+    Parámetros:
+        request (HttpRequest): La solicitud HTTP recibida.
+
+    Retorna:
+        HttpResponse: Redirige a la página de inicio de sesión después de enviar el correo o
+        renderiza la página de restablecimiento de contraseña con el formulario correspondiente.
+    """
     if request.method == 'POST':
         form = PasswordResetForm(request.POST)
         if form.is_valid():
@@ -83,6 +131,21 @@ def reset_password_view(request):
     return render(request, 'password-reset.html', {'form': form})
 
 def password_reset_confirm_view(request, uidb64, token):
+    """
+    Vista para confirmar el restablecimiento de la contraseña mediante un enlace enviado al correo electrónico del usuario.
+
+    Valida el token y el UID del usuario para permitir el cambio de contraseña.
+    Si la validación es exitosa, permite al usuario establecer una nueva contraseña.
+
+    Parámetros:
+        request (HttpRequest): La solicitud HTTP recibida.
+        uidb64 (str): El UID del usuario codificado en base64.
+        token (str): El token de seguridad para confirmar la validez del enlace.
+
+    Retorna:
+        HttpResponse: Redirige a la página de inicio de sesión si la actualización es exitosa o
+        renderiza la página de confirmación de restablecimiento de contraseña con el formulario correspondiente.
+    """
     user_model = get_user_model()
     try:
         uid = urlsafe_base64_decode(uidb64).decode()

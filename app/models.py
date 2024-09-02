@@ -89,6 +89,50 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['name']
 
     class Meta:
+        """
+        Configuración de metadatos para el modelo de usuario.
+
+        Atributos:
+            verbose_name (str): Nombre legible para el modelo en singular.
+            verbose_name_plural (str): Nombre legible para el modelo en plural.
+            permissions (list): Lista de permisos personalizados asociados al modelo de usuario.
+
+        Permisos:
+            - Permisos para contenido:
+                - ("create_content", "Crear contenidos"): Permiso para crear contenidos.
+                - ("edit_content", "Editar contenidos"): Permiso para editar contenidos.
+                - ("publish_content", "Publicar contenidos"): Permiso para publicar contenidos.
+                - ("comment_post", "Comentar contenidos"): Permiso para comentar en contenidos.
+                - ("react_to_post", "Reaccionar a contenidos"): Permiso para reaccionar a contenidos.
+                - ("report_post", "Reportar contenidos"): Permiso para reportar contenidos.
+                - ("view_content", "Ver contenidos"): Permiso para ver contenidos.
+                - ("edit_is_active", "Editar estado de contenidos"): Permiso para editar el estado activo de contenidos.
+
+            - Permisos para roles:
+                - ("create_roles", "Crear roles"): Permiso para crear roles.
+                - ("edit_roles", "Editar roles"): Permiso para editar roles.
+                - ("delete_roles", "Eliminar roles"): Permiso para eliminar roles.
+                - ("assign_roles", "Asignar roles a usuarios"): Permiso para asignar roles a usuarios.
+                - ("remove_roles", "Quitar roles a usuarios"): Permiso para quitar roles a usuarios.
+                - ("view_roles", "Ver roles"): Permiso para ver roles.
+
+            - Permisos para usuarios:
+                - ("create_users", "Crear usuarios"): Permiso para crear usuarios.
+                - ("edit_users", "Editar usuarios"): Permiso para editar usuarios.
+                - ("delete_users", "Eliminar usuarios"): Permiso para eliminar usuarios.
+                - ("block_users", "Bloquear usuarios"): Permiso para bloquear usuarios.
+                - ("unblock_users", "Desbloquear usuarios"): Permiso para desbloquear usuarios.
+                - ("reset_passwords", "Restablecer contraseñas"): Permiso para restablecer contraseñas.
+                - ("view_users", "Ver usuarios"): Permiso para ver usuarios.
+
+            - Permisos para categorías:
+                - ("create_category", "Crear categorías"): Permiso para crear categorías.
+                - ("view_category", "Ver categorías"): Permiso para ver categorías.
+                - ("edit_category", "Editar categorías"): Permiso para editar categorías.
+                - ("delete_category", "Eliminar categorías"): Permiso para eliminar categorías.
+                - ("activate_category", "Activar categorías"): Permiso para activar categorías.
+                - ("deactivate_category", "Desactivar categorías"): Permiso para desactivar categorías.
+        """
         verbose_name = 'Usuario'
         verbose_name_plural = 'Usuarios'
         permissions = [

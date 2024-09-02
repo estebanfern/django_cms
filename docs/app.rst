@@ -1,10 +1,14 @@
 app package
 ===========
 
+Subpackages
+-----------
 
 .. toctree::
    :maxdepth: 4
 
+   app.auth
+   app.profile
 
 Submodules
 ----------
