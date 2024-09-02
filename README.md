@@ -4,8 +4,9 @@
 1. [ Variables de Entorno ](#variables-de-entorno)
 1. [ Descripción ](#descripción)
 2. [ Desarrollo ](#desarrollo)
-3. [ Change Log ](#historial-de-cambios)
-4. [ Autores ](#authors)
+3. [ Historial de Cambios ](#historial-de-cambios)
+4. [ Despliegue en Producción ](#despliegue-en-producción)
+5. [ Autores ](#authors)
 
 # Descripción
 ![Django](https://img.shields.io/badge/django-000000?style=for-the-badge&logo=django&logoColor=white)
@@ -47,6 +48,10 @@ Puedes desplegar el proyecto en modo desarrollo con estos comandos
 # Historial de Cambios
 
 Para ver el historial de cambios visita [CHANGELOG.md](https://github.com/estebanfern/django_cms/tree/main/CHANGELOG.md)
+
+# Despliegue en producción
+
+Para ver la guía de despliegue a producción [DEPLOYMENT.md](https://github.com/estebanfern/django_cms/tree/main/DEPLOYMENT.md)
 
 
 # Authors
