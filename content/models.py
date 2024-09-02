@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 
 class Content (models.Model):
     title = models.CharField(max_length=255, verbose_name=('Título'))
@@ -23,8 +24,18 @@ class Content (models.Model):
     state = models.CharField(
         choices=StateChoices.choices,
         default=StateChoices.draft,
+        max_length=20,
         verbose_name=('Estado')
     )
+
+    def clean(self):
+        # Validar que el estado sea uno de los definidos en StateChoices
+        if self.state not in dict(Content.StateChoices.choices):
+            raise ValidationError(f"Estado '{self.state}' no es válido.")
+
+    def save(self, *args, **kwargs):
+        self.clean()  # Llama a la validación personalizada
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Contenido'
