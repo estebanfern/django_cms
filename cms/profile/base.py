@@ -175,7 +175,7 @@ JAZZMIN_SETTINGS = {
     "custom_css": "assets/css/admin_panel.css",  
     "topmenu_links":  [
         {"name": "Volver al sitio", "url": "/", "new_window": False},
-        {"name": "Documentación", "url": f"{CMS_DOCS_URL}", "new_window": False},
+        {"name": "Documentación", "url": f"{CMS_DOCS_URL}", "new_window": True},
     ],
    
 }

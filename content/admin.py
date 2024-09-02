@@ -1,5 +1,6 @@
 from django.contrib import admin, messages
 from .models import Content
+from django.urls import reverse
 
 class ContentAdmin(admin.ModelAdmin):
     """
@@ -43,6 +44,29 @@ class ContentAdmin(admin.ModelAdmin):
 
     # Definir acciones personalizadas
     actions = ['activar_contenidos', 'desactivar_contenidos']
+
+    # Boton de Cancelar al modificar
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        """
+        Modifica la vista de cambio en el panel de administración para agregar un botón de cancelar.
+
+        Esta función personaliza la vista de modificación de un objeto en el panel de administración,
+        añadiendo un botón de cancelar que redirige a la lista de objetos del mismo tipo.
+
+        Parámetros:
+            request (HttpRequest): Objeto de solicitud HTTP.
+            object_id (str): ID del objeto que se va a modificar.
+            form_url (str, opcional): URL del formulario, si existe. Por defecto es una cadena vacía.
+            extra_context (dict, opcional): Contexto adicional para la plantilla. Por defecto es None.
+
+        Retorna:
+            HttpResponse: La respuesta HTTP renderizada para la vista de cambio del objeto,
+            incluyendo el contexto adicional con la URL de cancelación.
+        """
+        extra_context = extra_context or {}
+        cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
+        extra_context['cancel_url'] = cancel_url
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
 
     # Acción para activar contenidos seleccionados
     @admin.action(description='Activar contenidos seleccionados')
