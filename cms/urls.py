@@ -65,19 +65,14 @@ urlpatterns = [
     path('logout/', logout_view, name='logout'),
     path('password-reset/', reset_password_view, name='password_reset'),
     path('reset/<uidb64>/<token>/', password_reset_confirm_view, name='password_reset_confirm'),
-    #############aaaaaa
-    # path('password_reset/', auth_views.PasswordResetView.as_view(template_name='password_reset_form.html'), name='password_reset'),
-    # path('password_reset_done/', auth_views.PasswordResetDoneView.as_view(template_name='password_reset_done.html'), name='password_reset_done'),
-    # path('password_reset_confirm/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='password_reset_confirm.html'), name='password_reset_confirm'),
-    # path('password_reset_complete/', auth_views.PasswordResetCompleteView.as_view(template_name='password_reset_complete.html'), name='password_reset_complete'),
-    #####aaaaaaaaaaaaaaaaa
 
     # Profile
     path('profile/', profile_view, name='profile'),
     path('profile/<int:id>/', other_profile_view, name='profile_view'),
     path('change-password/', change_password, name='change_password'),
 
-    path('ckeditor/', include('ckeditor_uploader.urls')),  # Solo si usas el uploader
+    # Content - Edit (Autor - Editor)
+    path('ckeditor/', include('ckeditor_uploader.urls')),  
     path('content/new/', ContentCreateView.as_view(), name='content-create'),
     path('content/<int:pk>/edit/', ContentUpdateView.as_view(), name='content-update'),
 

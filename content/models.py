@@ -132,8 +132,3 @@ class Content (models.Model):
         """
         return f"{self.title} ({self.get_state_display()})"
     
-#    # funcion para agregar fecha de expiracion expiration_date
-#    def expiration_date(self, *args, **kwargs):
-#        if self.state == publish and not self.date_expire:
-#            self.date_expire = self.date_create + timedelta(days=30)  # Cambia el número de días según sea necesario
-#        super().expiration_date(*args, **kwargs)

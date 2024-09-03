@@ -59,10 +59,6 @@
               {% elif user.get_groups_string == 'Editor' %}
               <button type="submit" name="action" value="send_to_draft">Mandar a borrador</button>
               <button type="submit" name="action" value="send_to_publish">Mandar a publicar</button>
-
-              {% elif user.get_groups_string == 'Publicador' %}
-              <button type="submit" name="action" value="send_for_revision">Mandar a revisión</button>
-              <button type="submit" name="action" value="publish">Publicar</button>
               {% endif %}
           </form>
 

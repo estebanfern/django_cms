@@ -3,14 +3,18 @@ from django.shortcuts import redirect, render
 # Create your views here.
 from django.utils import timezone 
 from django.views.generic import CreateView, UpdateView
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from .models import Content
 from .forms import ContentForm
+from django.core.exceptions import PermissionDenied
 
-class ContentCreateView(CreateView):
+class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Content
     form_class = ContentForm
     template_name = 'content/content_form.html'
-    success_url = 'home' # a donde te vas a ir
+    success_url = 'home' # a donde ir despues
+    permission_required = 'app.create_content'
+
     def form_valid(self, form):
         action = self.request.POST.get('action')
         content = form.save(commit=False)
@@ -31,12 +35,21 @@ class ContentCreateView(CreateView):
         content.save()
         return redirect(self.success_url)
 
-# no uso aun
-class ContentUpdateView(UpdateView):
+
+class ContentUpdateView(LoginRequiredMixin, UpdateView):
     model = Content
     form_class = ContentForm
     template_name = 'content/content_form.html'
-    success_url = 'home'  # donde ir
+    success_url = 'home'  # donde ir despues
+
+    # Lista de permisos
+    required_permissions = ['app.create_content', 'app.edit_content']
+
+    def dispatch(self, request, *args, **kwargs):
+        # Verifica si el usuario tiene al menos uno de los permisos requeridos
+        if not any(request.user.has_perm(perm) for perm in self.required_permissions):
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -50,21 +63,14 @@ class ContentUpdateView(UpdateView):
             form.fields['category'].widget.attrs['readonly'] = True
             form.fields['date_published'].widget.attrs['readonly'] = True
 
-        elif user.get_groups_string() == 'Publicador':
-            # Solo lectura para todos los campos si el usuario es un Publicador
-            for field in form.fields:
-                form.fields[field].widget.attrs['readonly'] = True
-
         return form
     
     def form_valid(self, form):
         user = self.request.user
         action = self.request.POST.get('action')
 
-
         # Recupera el objeto original desde la base de datos
         content = self.get_object()
-
 
 
         if user.get_groups_string() == 'Autor':
@@ -79,7 +85,7 @@ class ContentUpdateView(UpdateView):
         else:
 
             content.category = self.get_object().category
-            
+
             if user.get_groups_string() == 'Editor':
 
                 # Solo actualiza el campo 'content' desde el formulario
@@ -90,19 +96,10 @@ class ContentUpdateView(UpdateView):
                 elif action == 'send_to_publish':
                     content.state = Content.StateChoices.to_publish
 
-
-            elif user.get_groups_string() == 'Publicador':
-                if action == 'send_for_revision':
-                    content.state = Content.StateChoices.revision
-                elif action == 'publish':
-                    content.is_active = True
-                    content.date_expire = None #este se debe cambiaaaaaaaar
-                    content.state = Content.StateChoices.publish
             
         content.save()
         return redirect(self.success_url)
     
     def form_invalid(self, form):
-        print("Form is invalid")  # Depuración
         print(form.errors)  # Mostrar errores en el formulario
         return super().form_invalid(form)
