@@ -46,11 +46,12 @@ Rutas:
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 from app.auth.views import register_view, login_view, logout_view, reset_password_view, password_reset_confirm_view
 from app.profile.views import other_profile_view, profile_view, change_password
 from app.views import *
 from django.contrib.auth import views as auth_views
+from content.views import ContentCreateView, ContentUpdateView
 
 urlpatterns = [
 
@@ -75,6 +76,10 @@ urlpatterns = [
     path('profile/', profile_view, name='profile'),
     path('profile/<int:id>/', other_profile_view, name='profile_view'),
     path('change-password/', change_password, name='change_password'),
+
+    path('ckeditor/', include('ckeditor_uploader.urls')),  # Solo si usas el uploader
+    path('content/new/', ContentCreateView.as_view(), name='content-create'),
+    path('content/<int:pk>/edit/', ContentUpdateView.as_view(), name='content-update'),
 
 ]
 

@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'category',
     'content',
+    'ckeditor',
+    'ckeditor_uploader', 
 ]
 
 MIDDLEWARE = [
@@ -210,4 +212,15 @@ JAZZMIN_UI_TWEAKS = {
         "success": "btn-success"
     },
     "actions_sticky_top": False
+}
+
+CKEDITOR_UPLOAD_PATH = 'uploads/'
+
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'height': 300,
+        'width': '100%',
+    },
 }

@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from ckeditor.fields import RichTextField
 
 class Content (models.Model):
     """
@@ -47,7 +48,11 @@ class Content (models.Model):
     autor = models.ForeignKey('app.CustomUser', on_delete=models.CASCADE, verbose_name=('Autor'))
     is_active = models.BooleanField(default=True, verbose_name='Activo')
     date_create= models.DateTimeField(auto_now_add=True, verbose_name=('Fecha de creacion'))
-    date_expire = models.DateTimeField(verbose_name=('Fecha de expiración'))
+    date_expire = models.DateField(null=True, blank=True,verbose_name=('Fecha de expiración'))
+    date_published = models.DateField(null=True, blank=True, verbose_name='Fecha de publicación')
+    content = RichTextField(verbose_name='Contenido')  # Campo de texto enriquecido con CKEditor 5
+    attachment = models.FileField(upload_to='attachments/', null=True, blank=True, verbose_name='Archivo adjunto')
+
 
     class StateChoices(models.TextChoices):
         """
@@ -71,7 +76,7 @@ class Content (models.Model):
         revision = 'Revisión', ('Revisión')
         to_publish = 'A publicar', ('A publicar')
         publish = 'Publicado', ('Publicado')
-        rejected = 'Rechazado', ('Rechazado')
+        inactive = 'Inactivo', ('Inactivo')
 
     state = models.CharField(
         choices=StateChoices.choices,
@@ -126,3 +131,9 @@ class Content (models.Model):
             'estado' es la descripción del estado del contenido.
         """
         return f"{self.title} ({self.get_state_display()})"
+    
+#    # funcion para agregar fecha de expiracion expiration_date
+#    def expiration_date(self, *args, **kwargs):
+#        if self.state == publish and not self.date_expire:
+#            self.date_expire = self.date_create + timedelta(days=30)  # Cambia el número de días según sea necesario
+#        super().expiration_date(*args, **kwargs)
