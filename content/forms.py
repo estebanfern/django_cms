@@ -8,6 +8,11 @@ class ContentForm(forms.ModelForm):
         widgets = {
             'summary': forms.Textarea(attrs={'style': 'display: block; width: 100%;'}),  # Asegura que ocupe toda la línea
             #'date_published': forms.DateInput(attrs={'type': 'date', 'style': 'display: block; width: 100%;'}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),  # Campo de texto con clase Bootstrap
+            'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': '4', 'maxlength' : '255'}),  # Asegura que ocupe toda la línea
+            'category': forms.Select(attrs={'class': 'form-select'}),  # Campo select con clase Bootstrap
+            'date_published': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),  # Campo de fecha con clase Bootstrap
+            'attachment': forms.ClearableFileInput(attrs={'class': 'form-control'}),  # Campo de archivo con clase Bootstrap
         }
     def __init__(self, *args, **kwargs):
         super(ContentForm, self).__init__(*args, **kwargs)
@@ -20,5 +25,3 @@ class ContentForm(forms.ModelForm):
         else:
             # En modo de creación
             self.fields['date_published'].widget = forms.DateInput(attrs={'type': 'date'})
-
-        

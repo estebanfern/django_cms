@@ -9,7 +9,7 @@ from .forms import ContentForm
 class ContentCreateView(CreateView):
     model = Content
     form_class = ContentForm
-    template_name = 'content_form.html'
+    template_name = 'content/content_form.html'
     success_url = 'home' # a donde te vas a ir
     def form_valid(self, form):
         action = self.request.POST.get('action')
@@ -35,7 +35,7 @@ class ContentCreateView(CreateView):
 class ContentUpdateView(UpdateView):
     model = Content
     form_class = ContentForm
-    template_name = 'content_form.html'
+    template_name = 'content/content_form.html'
     success_url = 'home'  # donde ir
 
     def get_form(self, form_class=None):
