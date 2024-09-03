@@ -53,12 +53,12 @@
               {% csrf_token %}
               {{ form.as_p }}
               {% if user.get_groups_string == 'Autor' %}
-              <button type="submit" name="action" value="save_draft">Guardar en borrador</button>
-              <button type="submit" name="action" value="send_for_revision">Mandar a revisión</button>
+              <button type="submit" name="action" value="save_draft" class="btn btn-secondary">Guardar en borrador</button>
+              <button type="submit" name="action" value="send_for_revision" class="btn btn-success">Mandar a revisión</button>
 
               {% elif user.get_groups_string == 'Editor' %}
-              <button type="submit" name="action" value="send_to_draft">Mandar a borrador</button>
-              <button type="submit" name="action" value="send_to_publish">Mandar a publicar</button>
+              <button type="submit" name="action" value="send_to_draft" class="btn btn-secondary">Mandar a borrador</button>
+              <button type="submit" name="action" value="send_to_publish" class="btn btn-success">Mandar a publicar</button>
               {% endif %}
           </form>
 
