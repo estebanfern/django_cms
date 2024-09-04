@@ -22,9 +22,12 @@ def home_view(request):
     # contents = Content.objects.filter(is_active=True).values('title', 'summary', 'category', 'autor', 'date_published')
     contents = Content.objects.filter(is_active=True).select_related('category', 'autor')
     paginator = Paginator(contents, 10)
-    page_number = int(request.GET.get('page'))
+    str_page_number = request.GET.get('page')
+    if str_page_number is None or str_page_number == '':
+        page_number = 1
+    else:
+        page_number = int(str_page_number)
     if (page_number is None) or (page_number < 1): page_number = 1
     page_obj = paginator.get_page(page_number)
-    print(contents)
     return render(request, 'inicio.html', {'page_obj': page_obj})
 
