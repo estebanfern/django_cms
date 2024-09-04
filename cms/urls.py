@@ -51,7 +51,7 @@ from app.auth.views import register_view, login_view, logout_view, reset_passwor
 from app.profile.views import other_profile_view, profile_view, change_password
 from app.views import *
 from django.contrib.auth import views as auth_views
-from content.views import ContentCreateView, ContentUpdateView
+from content.views import ContentCreateView, ContentUpdateView, view_content
 
 urlpatterns = [
 
@@ -75,6 +75,7 @@ urlpatterns = [
     path('ckeditor/', include('ckeditor_uploader.urls')),  
     path('content/new/', ContentCreateView.as_view(), name='content-create'),
     path('content/<int:pk>/edit/', ContentUpdateView.as_view(), name='content-update'),
+    path('content/<int:id>/', view_content, name='content_view'),
 
 ]
 

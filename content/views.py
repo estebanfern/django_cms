@@ -1,4 +1,4 @@
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 
 # Create your views here.
 from django.utils import timezone 
@@ -103,3 +103,8 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
     def form_invalid(self, form):
         print(form.errors)  # Mostrar errores en el formulario
         return super().form_invalid(form)
+
+
+def view_content(request, id):
+    content = get_object_or_404(Content, id=id)
+    return render(request, 'content/view.html', {"content" : content})
