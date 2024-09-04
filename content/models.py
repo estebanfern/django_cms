@@ -1,6 +1,8 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from ckeditor.fields import RichTextField
+from simple_history.models import HistoricalRecords
+from app.models import CustomUser
 
 class Content (models.Model):
     """
@@ -45,14 +47,14 @@ class Content (models.Model):
     # ratings =  Calificaciones del contenido
     # record = Historial de cambios
     category = models.ForeignKey('category.Category', on_delete=models.CASCADE, verbose_name=('Categoría'))
-    autor = models.ForeignKey('app.CustomUser', on_delete=models.CASCADE, verbose_name=('Autor'))
+    autor = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name=('Autor'))
     is_active = models.BooleanField(default=True, verbose_name='Activo')
     date_create= models.DateTimeField(auto_now_add=True, verbose_name=('Fecha de creacion'))
     date_expire = models.DateField(null=True, blank=True,verbose_name=('Fecha de expiración'))
     date_published = models.DateField(null=True, blank=True, verbose_name='Fecha de publicación')
     content = RichTextField(verbose_name='Contenido')  # Campo de texto enriquecido con CKEditor 5
     attachment = models.FileField(upload_to='attachments/', null=True, blank=True, verbose_name='Archivo adjunto')
-
+    history = HistoricalRecords()
 
     class StateChoices(models.TextChoices):
         """
@@ -131,4 +133,3 @@ class Content (models.Model):
             'estado' es la descripción del estado del contenido.
         """
         return f"{self.title} ({self.get_state_display()})"
-    
