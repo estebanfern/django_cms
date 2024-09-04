@@ -55,7 +55,7 @@ class Content (models.Model):
     date_expire = models.DateField(null=True, blank=True,verbose_name=('Fecha de expiración'))
     date_published = models.DateField(null=True, blank=True, verbose_name='Fecha de publicación')
     content = RichTextField(verbose_name='Contenido')  # Campo de texto enriquecido con CKEditor 5
-    attachment = models.FileField(upload_to='attachments/', null=True, blank=True, verbose_name='Archivo adjunto')
+    attachment = models.FileField(upload_to='attachments/', null=True, blank=True, verbose_name='Archivos adjuntos')
     history = HistoricalRecords()
 
     class StateChoices(models.TextChoices):

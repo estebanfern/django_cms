@@ -10,7 +10,7 @@ class ContentForm(forms.ModelForm):
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': '4', 'maxlength' : '255'}),  # Asegura que ocupe toda la línea
             'category': forms.Select(attrs={'class': 'form-select'}),  # Campo select con clase Bootstrap
             'date_published': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'attachment': forms.ClearableFileInput(attrs={'class': 'form-control'}),  # Campo de archivo con clase Bootstrap
+            'attachment': forms.ClearableFileInput(attrs={'class': 'form-control', 'multiple':'True'}),  # Campo de archivo con clase Bootstrap
         }
     def __init__(self, *args, **kwargs):
         super(ContentForm, self).__init__(*args, **kwargs)
