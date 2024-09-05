@@ -35,4 +35,5 @@ VALUES
 ('Cocina Internacional', 'Descubre recetas de diferentes partes del mundo', 6, 2, TRUE, NOW(), NOW() + INTERVAL '1 year', 'publish'),
 ('Mindfulness en el Trabajo', 'Cómo aplicar mindfulness en tu vida profesional', 8, 2, TRUE, NOW(), NOW() + INTERVAL '1 year', 'to_publish'),
 ('Historia de la Música Clásica', 'Desde Bach hasta Beethoven, una historia completa', 9, 2, TRUE, NOW(), NOW() + INTERVAL '1 year', 'revision'),
-('Desarrollo de Apps Móviles', 'Todo lo que necesitas saber para empezar a desarrollar apps', 1, 2, TRUE, NOW(), NOW() + INTERVAL '1 year', 'draft');
+('Desarrollo de Apps Móviles', 'Todo lo que necesitas saber para empezar a desarrollar apps', 1, 2, TRUE, NOW(), NOW() + INTERVAL '1 year', 'draft'),
+('Contenido expirado','Expirado' ,1, 2, TRUE, NOW(), NOW(), 'publish');
