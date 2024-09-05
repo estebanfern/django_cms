@@ -78,7 +78,7 @@ urlpatterns = [
     path('profile/<int:id>/', other_profile_view, name='profile_view'),
     path('change-password/', change_password, name='change_password'),
 
-    path('kanban/', kanban_board, name='kanban_board'),
+    path('tablero/', kanban_board, name='kanban_board'),
     path('api/update-content-state/<int:content_id>/', update_content_state, name='update_content_state'),
 ]
 
