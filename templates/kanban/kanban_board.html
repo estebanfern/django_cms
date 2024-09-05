@@ -143,7 +143,7 @@
                 // Mapeo de etiquetas a claves internas del modelo
                 const stateMap = {
                     'Borrador': 'draft',
-                    'Edición': 'revision',
+                    'Edicion': 'revision',
                     'A publicar': 'to_publish',
                     'Publicado': 'publish',
                     'Inactivo': 'inactive'
@@ -160,11 +160,15 @@
                 };
 
                 let canChangeState = false;
+                const itemData = evt.item.dataset;  // Accede a los datos del ítem, como autor y categoría
 
                 // Lógica de permisos según el estado del contenido y los permisos del usuario
                 if (userPermissions.create) {
+                    // Verifica si la categoría no es moderada para permitir el cambio de Borrador a Publicado
+                    const isModerated = itemData.isModerated === 'true';
                     if (
                         (originalState === 'Borrador' && newState === 'Edición') ||
+                        (originalState === 'Borrador' && newState === 'Publicado' && !isModerated) || // Nueva restricción
                         (originalState === 'Publicado' && newState === 'Inactivo') ||
                         (originalState === 'Inactivo' && newState === 'Publicado') ||
                         (originalState === newState)  // Permite mover al mismo estado

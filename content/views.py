@@ -15,7 +15,7 @@ def kanban_board(request):
     user = request.user
     contents = {
         'Borrador': [],
-        'Edición': [],
+        'Edicion': [],
         'A publicar': [],
         'Publicado': [],
         'Inactivo': [],
@@ -25,14 +25,14 @@ def kanban_board(request):
     if user.has_perm('app.create_content'):
         # Los autores ven solo sus contenidos activos en cualquier estado
         contents['Borrador'] = Content.objects.filter(state='draft', autor=user, is_active=True)
-        contents['Edición'] = Content.objects.filter(state='revision', autor=user, is_active=True)
+        contents['Edicion'] = Content.objects.filter(state='revision', autor=user, is_active=True)
         contents['A publicar'] = Content.objects.filter(state='to_publish', autor=user, is_active=True)
         contents['Publicado'] = Content.objects.filter(state='publish', autor=user, is_active=True)
         contents['Inactivo'] = Content.objects.filter(state='inactive', autor=user, is_active=True)
     elif user.has_perm('app.edit_content') or user.has_perm('app.publish_content') or user.has_perm('app.edit_is_active'):
         # Los editores y publicadores ven todos los contenidos activos sin importar el autor
         contents['Borrador'] = Content.objects.filter(state='draft', is_active=True)
-        contents['Edición'] = Content.objects.filter(state='revision', is_active=True)
+        contents['Edicion'] = Content.objects.filter(state='revision', is_active=True)
         contents['A publicar'] = Content.objects.filter(state='to_publish', is_active=True)
         contents['Publicado'] = Content.objects.filter(state='publish', is_active=True)
         contents['Inactivo'] = Content.objects.filter(state='inactive', is_active=True)
@@ -74,6 +74,16 @@ def update_content_state(request, content_id):
                     return JsonResponse({'status': 'success'})
                 elif content.state == 'inactive' and new_state == 'publish' and timezone.now() >= content.date_expire:
                     return JsonResponse({'status': 'error', 'message': 'No se puede publicar un contenido expirado.'}, status=403)
+                # Restricción para pasar de 'Borrador' a 'Publicado' si la categoría no es moderada
+                elif content.state == 'draft' and new_state == 'publish':
+                    if not content.category.is_moderated:
+                        content.state = new_state
+                        content.save()
+                        return JsonResponse({'status': 'success'})
+                    else:
+                        return JsonResponse({'status': 'error',
+                                             'message': 'No se puede publicar un contenido de categoría moderada desde el estado de Borrador.'},
+                                            status=403)
 
         elif user.has_perm('app.edit_content'):
             # Permite mover de 'Edición' a 'A publicar' y al mismo estado
