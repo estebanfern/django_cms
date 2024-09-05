@@ -96,16 +96,16 @@ def update_content_state(request, content_id):
 
         elif user.has_perm('app.publish_content'):
             # Permite mover de 'A publicar' a 'Publicado', 'Revisión' y al mismo estado
-            if content.state == 'to_publish' and new_state in ['publish', 'revision', 'to_publish']:
-                content.state = new_state
-                if new_state == 'publish':
+            if content.state == 'to_publish' and new_state in ['publish', 'revision', 'to_publish'] or (content.state == new_state):
+                if new_state == 'publish' and  content.state != 'publish':
                     content.date_published = timezone.now()
+                content.state = new_state
                 content.save()
                 return JsonResponse({'status': 'success'})
 
         elif user.has_perm('app.edit_is_active'):
             # Permite mover de 'Publicado' a 'Inactivo' y desactiva el contenido
-            if content.state == 'publish' and new_state == 'inactive':
+            if content.state == 'publish' and new_state == 'inactive' or (content.state == new_state):
                 content.state = new_state
                 # content.is_active = False
                 content.save()
