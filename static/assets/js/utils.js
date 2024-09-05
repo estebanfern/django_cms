@@ -57,3 +57,18 @@ modal = {
         bootbox.dialog(settings)
     }
 }
+
+function redirectWithParams(element, url, param, value=null) {
+    // Obtener el valor del parámetro del elemento si no se pasa un valor
+    if (!value) {
+        value = element.attributes[`${param}-value`].value;
+    }
+
+    // Obtener los parámetros existentes de la URL actual
+    const urlParams = new URLSearchParams(window.location.search);
+    // Añadir o modificar el parámetro `cat`
+    urlParams.set(param, value);
+
+    // Redireccionar con los parámetros actualizados
+    window.location.href = `${url}?${urlParams.toString()}`;
+}

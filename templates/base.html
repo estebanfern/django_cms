@@ -67,7 +67,7 @@
           </a>
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
             {% for cat in categories_publicas|slice:":5" %}
-            <a href="/category/{{ cat.id }}">
+            <a href="#" type="button" cat-value="{{cat.id}}" onclick="redirectWithParams(this, '/', 'cat'); return false;"">
               <li class="notification-item">
                 <div>
                   <h4>{{ cat.name }}</h4>
@@ -96,7 +96,7 @@
           </a>
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
             {% for cat in categories_suscriptores|slice:":5" %}
-            <a href="/category/{{ cat.id }}">
+            <a href="#" type="button" cat-value="{{cat.id}}" onclick="redirectWithParams(this, '/', 'cat'); return false;"">
               <li class="notification-item">
                 <div>
                   <h4>{{ cat.name }}</h4>
@@ -125,7 +125,7 @@
           </a>
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
             {% for cat in categories_pago|slice:":5" %}
-            <a href="/category/{{ cat.id }}">
+            <a href="#" type="button" cat-value="{{cat.id}}" onclick="redirectWithParams(this, '/', 'cat'); return false;"">
               <li class="notification-item">
                 <div>
                   <h4>{{ cat.name }}</h4>
