@@ -53,9 +53,8 @@
               {% csrf_token %}
               {{ form.as_p }}
               {% if user.get_groups_string == 'Autor' %}
-              <button type="button" onclick="history.back()"class="btn btn-secondary">Cancelar</button>
-              <button name="action" value="save" class="btn btn-success">Guardar</button>
-
+                <button type="button" onclick="history.back()"class="btn btn-secondary">Cancelar</button>
+                <button name="action" value="save" class="btn btn-success">Guardar</button>
               {% elif user.get_groups_string == 'Editor' %}
               <button type="submit" name="action" value="send_to_draft" class="btn btn-secondary">Mandar a borrador</button>
               <button type="submit" name="action" value="send_to_publish" class="btn btn-success">Mandar a publicar</button>

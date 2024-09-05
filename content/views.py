@@ -121,26 +121,19 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     template_name = 'content/content_form.html'
     success_url = 'home' # a donde ir despues
     permission_required = 'app.create_content'
-
+    
     def form_valid(self, form):
-        action = self.request.POST.get('action')
         content = form.save(commit=False)
-
         content.autor = self.request.user
-
-        if action == 'save_draft':
-            content.is_active = False
-            content.date_create = timezone.now()
-            content.date_expire = None
-            content.state = Content.StateChoices.draft
-        elif action == 'send_for_revision':
-            content.is_active = False
-            content.date_create = timezone.now()
-            content.date_expire = None
-            content.state = Content.StateChoices.revision
-            
+        content.is_active = True
+        content.date_create = timezone.now()
+        content.date_expire = None
+        content.state = Content.StateChoices.draft
         content.save()
         return redirect(self.success_url)
+        
+    def form_invalid(self, form):
+        return self.render_to_response(self.get_context_data(form=form))
 
 
 class ContentUpdateView(LoginRequiredMixin, UpdateView):
