@@ -18,6 +18,11 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf import settings
+from django.conf.urls.static import static
+
+from category.views import content_by_category_view
+
 """
 Definición de rutas URL para la aplicación.
 
@@ -72,10 +77,13 @@ urlpatterns = [
     path('change-password/', change_password, name='change_password'),
 
     # Content - Edit (Autor - Editor)
-    path('ckeditor/', include('ckeditor_uploader.urls')),  
+    path('ckeditor/', include('ckeditor_uploader.urls')),
     path('content/new/', ContentCreateView.as_view(), name='content-create'),
     path('content/<int:pk>/edit/', ContentUpdateView.as_view(), name='content-update'),
     path('content/<int:id>/', view_content, name='content_view'),
+    path('category/<int:id>/', content_by_category_view, name='content_by_category'),
 
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
+# if settings.DEBUG:
+#     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

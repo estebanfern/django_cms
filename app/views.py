@@ -29,7 +29,5 @@ def home_view(request):
         page_number = int(str_page_number)
     if (page_number is None) or (page_number < 1): page_number = 1
     page_obj = paginator.get_page(page_number)
-    print(len(contents))
-    print(page_obj.object_list)
     return render(request, 'inicio.html', {'page_obj': page_obj})
 

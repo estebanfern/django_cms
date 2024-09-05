@@ -58,8 +58,98 @@
     </div><!-- End Search Bar -->
 
     <nav class="header-nav ms-auto">
-      <ul class="d-flex align-items-center">
+      <ul class="d-flex align-items-center gap-4">
+        <!-- Publicas -->
+        <li class="nav-item dropdown">
+          <a class="nav-link d-flex align-items-center" href="#" data-bs-toggle="dropdown">
+            <span>Categorías Públicas</span>
+            <span class="d-none d-md-block dropdown-toggle ps-2"></span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
+            {% for cat in categories_publicas|slice:":5" %}
+            <a href="/category/{{ cat.id }}">
+              <li class="notification-item">
+                <div>
+                  <h4>{{ cat.name }}</h4>
+                  <p>{{ cat.description }}</p>
+                </div>
+              </li>
+              <li>
+            </a>
+              <hr class="dropdown-divider">
+            </li>
+            {% endfor %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li class="dropdown-footer">
+              <a href="#">Ver todas las categorias públicas</a>
+            </li>
+          </ul>
+        </li>
 
+        <!-- Suscripción -->
+        <li class="nav-item dropdown">
+          <a class="nav-link d-flex align-items-center" href="#" data-bs-toggle="dropdown">
+            <span>Categorías de Suscripción</span>
+            <span class="d-none d-md-block dropdown-toggle ps-2"></span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
+            {% for cat in categories_suscriptores|slice:":5" %}
+            <a href="/category/{{ cat.id }}">
+              <li class="notification-item">
+                <div>
+                  <h4>{{ cat.name }}</h4>
+                  <p>{{ cat.description }}</p>
+                </div>
+              </li>
+            </a>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endfor %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li class="dropdown-footer">
+              <a href="#">Ver todas las categorias de suscripción</a>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Pago -->
+        <li class="nav-item dropdown">
+          <a class="nav-link d-flex align-items-center" href="#" data-bs-toggle="dropdown">
+            <span>Categorías de Pago</span>
+            <span class="d-none d-md-block dropdown-toggle ps-2"></span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
+            {% for cat in categories_pago|slice:":5" %}
+            <a href="/category/{{ cat.id }}">
+              <li class="notification-item">
+                <div>
+                  <h4>{{ cat.name }}</h4>
+                  <p>{{ cat.description }}</p>
+                </div>
+              </li>
+            </a>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endfor %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li class="dropdown-footer">
+              <a href="#">Ver todas las categorias de pago</a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+
+    <nav class="header-nav ms-auto">
+      <ul class="d-flex align-items-center">
         <li class="nav-item d-block d-lg-none">
           <a class="nav-link nav-icon search-bar-toggle " href="#">
             <i class="bi bi-search"></i>
