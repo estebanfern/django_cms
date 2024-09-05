@@ -123,43 +123,43 @@
 
                 const mappedState = stateMap[newState];  // Convertir la etiqueta a la clave
 
-                // Controlar los permisos según el rol
-                let userRole = '{{ request.user.groups.first.name }}';  // Obtén el rol del usuario desde el template
+                // Verifica los permisos en función de los atributos de estado del contenido
+                const userPermissions = {
+                    create: {{ can_create_content|yesno:"true,false" }},
+                    edit: {{ can_edit_content|yesno:"true,false" }},
+                    publish: {{ can_publish_content|yesno:"true,false" }}
+                };
+
                 let canChangeState = false;
 
-                // Lógica de permisos según el rol del usuario
-                if (userRole === 'Autor') {
-                    // Los autores pueden mover de 'Borrador' a 'Revisión', 'Publicado' a 'Inactivo' y viceversa
+                // Lógica de permisos según el estado del contenido y los permisos del usuario
+                if (userPermissions.create) {
                     if (
                         (evt.from.dataset.state === 'Borrador' && newState === 'Edición') ||
-                        (evt.from.dataset.state === 'Edición' && newState === 'Edición') ||
                         (evt.from.dataset.state === 'Publicado' && newState === 'Inactivo') ||
                         (evt.from.dataset.state === 'Inactivo' && newState === 'Publicado') ||
-                        (evt.from.dataset.state === newState)  // Permitir mover al mismo estado
+                        (evt.from.dataset.state === evt.to.dataset.state)  // Permite mover al mismo estado
                     ) {
                         canChangeState = true;
-                    } else {
-                        alert('No tienes permiso para cambiar el estado.');
-                        evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
-                        return;
                     }
-                } else if (userRole === 'Editor') {
-                    if (evt.from.dataset.state === 'Edición' && newState === 'A publicar') {
-                        canChangeState = true;
-                    } else if (evt.from.dataset.state === 'Edición' && newState === 'Edición') {
-                        canChangeState = true; // Permitir mover al mismo estado
-                    }
-                } else if (userRole === 'Publicador') {
+                } else if (userPermissions.edit) {
                     if (
-                        evt.from.dataset.state === 'A publicar' &&
-                        (newState === 'Publicado' || newState === 'Edición' || newState === 'A publicar')
+                        (evt.from.dataset.state === 'Edición' && newState === 'A publicar') ||
+                        (evt.from.dataset.state === evt.to.dataset.state)  // Permite mover al mismo estado
+                    ) {
+                        canChangeState = true;
+                    }
+                } else if (userPermissions.publish) {
+                    if (
+                        (evt.from.dataset.state === 'A publicar' && ['Publicado', 'Edición'].includes(newState)) ||
+                        (evt.from.dataset.state === evt.to.dataset.state)  // Permite mover al mismo estado
                     ) {
                         canChangeState = true;
                     }
                 }
 
                 if (!canChangeState) {
-                    alert('No tienes permiso para cambiar el estado de este contenido.');
+                    alert('No tienes permiso para cambiar el estado.');
                     evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
                     return;
                 }
@@ -187,7 +187,6 @@
             }
         });
     });
-
 </script>
 
 {% endblock content %}

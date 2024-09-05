@@ -16,24 +16,29 @@ def kanban_board(request):
         'Inactivo': [],
     }
 
-    # Filtrar contenidos según el rol del usuario
-    if user.groups.filter(name='Autor').exists():
-        # El autor ve solo sus contenidos en cualquier estado
+    # Filtrar contenidos según los permisos del usuario
+    if user.has_perm('app.create_content'):
         contents['Borrador'] = Content.objects.filter(state='draft', autor=user)
         contents['Edición'] = Content.objects.filter(state='revision', autor=user)
         contents['A publicar'] = Content.objects.filter(state='to_publish', autor=user)
         contents['Publicado'] = Content.objects.filter(state='publish', autor=user)
         contents['Inactivo'] = Content.objects.filter(state='inactive', autor=user)
-
-    elif user.groups.filter(name__in=['Editor', 'Publicador']).exists():
-        # Los editores y publicadores ven todos los contenidos sin importar el autor
+    elif user.has_perm('app.edit_content') or user.has_perm('app.publish_content'):
         contents['Borrador'] = Content.objects.filter(state='draft')
         contents['Edición'] = Content.objects.filter(state='revision')
         contents['A publicar'] = Content.objects.filter(state='to_publish')
         contents['Publicado'] = Content.objects.filter(state='publish')
         contents['Inactivo'] = Content.objects.filter(state='inactive')
 
-    return render(request, 'kanban/kanban_board.html', {'contents': contents})
+    # Pasar permisos al contexto de la plantilla
+    context = {
+        'contents': contents,
+        'can_create_content': user.has_perm('app.create_content'),
+        'can_edit_content': user.has_perm('app.edit_content'),
+        'can_publish_content': user.has_perm('app.publish_content'),
+    }
+    return render(request, 'kanban/kanban_board.html', context)
+
 
 # API para actualizar el estado
 @csrf_exempt
@@ -46,36 +51,34 @@ def update_content_state(request, content_id):
         data = json.loads(request.body)
         new_state = data.get('state')
 
-        # Verificar los estados válidos para cada rol
-        if user.groups.filter(name='Autor').exists():
-            # Los autores pueden mover sus contenidos de 'Borrador' a 'Revisión', 'Publicado' a 'Inactivo' y viceversa
+        # Verificar los estados válidos según los permisos
+        if user.has_perm('app.create_content'):
+            # Permite mover de 'Borrador' a 'Edición', de 'Publicado' a 'Inactivo' y viceversa
             if content.autor == user and (
-                (content.state == 'draft' and new_state in ['draft', 'revision']) or
-                (content.state == 'publish' and new_state in ['publish', 'inactive']) or
-                (content.state == 'inactive' and new_state in ['inactive', 'publish'])
+                (content.state == 'draft' and new_state == 'revision') or
+                (content.state == 'publish' and new_state == 'inactive') or
+                (content.state == 'inactive' and new_state == 'publish') or
+                (content.state == new_state)
             ):
                 content.state = new_state
                 content.save()
                 return JsonResponse({'status': 'success'})
-            else:
-                return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
 
-        elif user.groups.filter(name='Editor').exists():
-            # El editor solo puede mover de 'Revisión' a 'A publicar' o confirmar el estado
-            if content.state == 'revision' and new_state in ['revision', 'to_publish']:
+        elif user.has_perm('app.edit_content'):
+            # Permite mover de 'Edición' a 'A publicar' y al mismo estado
+            if (content.state == 'revision' and new_state == 'to_publish') or (content.state == new_state):
                 content.state = new_state
                 content.save()
                 return JsonResponse({'status': 'success'})
-            else:
-                return JsonResponse({'status': 'error', 'message': 'Cambio de estado no permitido.'}, status=403)
 
-        elif user.groups.filter(name='Publicador').exists():
-            # El publicador solo puede mover de 'A publicar' a 'Publicado', 'Revisión' o confirmar el estado
-            if content.state == 'to_publish' and new_state in ['to_publish', 'publish', 'revision']:
+        elif user.has_perm('app.publish_content'):
+            # Permite mover de 'A publicar' a 'Publicado', 'Revisión' y al mismo estado
+            if content.state == 'to_publish' and new_state in ['publish', 'revision', 'to_publish']:
                 content.state = new_state
                 content.save()
                 return JsonResponse({'status': 'success'})
-            else:
-                return JsonResponse({'status': 'error', 'message': 'Cambio de estado no permitido.'}, status=403)
+
+        # Responder con un error si la acción no está permitida
+        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
 
     return JsonResponse({'status': 'error', 'message': 'Método no permitido.'}, status=405)
