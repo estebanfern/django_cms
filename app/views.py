@@ -8,19 +8,11 @@ from .forms import CustomUserCreationForm, CustomAuthenticationForm
 # Create your views here.
 
 def home_view(request):
-    """
-    Vista para la página de inicio.
-
-    Renderiza la plantilla correspondiente a la página de inicio.
-
-    Parámetros:
-        request (HttpRequest): La solicitud HTTP recibida.
-
-    Retorna:
-        HttpResponse: Renderiza y devuelve la página de inicio ('inicio.html').
-    """
-    # contents = Content.objects.filter(is_active=True).values('title', 'summary', 'category', 'autor', 'date_published')
+    cat_id = request.GET.get('cat')
+    autor_name = request.GET.get('autor')
     contents = Content.objects.filter(is_active=True).select_related('category', 'autor').order_by('-date_create')
+    if cat_id:
+        contents = contents.filter(category_id=cat_id)
     paginator = Paginator(contents, 10)
     str_page_number = request.GET.get('page')
     if str_page_number is None or str_page_number == '':

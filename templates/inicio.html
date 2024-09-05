@@ -50,7 +50,7 @@
             {% for content in page_obj %}
             <div class="col-6">
               <div class="card">
-                <div class="card-header">{{ content.category }}</div>
+                <div class="card-header">{{ content.category.name  }}</div>
                 <div class="card-body">
                   <h5 class="card-title text-center">{{ content.title }}</h5>
                   {{ content.summary }}<a href="/content/{{content.id}}">...ver más</a>
