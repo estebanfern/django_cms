@@ -1,16 +1,17 @@
 -- Inserción de datos en la tabla `category`
 INSERT INTO category (name, description, is_active, is_moderated, price, date_create, type)
 VALUES
-('Tecnología', 'Categoría sobre tecnología y gadgets', TRUE, TRUE, 49.99, NOW(), 'Pago'),  -- No vacía
-('Educación', 'Categoría de recursos educativos gratuitos', TRUE, TRUE, NULL, NOW(), 'Publico'),  -- No vacía
-('Entretenimiento', 'Categoría de contenido para suscriptores', TRUE, TRUE, NULL, NOW(), 'Suscriptor'),  -- Vacía
+('Tecnología', 'Categoría sobre tecnología y gadgets', TRUE, TRUE, 49.99, NOW(), 'Pago'),
+('Educación', 'Categoría de recursos educativos gratuitos', TRUE, TRUE, NULL, NOW(), 'Publico'),
+('Entretenimiento', 'Categoría de contenido para suscriptores', TRUE, TRUE, NULL, NOW(), 'Suscriptor'),
 ('Salud', 'Categoría sobre salud y bienestar', TRUE, TRUE, NULL, NOW(), 'Publico'),  -- Vacía
-('Negocios', 'Categoría enfocada en el mundo empresarial', TRUE, TRUE, 29.99, NOW(), 'Pago'),  -- Vacía
-('Cocina', 'Categoría de recetas y consejos de cocina', TRUE, TRUE, NULL, NOW(), 'Publico'),  -- No vacía
-('Deportes', 'Categoría sobre deportes y actividades físicas', TRUE, TRUE, 19.99, NOW(), 'Pago'),  -- No vacía
-('Viajes', 'Categoría de guías y consejos para viajar', TRUE, TRUE, NULL, NOW(), 'Suscriptor'),  -- Vacía
+('Negocios', 'Categoría enfocada en el mundo empresarial', TRUE, TRUE, 29.99, NOW(), 'Pago'),
+('Cocina', 'Categoría de recetas y consejos de cocina', TRUE, TRUE, NULL, NOW(), 'Publico'),
+('Deportes', 'Categoría sobre deportes y actividades físicas', TRUE, TRUE, 19.99, NOW(), 'Pago'),
+('Viajes', 'Categoría de guías y consejos para viajar', TRUE, TRUE, NULL, NOW(), 'Suscriptor'),
 ('Arte', 'Categoría sobre arte y cultura', TRUE, TRUE, NULL, NOW(), 'Publico'),  -- No vacía
-('Ciencia', 'Categoría de artículos científicos y avances', TRUE, TRUE, 39.99, NOW(), 'Pago');  -- No vacía
+('Ciencia', 'Categoría de artículos científicos y avances', TRUE, TRUE, 39.99, NOW(), 'Pago'),
+('No Moderada', 'Categoría no moderada', TRUE, FALSE, NULL, NOW(), 'Publico');
 
 -- Inserción de datos en la tabla `content` con los nuevos campos ajustados
 INSERT INTO content (
@@ -38,4 +39,7 @@ VALUES
 ('Mindfulness en el Trabajo', 'Cómo aplicar mindfulness en tu vida profesional', 8, 2, TRUE, NOW(), NOW() + INTERVAL '1 year', NULL, '<p>Mindfulness en el entorno laboral.</p>', NULL, 'to_publish'),
 ('Historia de la Música Clásica', 'Desde Bach hasta Beethoven, una historia completa', 9, 2, TRUE, NOW(), NOW() + INTERVAL '1 year', NULL, '<p>Historia de la música clásica.</p>', NULL, 'revision'),
 ('Desarrollo de Apps Móviles', 'Todo lo que necesitas saber para empezar a desarrollar apps', 1, 2, TRUE, NOW(), NOW() + INTERVAL '1 year', NULL, '<p>Desarrollo de aplicaciones móviles.</p>', NULL, 'draft'),
-('Contenido Expirado','Expirado' ,1, 2, TRUE, NOW(), NOW(), NULL, '<p>Contenido expirado.</p>', NULL, 'publish');
+('Contenido Expirado','Expirado' ,1, 2, TRUE, NOW(), NOW(), NULL, '<p>Contenido expirado.</p>', NULL, 'publish'),
+('Contenido no moderado 1','No moderado' ,11, 2, TRUE, NOW(), NOW() + INTERVAL '1 year', NULL, '<p>Contenido expirado.</p>', NULL, 'draft'),
+('Contenido no moderado 2','No moderado' ,11, 2, TRUE, NOW(), NOW() + INTERVAL '1 year', NULL, '<p>Contenido expirado.</p>', NULL, 'draft'),
+('Contenido no moderado 3','No moderado' ,11, 2, TRUE, NOW(), NOW() + INTERVAL '1 year', NULL, '<p>Contenido expirado.</p>', NULL, 'draft');
