@@ -167,7 +167,7 @@
                     // Verifica si la categoría no es moderada para permitir el cambio de Borrador a Publicado
                     const isModerated = itemData.isModerated === 'true';
                     if (
-                        (originalState === 'Borrador' && newState === 'Edición') ||
+                        (originalState === 'Borrador' && newState === 'Edicion') ||
                         (originalState === 'Borrador' && newState === 'Publicado' && !isModerated) || // Nueva restricción
                         (originalState === 'Publicado' && newState === 'Inactivo') ||
                         (originalState === 'Inactivo' && newState === 'Publicado') ||
@@ -177,14 +177,14 @@
                     }
                 } else if (userPermissions.edit) {
                     if (
-                        (originalState === 'Edición' && newState === 'A publicar') ||
+                        (originalState === 'Edicion' && newState === 'A publicar') ||
                         (originalState === newState)  // Permite mover al mismo estado
                     ) {
                         canChangeState = true;
                     }
                 } else if (userPermissions.publish) {
                     if (
-                        (originalState === 'A publicar' && ['Publicado', 'Edición'].includes(newState)) ||
+                        (originalState === 'A publicar' && ['Publicado', 'Edicion'].includes(newState)) ||
                         (originalState === newState)  // Permite mover al mismo estado
                     ) {
                         canChangeState = true;
