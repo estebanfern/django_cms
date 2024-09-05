@@ -33,6 +33,11 @@ class ContentForm(forms.ModelForm):
                 self.fields['summary'].widget.attrs['disabled'] = 'disabled'
                 self.fields['category'].widget.attrs['disabled'] = 'disabled'
                 self.fields['date_published'].widget.attrs['disabled'] = 'disabled'
+            else:
+                print(self.instance.date_published.strftime('%m-%d-%Y'))
+                #self.fields['date_published'].widget = forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+                #self.fields['date_published'].widget.attrs['value'] = self.instance.date_published
+                #self.fields['date_published'].widget.attrs['disabled'] = 'disabled'
         else:
             # En modo de creación
             self.fields['date_published'].widget = forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})

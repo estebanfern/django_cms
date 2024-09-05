@@ -164,21 +164,11 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
-        user = self.request.user
-        
-        # Verificar el grupo del usuario y ajustar el formulario
-        if user.has_perm('app.edit_content'):
-            # Solo lectura para los campos específicos si el usuario es un Autor
-            form.fields['title'].widget.attrs['readonly'] = True
-            form.fields['summary'].widget.attrs['readonly'] = True
-            form.fields['category'].widget.attrs['readonly'] = True
-            form.fields['date_published'].widget.attrs['readonly'] = True
-
+ 
         return form
     
     def form_valid(self, form):
         user = self.request.user
-        action = self.request.POST.get('action')
 
         # Recupera el objeto original desde la base de datos
         content = self.get_object()
@@ -186,16 +176,18 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
         # Captura la razón de cambio desde el formulario
         change_reason = form.cleaned_data.get('change_reason', '')
 
+        # Recupera el autor 
+        #autor = self.get_object().autor
 
-        if user.get_groups_string() == 'Autor':
+
+        if user.has_perm('app.create_content'):# and user.id == autor:
             # Solo actualizar los campos que vienen del formulario
             form_data = form.cleaned_data
             for field in form_data:
                 setattr(content, field, form_data[field])
 
         elif user.has_perm('app.edit_content'):
-                content = self.get_object()
-
+                
                 # Solo actualiza el campo 'content' desde el formulario
                 content.content = form.cleaned_data['content']
 
