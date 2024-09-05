@@ -122,9 +122,6 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     template_name = 'content/content_form.html'
     success_url = 'home' # a donde ir despues
     permission_required = 'app.create_content'
-<<<<<<< HEAD
-    
-=======
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -132,29 +129,13 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         del form.fields['change_reason']
         return form
 
->>>>>>> a819a23396f17fb3e7767dc182bbf5f1376ed3af
     def form_valid(self, form):
         content = form.save(commit=False)
         content.autor = self.request.user
-<<<<<<< HEAD
         content.is_active = True
         content.date_create = timezone.now()
         content.date_expire = None
         content.state = Content.StateChoices.draft
-=======
-
-        if action == 'save_draft':
-            content.is_active = False
-            content.date_create = timezone.now()
-            content.date_expire = None
-            content.state = Content.StateChoices.draft
-        elif action == 'send_for_revision':
-            content.is_active = False
-            content.date_create = timezone.now()
-            content.date_expire = None
-            content.state = Content.StateChoices.revision
-
->>>>>>> a819a23396f17fb3e7767dc182bbf5f1376ed3af
         content.save()
 
         # Establece la razón de cambio en el historial como 'Creación de contenido'
