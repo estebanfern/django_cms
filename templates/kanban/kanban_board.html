@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block content %}
+
+{% if messages %}
+  {% for message in messages %}
+    {% if message.tags == 'success' %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-1"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% elif message.tags == 'error' %}
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-octagon me-1"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% elif message.tags == 'warning' %}
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+<div class="pagetitle">
+  <h1>Tablero Kanban de Contenidos</h1>
+  <nav>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+      <li class="breadcrumb-item">Contenidos</li>
+      <li class="breadcrumb-item active">Tablero Kanban</li>
+    </ol>
+  </nav>
+</div><!-- End Page Title -->
+
+<section class="section">
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Gestión de Contenidos</h5>
+          <p>Organiza los contenidos arrastrándolos entre columnas según su estado.</p>
+
+          <!-- Kanban Board -->
+          <div class="kanban-board row">
+            {% for state, items in contents.items %}
+              <div class="kanban-column col-lg-2 mx-1" id="{{ state }}">
+                <h4 class="text-center">{{ state }}</h4>
+                <div class="kanban-items p-2 border rounded" data-state="{{ state }}">
+                  {% for item in items %}
+                    <div class="kanban-item bg-light p-3 mb-3 rounded shadow-sm" data-id="{{ item.id }}" style="cursor: pointer; border: 1px solid #ddd;">
+                      <strong>{{ item.title }}</strong>
+                      <p class="small">{{ item.summary }}</p>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+          </div><!-- End Kanban Board -->
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Añadir estilos CSS directamente aquí -->
+<style>
+  .kanban-items {
+      max-height: 600px; /* Aumenta la altura según lo necesites */
+      overflow-y: auto; /* Permite el desplazamiento vertical dentro de la columna */
+  }
+
+  .kanban-column {
+      min-height: 600px; /* Ajusta la altura mínima para mayor uniformidad */
+      overflow-y: auto; /* Desplazamiento vertical en columnas */
+  }
+
+  .kanban-board {
+      display: flex;
+      flex-wrap: nowrap; /* Mantener las columnas alineadas horizontalmente */
+  }
+
+  .kanban-item {
+      border-radius: 8px;
+      padding: 20px; /* Aumenta el padding para mayor grosor */
+      margin-bottom: 15px; /* Aumenta el margen inferior para más espacio entre elementos */
+      background-color: #f8f9fa; /* Color de fondo claro */
+      transition: box-shadow 0.2s;
+  }
+
+  .kanban-item:hover {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Añade sombra al pasar el ratón para resaltar */
+  }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+<script>
+    document.querySelectorAll('.kanban-items').forEach(function (column) {
+        new Sortable(column, {
+            group: 'kanban',
+            animation: 150,
+            scroll: true,  // Habilitar auto-scroll en contenedores
+            scrollSensitivity: 100, // Ajusta para mayor sensibilidad en el scroll
+            scrollSpeed: 20, // Ajusta la velocidad del desplazamiento al arrastrar
+            onEnd: function (evt) {
+                const itemId = evt.item.dataset.id;
+                const newState = evt.to.dataset.state;
+
+                // Mapeo de etiquetas a claves internas del modelo
+                const stateMap = {
+                    'Borrador': 'draft',
+                    'Edición': 'revision',
+                    'A publicar': 'to_publish',
+                    'Publicado': 'publish',
+                    'Inactivo': 'inactive'
+                };
+
+                const mappedState = stateMap[newState];  // Convertir la etiqueta a la clave
+
+                // Controlar los permisos según el rol
+                let userRole = '{{ request.user.groups.first.name }}';  // Obtén el rol del usuario desde el template
+                let canChangeState = false;
+
+                // Lógica de permisos según el rol del usuario
+                if (userRole === 'Autor') {
+                    // Los autores pueden mover de 'Borrador' a 'Revisión', 'Publicado' a 'Inactivo' y viceversa
+                    if (
+                        (evt.from.dataset.state === 'Borrador' && newState === 'Edición') ||
+                        (evt.from.dataset.state === 'Edición' && newState === 'Edición') ||
+                        (evt.from.dataset.state === 'Publicado' && newState === 'Inactivo') ||
+                        (evt.from.dataset.state === 'Inactivo' && newState === 'Publicado') ||
+                        (evt.from.dataset.state === newState)  // Permitir mover al mismo estado
+                    ) {
+                        canChangeState = true;
+                    } else {
+                        alert('No tienes permiso para cambiar el estado.');
+                        evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
+                        return;
+                    }
+                } else if (userRole === 'Editor') {
+                    if (evt.from.dataset.state === 'Edición' && newState === 'A publicar') {
+                        canChangeState = true;
+                    } else if (evt.from.dataset.state === 'Edición' && newState === 'Edición') {
+                        canChangeState = true; // Permitir mover al mismo estado
+                    }
+                } else if (userRole === 'Publicador') {
+                    if (
+                        evt.from.dataset.state === 'A publicar' &&
+                        (newState === 'Publicado' || newState === 'Edición' || newState === 'A publicar')
+                    ) {
+                        canChangeState = true;
+                    }
+                }
+
+                if (!canChangeState) {
+                    alert('No tienes permiso para cambiar el estado de este contenido.');
+                    evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
+                    return;
+                }
+
+                // Llamar a la API para actualizar el estado del contenido
+                fetch(`/api/update-content-state/${itemId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ state: mappedState })
+                }).then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            alert(`Error al actualizar el estado: ${data.message}`);
+                        });
+                    } else {
+                        console.log('Estado actualizado correctamente');
+                    }
+                }).catch(error => {
+                    console.error('Error en la solicitud fetch:', error);
+                    alert('Error en la comunicación con el servidor.');
+                });
+            }
+        });
+    });
+
+</script>
+
+{% endblock content %}

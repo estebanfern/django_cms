@@ -18,6 +18,8 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from content.views import kanban_board, update_content_state
+
 """
 Definición de rutas URL para la aplicación.
 
@@ -76,5 +78,7 @@ urlpatterns = [
     path('profile/<int:id>/', other_profile_view, name='profile_view'),
     path('change-password/', change_password, name='change_password'),
 
+    path('kanban/', kanban_board, name='kanban_board'),
+    path('api/update-content-state/<int:content_id>/', update_content_state, name='update_content_state'),
 ]
 
