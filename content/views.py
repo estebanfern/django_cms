@@ -5,10 +5,11 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import Content
 import json
 from django.contrib.auth.decorators import login_required
-from django.views.generic import CreateView, UpdateView
+from django.views.generic import CreateView, UpdateView, View
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from .forms import ContentForm
 from django.core.exceptions import PermissionDenied
+from simple_history.utils import update_change_reason
 
 @login_required
 def kanban_board(request):
@@ -121,15 +122,44 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     template_name = 'content/content_form.html'
     success_url = 'home' # a donde ir despues
     permission_required = 'app.create_content'
+<<<<<<< HEAD
     
+=======
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # Elimina el campo 'change_reason' para que no se muestre en el formulario de creación
+        del form.fields['change_reason']
+        return form
+
+>>>>>>> a819a23396f17fb3e7767dc182bbf5f1376ed3af
     def form_valid(self, form):
         content = form.save(commit=False)
         content.autor = self.request.user
+<<<<<<< HEAD
         content.is_active = True
         content.date_create = timezone.now()
         content.date_expire = None
         content.state = Content.StateChoices.draft
+=======
+
+        if action == 'save_draft':
+            content.is_active = False
+            content.date_create = timezone.now()
+            content.date_expire = None
+            content.state = Content.StateChoices.draft
+        elif action == 'send_for_revision':
+            content.is_active = False
+            content.date_create = timezone.now()
+            content.date_expire = None
+            content.state = Content.StateChoices.revision
+
+>>>>>>> a819a23396f17fb3e7767dc182bbf5f1376ed3af
         content.save()
+
+        # Establece la razón de cambio en el historial como 'Creación de contenido'
+        update_change_reason(content, 'Creación de contenido')
+
         return redirect(self.success_url)
         
     def form_invalid(self, form):
@@ -172,6 +202,9 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
         # Recupera el objeto original desde la base de datos
         content = self.get_object()
 
+        # Captura la razón de cambio desde el formulario
+        change_reason = form.cleaned_data.get('change_reason', '')
+
 
         if user.get_groups_string() == 'Autor':
             # Solo actualizar los campos que vienen del formulario
@@ -196,8 +229,12 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
                 elif action == 'send_to_publish':
                     content.state = Content.StateChoices.to_publish
 
-            
+        # Guarda el contenido
         content.save()
+
+        # Actualiza la razón de cambio en el historial
+        update_change_reason(content, change_reason)
+
         return redirect(self.success_url)
     
     def form_invalid(self, form):
@@ -208,3 +245,17 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
 def view_content(request, id):
     content = get_object_or_404(Content, id=id)
     return render(request, 'content/view.html', {"content" : content})
+
+
+class ContentHistoryView(LoginRequiredMixin, View):
+    template_name = 'content/content_history.html'
+
+    def get(self, request, content_id):
+        content = get_object_or_404(Content, id=content_id)
+        # Obtener el historial del contenido
+        history = content.history.all().order_by('-history_date')
+        context = {
+            'content': content,
+            'history': history,
+        }
+        return render(request, self.template_name, context)
