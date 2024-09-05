@@ -1,3 +1,5 @@
+from django.utils import timezone
+
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -55,16 +57,19 @@ def update_content_state(request, content_id):
 
         # Verificar los estados válidos según los permisos
         if user.has_perm('app.create_content'):
-            # Permite mover de 'Borrador' a 'Edición', de 'Publicado' a 'Inactivo' y viceversa
-            if content.autor == user and (
-                (content.state == 'draft' and new_state == 'revision') or
-                (content.state == 'publish' and new_state == 'inactive') or
-                (content.state == 'inactive' and new_state == 'publish') or
-                (content.state == new_state)  # Permite mover al mismo estado
-            ):
-                content.state = new_state
-                content.save()
-                return JsonResponse({'status': 'success'})
+            # Permite mover de 'Borrador' a 'Edición', de 'Publicado' a 'Inactivo', viceversa, y al mismo estado
+            if content.autor == user:
+                if (
+                    (content.state == 'draft' and new_state == 'revision') or
+                    (content.state == 'publish' and new_state == 'inactive') or
+                    (content.state == 'inactive' and new_state == 'publish' and timezone.now() < content.date_expire) or
+                    (content.state == new_state)  # Permite mover al mismo estado
+                ):
+                    content.state = new_state
+                    content.save()
+                    return JsonResponse({'status': 'success'})
+                elif content.state == 'inactive' and new_state == 'publish' and timezone.now() >= content.date_expire:
+                    return JsonResponse({'status': 'error', 'message': 'No se puede publicar un contenido expirado.'}, status=403)
 
         elif user.has_perm('app.edit_content'):
             # Permite mover de 'Edición' a 'A publicar' y al mismo estado

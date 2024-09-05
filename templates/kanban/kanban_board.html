@@ -122,6 +122,7 @@
             onEnd: function (evt) {
                 const itemId = evt.item.dataset.id;
                 const newState = evt.to.dataset.state;
+                const originalState = evt.from.dataset.state;
 
                 // Mapeo de etiquetas a claves internas del modelo
                 const stateMap = {
@@ -146,24 +147,24 @@
                 // Lógica de permisos según el estado del contenido y los permisos del usuario
                 if (userPermissions.create) {
                     if (
-                        (evt.from.dataset.state === 'Borrador' && newState === 'Edición') ||
-                        (evt.from.dataset.state === 'Publicado' && newState === 'Inactivo') ||
-                        (evt.from.dataset.state === 'Inactivo' && newState === 'Publicado') ||
-                        (evt.from.dataset.state === evt.to.dataset.state)  // Permite mover al mismo estado
+                        (originalState === 'Borrador' && newState === 'Edición') ||
+                        (originalState === 'Publicado' && newState === 'Inactivo') ||
+                        (originalState === 'Inactivo' && newState === 'Publicado') ||
+                        (originalState === newState)  // Permite mover al mismo estado
                     ) {
                         canChangeState = true;
                     }
                 } else if (userPermissions.edit) {
                     if (
-                        (evt.from.dataset.state === 'Edición' && newState === 'A publicar') ||
-                        (evt.from.dataset.state === evt.to.dataset.state)  // Permite mover al mismo estado
+                        (originalState === 'Edición' && newState === 'A publicar') ||
+                        (originalState === newState)  // Permite mover al mismo estado
                     ) {
                         canChangeState = true;
                     }
                 } else if (userPermissions.publish) {
                     if (
-                        (evt.from.dataset.state === 'A publicar' && ['Publicado', 'Edición'].includes(newState)) ||
-                        (evt.from.dataset.state === evt.to.dataset.state)  // Permite mover al mismo estado
+                        (originalState === 'A publicar' && ['Publicado', 'Edición'].includes(newState)) ||
+                        (originalState === newState)  // Permite mover al mismo estado
                     ) {
                         canChangeState = true;
                     }
@@ -187,6 +188,7 @@
                     if (!response.ok) {
                         return response.json().then(data => {
                             alert(`Error al actualizar el estado: ${data.message}`);
+                            evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
                         });
                     } else {
                         console.log('Estado actualizado correctamente');
@@ -194,6 +196,7 @@
                 }).catch(error => {
                     console.error('Error en la solicitud fetch:', error);
                     alert('Error en la comunicación con el servidor.');
+                    evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
                 });
             }
         });
