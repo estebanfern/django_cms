@@ -56,7 +56,16 @@
                       <strong>
                         <a href="{% url 'home' %}" class="kanban-title-link">{{ item.title }}</a>
                       </strong>
-                      <p class="small">{{ item.summary }}</p>
+                      <p class="small mb-1"><strong>Autor:</strong> {{ item.autor.name }}</p>
+                      <p class="small mb-1"><strong>Categoría:</strong> {{ item.category.name }}</p>
+                      <p class="small mb-0">
+                        <strong>Categoria Moderada:</strong>
+                        {% if item.category.is_moderated %}
+                          Si
+                        {% else %}
+                          No
+                        {% endif %}
+                      </p>
                     </div>
                   {% endfor %}
                 </div>
