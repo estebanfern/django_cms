@@ -129,9 +129,9 @@
         
         {% if perms.app.create_content %}
         <li class="nav-item">
-          <a class="nav-link collapsed" href="#">
+          <a class="nav-link collapsed" href="/content/new">
             <i class="bi bi-journal-plus"></i>
-            <span>Crear Articulo</span> 
+            <span>Crear contenido</span> 
           </a>
         </li>
         {% endif %}
@@ -158,7 +158,7 @@
     <!-- End Sidebar-->
   {% endif %}
 
-  <main id="main" class="main">
+  <main id="main" class="main min-vh-100">
 
     <!-- Aqui va todo el contenido que agreguen denntro de su html -->
     {% block content %}
@@ -182,6 +182,7 @@
 
   {% block js %}
   <!-- Vendor JS Files -->
+  <script src="{% static 'assets/js/jquery-3.7.1.min.js' %}"></script>
   <script src="{% static 'assets/vendor/apexcharts/apexcharts.min.js' %}"></script>
   <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'assets/vendor/chart.js/chart.umd.js' %}"></script>
@@ -192,6 +193,7 @@
   <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
   <!-- Template Main JS File -->
   <script src="{% static 'assets/js/main.js' %}"></script>
+  <script src="{% static 'assets/js/bootbox.min.js' %}"></script>
   {% endblock js %}
 
 

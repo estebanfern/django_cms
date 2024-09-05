@@ -1,5 +1,10 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from ckeditor.fields import RichTextField
+from simple_history.models import HistoricalRecords
+from app.models import CustomUser
+from category.models import Category
+
 
 class Content (models.Model):
     """
@@ -43,11 +48,15 @@ class Content (models.Model):
     # reactions = Reacciones del contenido
     # ratings =  Calificaciones del contenido
     # record = Historial de cambios
-    category = models.ForeignKey('category.Category', on_delete=models.CASCADE, verbose_name=('Categoría'))
-    autor = models.ForeignKey('app.CustomUser', on_delete=models.CASCADE, verbose_name=('Autor'))
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name=('Categoría'))
+    autor = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name=('Autor'))
     is_active = models.BooleanField(default=True, verbose_name='Activo')
     date_create= models.DateTimeField(auto_now_add=True, verbose_name=('Fecha de creacion'))
-    date_expire = models.DateTimeField(verbose_name=('Fecha de expiración'))
+    date_expire = models.DateField(null=True, blank=True,verbose_name=('Fecha de expiración'))
+    date_published = models.DateField(null=True, blank=True, verbose_name='Fecha de publicación')
+    content = RichTextField(verbose_name='Contenido')  # Campo de texto enriquecido con CKEditor 5
+    attachment = models.FileField(upload_to='attachments/', null=True, blank=True, verbose_name='Archivos adjuntos')
+    history = HistoricalRecords()
 
     class StateChoices(models.TextChoices):
         """
@@ -67,13 +76,11 @@ class Content (models.Model):
             Esta enumeración se utiliza para limitar las opciones disponibles en el campo `state` del modelo Content,
             garantizando que solo se seleccionen valores válidos y predefinidos.
         """
-        draft = 'draft', ('Borrador')  # Clave: 'draft', Etiqueta: 'Borrador'
-        revision = 'revision', ('Revisión')  # Clave: 'revision', Etiqueta: 'Revisión'
-        to_publish = 'to_publish', ('A publicar')  # Clave: 'to_publish', Etiqueta: 'A publicar'
-        publish = 'publish', ('Publicado')  # Clave: 'publish', Etiqueta: 'Publicado'
-        rejected = 'rejected', ('Rechazado')  # Clave: 'rejected', Etiqueta: 'Rechazado'
-        inactive = 'inactive', ('Inactivo')  # Clave: 'inactive', Etiqueta: 'Inactivo'
-
+        draft = 'Borrador', ('Borrador')
+        revision = 'Revisión', ('Revisión')
+        to_publish = 'A publicar', ('A publicar')
+        publish = 'Publicado', ('Publicado')
+        inactive = 'Inactivo', ('Inactivo')
 
     state = models.CharField(
         choices=StateChoices.choices,
