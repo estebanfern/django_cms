@@ -10,7 +10,7 @@ class ContentForm(forms.ModelForm):
 
     class Meta:
         model = Content
-        fields = ['title', 'summary', 'category', 'date_published', 'content', 'attachment']
+        fields = ['title', 'summary', 'category', 'date_published', 'content', 'attachment', 'tags']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),  # Campo de texto con clase Bootstrap
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': '4', 'maxlength' : '255'}),  # Asegura que ocupe toda la línea
