@@ -147,7 +147,8 @@
                 const userPermissions = {
                     create: {{ can_create_content|yesno:"true,false" }},
                     edit: {{ can_edit_content|yesno:"true,false" }},
-                    publish: {{ can_publish_content|yesno:"true,false" }}
+                    publish: {{ can_publish_content|yesno:"true,false" }},
+                    editIsActive: {{ can_edit_is_active|yesno:"true,false" }}
                 };
 
                 let canChangeState = false;
@@ -174,6 +175,10 @@
                         (originalState === 'A publicar' && ['Publicado', 'Edición'].includes(newState)) ||
                         (originalState === newState)  // Permite mover al mismo estado
                     ) {
+                        canChangeState = true;
+                    }
+                } else if (userPermissions.editIsActive) {
+                    if (originalState === 'Publicado' && newState === 'Inactivo') {
                         canChangeState = true;
                     }
                 }

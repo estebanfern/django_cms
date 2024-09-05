@@ -26,7 +26,7 @@ def kanban_board(request):
         contents['A publicar'] = Content.objects.filter(state='to_publish', autor=user, is_active=True)
         contents['Publicado'] = Content.objects.filter(state='publish', autor=user, is_active=True)
         contents['Inactivo'] = Content.objects.filter(state='inactive', autor=user, is_active=True)
-    elif user.has_perm('app.edit_content') or user.has_perm('app.publish_content'):
+    elif user.has_perm('app.edit_content') or user.has_perm('app.publish_content') or user.has_perm('app.edit_is_active'):
         # Los editores y publicadores ven todos los contenidos activos sin importar el autor
         contents['Borrador'] = Content.objects.filter(state='draft', is_active=True)
         contents['Edición'] = Content.objects.filter(state='revision', is_active=True)
@@ -40,6 +40,7 @@ def kanban_board(request):
         'can_create_content': user.has_perm('app.create_content'),
         'can_edit_content': user.has_perm('app.edit_content'),
         'can_publish_content': user.has_perm('app.publish_content'),
+        'can_edit_is_active': user.has_perm('app.edit_is_active'),
     }
     return render(request, 'kanban/kanban_board.html', context)
 
@@ -82,6 +83,14 @@ def update_content_state(request, content_id):
             # Permite mover de 'A publicar' a 'Publicado', 'Revisión' y al mismo estado
             if content.state == 'to_publish' and new_state in ['publish', 'revision', 'to_publish']:
                 content.state = new_state
+                content.save()
+                return JsonResponse({'status': 'success'})
+
+        elif user.has_perm('app.edit_is_active'):
+            # Permite mover de 'Publicado' a 'Inactivo' y desactiva el contenido
+            if content.state == 'publish' and new_state == 'inactive':
+                content.state = new_state
+                # content.is_active = False
                 content.save()
                 return JsonResponse({'status': 'success'})
 
