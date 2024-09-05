@@ -16,19 +16,21 @@ def kanban_board(request):
         'Inactivo': [],
     }
 
-    # Filtrar contenidos según los permisos del usuario
+    # Filtrar contenidos según los permisos del usuario y que estén activos
     if user.has_perm('app.create_content'):
-        contents['Borrador'] = Content.objects.filter(state='draft', autor=user)
-        contents['Edición'] = Content.objects.filter(state='revision', autor=user)
-        contents['A publicar'] = Content.objects.filter(state='to_publish', autor=user)
-        contents['Publicado'] = Content.objects.filter(state='publish', autor=user)
-        contents['Inactivo'] = Content.objects.filter(state='inactive', autor=user)
+        # Los autores ven solo sus contenidos activos en cualquier estado
+        contents['Borrador'] = Content.objects.filter(state='draft', autor=user, is_active=True)
+        contents['Edición'] = Content.objects.filter(state='revision', autor=user, is_active=True)
+        contents['A publicar'] = Content.objects.filter(state='to_publish', autor=user, is_active=True)
+        contents['Publicado'] = Content.objects.filter(state='publish', autor=user, is_active=True)
+        contents['Inactivo'] = Content.objects.filter(state='inactive', autor=user, is_active=True)
     elif user.has_perm('app.edit_content') or user.has_perm('app.publish_content'):
-        contents['Borrador'] = Content.objects.filter(state='draft')
-        contents['Edición'] = Content.objects.filter(state='revision')
-        contents['A publicar'] = Content.objects.filter(state='to_publish')
-        contents['Publicado'] = Content.objects.filter(state='publish')
-        contents['Inactivo'] = Content.objects.filter(state='inactive')
+        # Los editores y publicadores ven todos los contenidos activos sin importar el autor
+        contents['Borrador'] = Content.objects.filter(state='draft', is_active=True)
+        contents['Edición'] = Content.objects.filter(state='revision', is_active=True)
+        contents['A publicar'] = Content.objects.filter(state='to_publish', is_active=True)
+        contents['Publicado'] = Content.objects.filter(state='publish', is_active=True)
+        contents['Inactivo'] = Content.objects.filter(state='inactive', is_active=True)
 
     # Pasar permisos al contexto de la plantilla
     context = {
@@ -58,7 +60,7 @@ def update_content_state(request, content_id):
                 (content.state == 'draft' and new_state == 'revision') or
                 (content.state == 'publish' and new_state == 'inactive') or
                 (content.state == 'inactive' and new_state == 'publish') or
-                (content.state == new_state)
+                (content.state == new_state)  # Permite mover al mismo estado
             ):
                 content.state = new_state
                 content.save()
