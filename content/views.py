@@ -167,7 +167,7 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
         user = self.request.user
         
         # Verificar el grupo del usuario y ajustar el formulario
-        if user.get_groups_string() == 'Editor':
+        if user.has_perm('app.edit_content'):
             # Solo lectura para los campos específicos si el usuario es un Autor
             form.fields['title'].widget.attrs['readonly'] = True
             form.fields['summary'].widget.attrs['readonly'] = True
@@ -193,22 +193,11 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
             for field in form_data:
                 setattr(content, field, form_data[field])
 
-            # Cambiar el estado basado en la acción
-            if action == 'send_for_revision':
-                content.state = Content.StateChoices.revision
-        else:
-
-            content.category = self.get_object().category
-
-            if user.get_groups_string() == 'Editor':
+        elif user.has_perm('app.edit_content'):
+                content = self.get_object()
 
                 # Solo actualiza el campo 'content' desde el formulario
                 content.content = form.cleaned_data['content']
-
-                if action == 'send_to_draft':
-                    content.state = Content.StateChoices.draft
-                elif action == 'send_to_publish':
-                    content.state = Content.StateChoices.to_publish
 
         # Guarda el contenido
         content.save()

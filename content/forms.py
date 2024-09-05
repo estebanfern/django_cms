@@ -25,9 +25,14 @@ class ContentForm(forms.ModelForm):
         if self.instance.pk:
             if self.instance.state != Content.StateChoices.draft:
                 # En modo de edición
-                self.fields['category'].required = False
-                self.fields['category'].widget.attrs['disabled'] = 'disabled'
+                for field in self.fields.values():
+                    field.required = False
+
                 self.fields['date_published'].widget = forms.TextInput(attrs={'type': 'text', 'class': 'form-control', 'readonly': 'readonly'})
+                self.fields['title'].widget.attrs['disabled'] = 'disabled'
+                self.fields['summary'].widget.attrs['disabled'] = 'disabled'
+                self.fields['category'].widget.attrs['disabled'] = 'disabled'
+                self.fields['date_published'].widget.attrs['disabled'] = 'disabled'
         else:
             # En modo de creación
             self.fields['date_published'].widget = forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
