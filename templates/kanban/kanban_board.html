@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block content %}
+
+{% if messages %}
+  {% for message in messages %}
+    {% if message.tags == 'success' %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-1"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% elif message.tags == 'error' %}
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-octagon me-1"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% elif message.tags == 'warning' %}
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+<div class="pagetitle">
+  <h1>Tablero Kanban de Contenidos</h1>
+  <nav>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+      <li class="breadcrumb-item active">Tablero Kanban</li>
+    </ol>
+  </nav>
+</div><!-- End Page Title -->
+
+<section class="section">
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Gestión de Contenidos</h5>
+          <p>Organiza los contenidos arrastrándolos entre columnas según su estado.</p>
+
+          <!-- Kanban Board -->
+          <div class="kanban-board row">
+            {% for state, items in contents.items %}
+              <div class="kanban-column col-lg-2 mx-1" id="{{ state }}">
+                <h4 class="text-center">{{ state }}</h4>
+                <div class="kanban-items p-2 border rounded" data-state="{{ state }}">
+                  {% for item in items %}
+                    <div class="kanban-item bg-light p-3 mb-3 rounded shadow-sm" data-id="{{ item.id }}" style="cursor: pointer; border: 1px solid #ddd;">
+                      <strong>
+                        {% if can_create_content %}
+                          <a href="{% url 'content_view' item.id %}" class="kanban-title-link">{{ item.title }}</a>
+                        {% elif can_edit_content and item.state == 'revision' %}
+                          <a href="{% url 'content-update' item.id %}" class="kanban-title-link">{{ item.title }}</a>
+                        {% elif can_edit_content or can_publish_content %}
+                          <a href="{% url 'content_view' item.id %}" class="kanban-title-link">{{ item.title }}</a>
+                        {% else %}
+                          <span>{{ item.title }}</span> <!-- Fallback if no valid permission -->
+                        {% endif %}                     
+                      </strong>
+                      <p class="small mb-1"><strong>Autor:</strong> {{ item.autor.name }}</p>
+                      <p class="small mb-1"><strong>Categoría:</strong> {{ item.category.name }}</p>
+                      <p class="small mb-0">
+                        <strong>Categoria Moderada:</strong>
+                        {% if item.category.is_moderated %}
+                          Si
+                        {% else %}
+                          No
+                        {% endif %}
+                      </p>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+          </div><!-- End Kanban Board -->
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Añadir estilos CSS directamente aquí -->
+<style>
+  .kanban-items {
+      max-height: 600px; /* Aumenta la altura según lo necesites */
+      overflow-y: auto; /* Permite el desplazamiento vertical dentro de la columna */
+  }
+
+  .kanban-column {
+      min-height: 600px; /* Ajusta la altura mínima para mayor uniformidad */
+      overflow-y: auto; /* Desplazamiento vertical en columnas */
+  }
+
+  .kanban-board {
+      display: flex;
+      flex-wrap: nowrap; /* Mantener las columnas alineadas horizontalmente */
+  }
+
+  .kanban-item {
+      border-radius: 8px;
+      padding: 20px; /* Aumenta el padding para mayor grosor */
+      margin-bottom: 15px; /* Aumenta el margen inferior para más espacio entre elementos */
+      background-color: #f8f9fa; /* Color de fondo claro */
+      transition: box-shadow 0.2s;
+  }
+
+  .kanban-item:hover {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Añade sombra al pasar el ratón para resaltar */
+  }
+
+  /* Estilo para subrayar el título al pasar el ratón */
+  .kanban-title-link {
+      text-decoration: none; /* Elimina el subrayado por defecto */
+      color: inherit; /* Mantiene el color de texto */
+  }
+
+  .kanban-title-link:hover {
+      text-decoration: underline; /* Añade el subrayado al pasar el ratón */
+  }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+<script>
+    document.querySelectorAll('.kanban-items').forEach(function (column) {
+        new Sortable(column, {
+            group: 'kanban',
+            animation: 150,
+            scroll: true,  // Habilitar auto-scroll en contenedores
+            scrollSensitivity: 100, // Ajusta para mayor sensibilidad en el scroll
+            scrollSpeed: 20, // Ajusta la velocidad del desplazamiento al arrastrar
+            onEnd: function (evt) {
+                const itemId = evt.item.dataset.id;
+                const newState = evt.to.dataset.state;
+                const originalState = evt.from.dataset.state;
+
+                // Mapeo de etiquetas a claves internas del modelo
+                const stateMap = {
+                    'Borrador': 'draft',
+                    'Edicion': 'revision',
+                    'A publicar': 'to_publish',
+                    'Publicado': 'publish',
+                    'Inactivo': 'inactive'
+                };
+
+                const mappedState = stateMap[newState];  // Convertir la etiqueta a la clave
+
+                // Verifica los permisos en función de los atributos de estado del contenido
+                const userPermissions = {
+                    create: {{ can_create_content|yesno:"true,false" }},
+                    edit: {{ can_edit_content|yesno:"true,false" }},
+                    publish: {{ can_publish_content|yesno:"true,false" }},
+                    editIsActive: {{ can_edit_is_active|yesno:"true,false" }}
+                };
+
+                let canChangeState = false;
+                const itemData = evt.item.dataset;  // Accede a los datos del ítem, como autor y categoría
+
+                // Lógica de permisos según el estado del contenido y los permisos del usuario
+                if (userPermissions.create) {
+                    // Verifica si la categoría no es moderada para permitir el cambio de Borrador a Publicado
+                    const isModerated = itemData.isModerated === 'true';
+                    if (
+                        (originalState === 'Borrador' && newState === 'Edicion') ||
+                        (originalState === 'Borrador' && newState === 'Publicado' && !isModerated) || // Nueva restricción
+                        (originalState === 'Publicado' && newState === 'Inactivo') ||
+                        (originalState === 'Inactivo' && newState === 'Publicado') ||
+                        (originalState === newState)  // Permite mover al mismo estado
+                    ) {
+                        canChangeState = true;
+                    }
+                } else if (userPermissions.edit) {
+                    if (
+                        (originalState === 'Edicion' && newState === 'A publicar') ||
+                        (originalState === newState)  // Permite mover al mismo estado
+                    ) {
+                        canChangeState = true;
+                    }
+                } else if (userPermissions.publish) {
+                    if (
+                        (originalState === 'A publicar' && ['Publicado', 'Edicion'].includes(newState)) ||
+                        (originalState === newState)  // Permite mover al mismo estado
+                    ) {
+                        canChangeState = true;
+                    }
+                } else if (userPermissions.editIsActive) {
+                    if (originalState === 'Publicado' && newState === 'Inactivo') {
+                        canChangeState = true;
+                    }
+                }
+
+                if (!canChangeState) {
+                    alert('No tienes permiso para cambiar el estado.');
+                    evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
+                    return;
+                }
+
+                // Llamar a la API para actualizar el estado del contenido
+                fetch(`/api/update-content-state/${itemId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ state: mappedState })
+                }).then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            alert(`Error al actualizar el estado: ${data.message}`);
+                            evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
+                        });
+                    } else {
+                        console.log('Estado actualizado correctamente');
+                    }
+                }).catch(error => {
+                    console.error('Error en la solicitud fetch:', error);
+                    alert('Error en la comunicación con el servidor.');
+                    evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
+                });
+            }
+        });
+    });
+</script>
+
+{% endblock content %}

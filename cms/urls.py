@@ -1,26 +1,5 @@
-"""
-URL configuration for cms project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.1/topics/http/urls/
-
-Examples:
-
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.conf import settings
 from django.conf.urls.static import static
-
 from category.views import content_by_category_view
 
 """
@@ -50,6 +29,7 @@ Rutas:
     - 'change-password/': Ruta para cambiar la contraseña del usuario autenticado, utilizando `change_password`.
 """
 
+from content.views import kanban_board, update_content_state, ContentHistoryView
 from django.contrib import admin
 from django.urls import include, path
 from app.auth.views import register_view, login_view, logout_view, reset_password_view, password_reset_confirm_view
@@ -82,6 +62,9 @@ urlpatterns = [
     path('content/<int:pk>/edit/', ContentUpdateView.as_view(), name='content-update'),
     path('content/<int:id>/', view_content, name='content_view'),
     path('category/<int:id>/', content_by_category_view, name='content_by_category'),
+    path('content/<int:content_id>/history/', ContentHistoryView.as_view(), name='content_history'),
+    path('tablero/', kanban_board, name='kanban_board'),
+    path('api/update-content-state/<int:content_id>/', update_content_state, name='update_content_state'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

@@ -2,6 +2,12 @@ from django import forms
 from .models import Content
 
 class ContentForm(forms.ModelForm):
+    change_reason = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        label='Razón de edición'
+    )
+
     class Meta:
         model = Content
         fields = ['title', 'summary', 'category', 'date_published', 'content', 'attachment']
@@ -11,6 +17,7 @@ class ContentForm(forms.ModelForm):
             'category': forms.Select(attrs={'class': 'form-select'}),  # Campo select con clase Bootstrap
             'date_published': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'attachment': forms.ClearableFileInput(attrs={'class': 'form-control', 'multiple':'True'}),  # Campo de archivo con clase Bootstrap
+
         }
     def __init__(self, *args, **kwargs):
         super(ContentForm, self).__init__(*args, **kwargs)
@@ -18,9 +25,19 @@ class ContentForm(forms.ModelForm):
         if self.instance.pk:
             if self.instance.state != Content.StateChoices.draft:
                 # En modo de edición
-                self.fields['category'].required = False
-                self.fields['category'].widget.attrs['disabled'] = 'disabled'
+                for field in self.fields.values():
+                    field.required = False
+
                 self.fields['date_published'].widget = forms.TextInput(attrs={'type': 'text', 'class': 'form-control', 'readonly': 'readonly'})
+                self.fields['title'].widget.attrs['disabled'] = 'disabled'
+                self.fields['summary'].widget.attrs['disabled'] = 'disabled'
+                self.fields['category'].widget.attrs['disabled'] = 'disabled'
+                self.fields['date_published'].widget.attrs['disabled'] = 'disabled'
+            else:
+                print(self.instance.date_published.strftime('%m-%d-%Y'))
+                #self.fields['date_published'].widget = forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+                #self.fields['date_published'].widget.attrs['value'] = self.instance.date_published
+                #self.fields['date_published'].widget.attrs['disabled'] = 'disabled'
         else:
             # En modo de creación
             self.fields['date_published'].widget = forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})

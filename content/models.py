@@ -76,11 +76,11 @@ class Content (models.Model):
             Esta enumeración se utiliza para limitar las opciones disponibles en el campo `state` del modelo Content,
             garantizando que solo se seleccionen valores válidos y predefinidos.
         """
-        draft = 'Borrador', ('Borrador')
-        revision = 'Revisión', ('Revisión')
-        to_publish = 'A publicar', ('A publicar')
-        publish = 'Publicado', ('Publicado')
-        inactive = 'Inactivo', ('Inactivo')
+        draft = 'draft', ('Borrador')
+        revision = 'revision', ('Revisión')
+        to_publish = 'to_publish', ('A publicar')
+        publish = 'publish', ('Publicado')
+        inactive = 'inactive', ('Inactivo')
 
     state = models.CharField(
         choices=StateChoices.choices,

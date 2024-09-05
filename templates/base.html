@@ -227,7 +227,7 @@
         {% endif %}
 
         <li class="nav-item">
-          <a class="nav-link collapsed" href="#">
+          <a class="nav-link collapsed" href="/tablero">
             <i class="bi bi-table"></i>
             <span>Tablero</span>
           </a>
@@ -273,6 +273,7 @@
   {% block js %}
   <!-- Vendor JS Files -->
   <script src="{% static 'assets/js/jquery-3.7.1.min.js' %}"></script>
+  <script src="{% static 'assets/js/bootbox.min.js' %}"></script>
   <script src="{% static 'assets/vendor/apexcharts/apexcharts.min.js' %}"></script>
   <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'assets/vendor/chart.js/chart.umd.js' %}"></script>
@@ -283,7 +284,7 @@
   <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
   <!-- Template Main JS File -->
   <script src="{% static 'assets/js/main.js' %}"></script>
-  <script src="{% static 'assets/js/bootbox.min.js' %}"></script>
+  <script src="{% static 'assets/js/utils.js' %}"></script>
   {% endblock js %}
 
 
