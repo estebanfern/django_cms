@@ -2,6 +2,12 @@ from django import forms
 from .models import Content
 
 class ContentForm(forms.ModelForm):
+    change_reason = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        label='Razón de edición'
+    )
+
     class Meta:
         model = Content
         fields = ['title', 'summary', 'category', 'date_published', 'content', 'attachment']
@@ -11,6 +17,7 @@ class ContentForm(forms.ModelForm):
             'category': forms.Select(attrs={'class': 'form-select'}),  # Campo select con clase Bootstrap
             'date_published': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'attachment': forms.ClearableFileInput(attrs={'class': 'form-control', 'multiple':'True'}),  # Campo de archivo con clase Bootstrap
+
         }
     def __init__(self, *args, **kwargs):
         super(ContentForm, self).__init__(*args, **kwargs)
