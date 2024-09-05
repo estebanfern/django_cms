@@ -1,4 +1,5 @@
 from django.shortcuts import redirect, render, get_object_or_404
+from django.urls import reverse_lazy
 
 # Create your views here.
 from django.utils import timezone 
@@ -13,27 +14,23 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     form_class = ContentForm
     template_name = 'content/content_form.html'
     success_url = 'home' # a donde ir despues
+    cancel_url = 'home' # ir cuando se cancela
     permission_required = 'app.create_content'
-
+    
     def form_valid(self, form):
-        action = self.request.POST.get('action')
         content = form.save(commit=False)
-
         content.autor = self.request.user
-
-        if action == 'save_draft':
-            content.is_active = False
-            content.date_create = timezone.now()
-            content.date_expire = None
-            content.state = Content.StateChoices.draft
-        elif action == 'send_for_revision':
-            content.is_active = False
-            content.date_create = timezone.now()
-            content.date_expire = None
-            content.state = Content.StateChoices.revision
-            
+        content.is_active = True
+        content.date_create = timezone.now()
+        content.date_expire = None
+        content.state = Content.StateChoices.draft
         content.save()
         return redirect(self.success_url)
+        
+    def form_invalid(self, form):
+        return self.render_to_response(self.get_context_data(form=form))
+        
+        
 
 
 class ContentUpdateView(LoginRequiredMixin, UpdateView):
