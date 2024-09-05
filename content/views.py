@@ -160,6 +160,11 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
         # Verifica si el usuario tiene al menos uno de los permisos requeridos
         if not any(request.user.has_perm(perm) for perm in self.required_permissions):
             raise PermissionDenied
+        
+        # Verifica que solo el autor del contenido edite su contenido en borrador
+        if self.request.user != self.get_object().autor and self.request.user.has_perm('app.create_content') and not self.request.user.has_perm('app.edit_content') :
+            raise PermissionDenied
+        
         return super().dispatch(request, *args, **kwargs)
 
     def get_form(self, form_class=None):
@@ -176,11 +181,8 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
         # Captura la razón de cambio desde el formulario
         change_reason = form.cleaned_data.get('change_reason', '')
 
-        # Recupera el autor 
-        #autor = self.get_object().autor
 
-
-        if user.has_perm('app.create_content'):# and user.id == autor:
+        if user.has_perm('app.create_content'):
             # Solo actualizar los campos que vienen del formulario
             form_data = form.cleaned_data
             for field in form_data:
