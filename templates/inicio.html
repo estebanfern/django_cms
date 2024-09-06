@@ -39,12 +39,12 @@
     <div class="col-12">
 
       <div class="card">
-        {% if category != None or autor != None %}
+        {% if category != None or query != None %}
             <div class="card-header">
               <div class="row">
                 <div class="col-6">
-                {% if autor != None %}
-                  Autor: {{ autor.name }}
+                {% if query != None %}
+                  Busqueda: {{ query }}
                 {% endif %}
                 </div>
                 <div class="col-6 text-end">
