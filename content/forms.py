@@ -5,19 +5,18 @@ from .models import Content
 class ContentForm(forms.ModelForm):
     change_reason = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'required':'required'}),
         label='Razón de edición'
     )
 
     class Meta:
         model = Content
-        fields = ['title', 'summary', 'category', 'date_published', 'content', 'attachment', 'tags']
+        fields = ['title', 'summary', 'category', 'date_published', 'content', 'tags']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),  # Campo de texto con clase Bootstrap
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': '4', 'maxlength' : '255'}),  # Asegura que ocupe toda la línea
             'category': forms.Select(attrs={'class': 'form-select'}),  # Campo select con clase Bootstrap
             'date_published': forms.DateInput(attrs={'type': 'date', 'class': 'form-control', 'min': (datetime.date.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d')}),
-            'attachment': forms.ClearableFileInput(attrs={'class': 'form-control', 'multiple':'True'}),  # Campo de archivo con clase Bootstrap
         }
     def __init__(self, *args, **kwargs):
         super(ContentForm, self).__init__(*args, **kwargs)
