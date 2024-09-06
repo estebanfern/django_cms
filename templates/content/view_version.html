@@ -63,22 +63,7 @@
         </div>
         <div class="card-footer">
           <div class="row">
-            <div class="col-6 text-start">
-              {% comment %} Mientras tanto que solo se puede subir un archivo adjunto {% endcomment %}
-            
-              {% if history.attachment %}
-              Archivos adjuntos: 
-              <a href="{{ history.attachment.url }}" target="_blank">{{ history.attachment.file.name }}</a>
-              {% else %} 
-                  No hay archivos adjuntos.
-              {% endif %}
-              
-              {% comment %} Usar cuando se tenga la lista de archivos adjuntos {% endcomment %}
-              {% comment %} {% for att in history.attachment.all %}
-                <a href="{{ att.url }}" target="_blank">{{ att.file.name }}</a>
-              {% endfor %} {% endcomment %}
-            </div>
-            <div class="col-6 text-end">
+            <div class="col-12 text-start">
               {% if history.history_change_reason != None and history.history_change_reason|length > 0 %}
                   Motivo de cambio: {{ history.history_change_reason }}
               {% endif %}
