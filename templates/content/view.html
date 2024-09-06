@@ -40,12 +40,44 @@
     <div class="col-lg-12">
 
       <div class="card">
+        <div class="card-header">
+          <div class="row">
+            <div class="col-4 text-start">
+              {{ content.date_published|default:"" }}
+            </div>
+            <div class="col-4 text-center">
+              <a href="/profile/{{ content.autor_id }}">{{ content.autor.name }}</a>
+            </div>
+            <div class="col-4 text-end">
+              {{ content.category.name }}
+            </div>
+          </div>
+        </div>
         <div class="card-body">
           <h1 class="text-center mt-4 fw-bold">{{ content.title }}</h1>
           <h4> {{content.summary}} </h4>
           <section>
             {{ content.content|safe }}
           </section>
+        </div>
+        <div class="card-footer">
+          <div class="row">
+            <div class="col-6 text-start">
+              {% comment %} Mientras tanto que solo se puede subir un archivo adjunto {% endcomment %}
+              Archivos adjuntos: 
+              <a href="{{ content.attachment.url }}" target="_blank">{{ content.attachment.file.name }}</a>
+
+              {% comment %} Usar cuando se tenga la lista de archivos adjuntos {% endcomment %}
+              {% comment %} {% for att in content.attachment.all %}
+                <a href="{{ att.url }}" target="_blank">{{ att.file.name }}</a>
+              {% endfor %} {% endcomment %}
+            </div>
+            <div class="col-6 text-end">
+              {% for tag in content.tags.all %}
+              <span class="badge text-bg-secondary">{{ tag }}</span>
+              {% endfor %}
+            </div>
+          </div>
         </div>
       </div>
         <a href="{% url 'content_history' content.id %}" class="btn btn-secondary">Historial</a>
