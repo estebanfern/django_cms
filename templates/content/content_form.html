@@ -65,12 +65,12 @@
 </section>
 <script src="{% static 'ckeditor/ckeditor/ckeditor.js' %}"></script>
 <script>
-    CKEDITOR.replace('{{ form.content.name }}', {
-        config: {
-            toolbar: 'full',
-            height: 300,
-            width: '100%',
-        }
-    });
+CKEDITOR.replace('{{ form.content.name }}', {
+        extraPlugins: 'uploadimage',
+        filebrowserUploadUrl: '{% url "content_ckeditor_upload" %}',
+        toolbar: 'full',
+        height: 300,
+        width: '100%'
+      });
 </script>
 {% endblock content %}
