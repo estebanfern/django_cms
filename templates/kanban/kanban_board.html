@@ -57,7 +57,7 @@
                           <a href="{% url 'content_view' item.id %}" class="kanban-title-link">{{ item.title }}</a>
                         {% elif can_edit_content and item.state == 'revision' %}
                           <a href="{% url 'content-update' item.id %}" class="kanban-title-link">{{ item.title }}</a>
-                        {% elif can_edit_content or can_publish_content %}
+                        {% elif can_edit_content or can_publish_content or can_edit_is_active %}
                           <a href="{% url 'content_view' item.id %}" class="kanban-title-link">{{ item.title }}</a>
                         {% else %}
                           <span>{{ item.title }}</span> <!-- Fallback if no valid permission -->
@@ -199,7 +199,7 @@
                 }
 
                 if (!canChangeState) {
-                    alert('No tienes permiso para cambiar el estado.');
+                    modal.warning({message:'No tienes permiso para cambiar el estado.'});
                     evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
                     return;
                 }
@@ -215,7 +215,7 @@
                 }).then(response => {
                     if (!response.ok) {
                         return response.json().then(data => {
-                            alert(`Error al actualizar el estado: ${data.message}`);
+                            modal.error({message:`Error al actualizar el estado: ${data.message}`});
                             evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
                         });
                     } else {
@@ -223,7 +223,7 @@
                     }
                 }).catch(error => {
                     console.error('Error en la solicitud fetch:', error);
-                    alert('Error en la comunicación con el servidor.');
+                    modal.error({message:'Error en la comunicación con el servidor.'});
                     evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
                 });
             }
