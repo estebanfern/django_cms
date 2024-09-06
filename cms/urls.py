@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.conf.urls.static import static
-from category.views import content_by_category_view
+from category.views import categories_by_type
 
 """
 Definición de rutas URL para la aplicación.
@@ -61,10 +61,13 @@ urlpatterns = [
     path('content/new/', ContentCreateView.as_view(), name='content-create'),
     path('content/<int:pk>/edit/', ContentUpdateView.as_view(), name='content-update'),
     path('content/<int:id>/', view_content, name='content_view'),
-    path('category/<int:id>/', content_by_category_view, name='content_by_category'),
     path('content/<int:content_id>/history/', ContentHistoryView.as_view(), name='content_history'),
     path('tablero/', kanban_board, name='kanban_board'),
     path('api/update-content-state/<int:content_id>/', update_content_state, name='update_content_state'),
+
+    # Category
+    path('category/<str:type>/', categories_by_type, name='categories_by_type'),
+
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
