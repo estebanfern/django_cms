@@ -1,7 +1,3 @@
-from django.conf import settings
-from django.conf.urls.static import static
-from category.views import categories_by_type
-
 """
 Definición de rutas URL para la aplicación.
 
@@ -29,15 +25,17 @@ Rutas:
     - 'change-password/': Ruta para cambiar la contraseña del usuario autenticado, utilizando `change_password`.
 """
 
-from content.views import kanban_board, update_content_state, ContentHistoryView, view_version
+from content.views import kanban_board, update_content_state, view_version
 from django.contrib import admin
 from django.urls import include, path
 from app.auth.views import register_view, login_view, logout_view, reset_password_view, password_reset_confirm_view
 from app.profile.views import other_profile_view, profile_view, change_password
 from app.views import *
-from django.contrib.auth import views as auth_views
 from content.views import ContentCreateView, ContentUpdateView, view_content
 from ckeditor_uploader import views
+from django.conf import settings
+from django.conf.urls.static import static
+from category.views import categories_by_type
 
 urlpatterns = [
 

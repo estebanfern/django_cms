@@ -239,7 +239,18 @@ def view_content(request, id):
     return render(request, 'content/view.html', {"content" : content, "history" : history})
 
 def view_version(request, content_id, history_id):
+    user = request.user
     content = get_object_or_404(Content, id=content_id)
+
+    if user.has_perm('app.create_content') and user.id == content.autor_id:
+        pass
+    elif user.has_perm('app.edit_content'):
+        pass
+    elif user.has_perm('app.publish_content'):
+        pass
+    else:
+        raise PermissionDenied
+
     history = content.history.filter(history_id=history_id).first()
 
     if not history:
