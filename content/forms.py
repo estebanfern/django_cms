@@ -17,14 +17,13 @@ class ContentForm(forms.ModelForm):
             'category': forms.Select(attrs={'class': 'form-select'}),  # Campo select con clase Bootstrap
             'date_published': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'attachment': forms.ClearableFileInput(attrs={'class': 'form-control', 'multiple':'True'}),  # Campo de archivo con clase Bootstrap
-
         }
     def __init__(self, *args, **kwargs):
         super(ContentForm, self).__init__(*args, **kwargs)
             # Verifica si el formulario está en modo de edición o creación
         if self.instance.pk:
             if self.instance.state != Content.StateChoices.draft:
-                # En modo de edición
+                # En modo de edición por editor
                 for field in self.fields.values():
                     field.required = False
 
@@ -33,11 +32,13 @@ class ContentForm(forms.ModelForm):
                 self.fields['summary'].widget.attrs['disabled'] = 'disabled'
                 self.fields['category'].widget.attrs['disabled'] = 'disabled'
                 self.fields['date_published'].widget.attrs['disabled'] = 'disabled'
+                self.fields['tags'].widget.attrs['disabled'] = 'disabled'
+                self.fields['tags'].widget.attrs['class'] = 'form-control'
             else:
-                print(self.instance.date_published.strftime('%m-%d-%Y'))
-                #self.fields['date_published'].widget = forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
-                #self.fields['date_published'].widget.attrs['value'] = self.instance.date_published
-                #self.fields['date_published'].widget.attrs['disabled'] = 'disabled'
+                # En modo edición por autor
+                self.fields['date_published'].widget = forms.DateInput(attrs={'type': 'date', 'class': 'form-control', 'value' : self.instance.date_published})
+                self.fields['tags'].widget.attrs['class'] = 'form-control'
         else:
             # En modo de creación
-            self.fields['date_published'].widget = forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+            # Se hace algo?
+            self.fields['tags'].widget.attrs['class'] = 'form-control'
