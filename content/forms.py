@@ -47,7 +47,7 @@ class ContentForm(forms.ModelForm):
                         'value': self.instance.date_published if self.instance.date_published else ''
                     }
                 )
-                print(self.instance.date_published)
+                #print(self.instance.date_published)
         else:
             # En modo de creación
             # Se hace algo?
