@@ -63,12 +63,19 @@ function redirectWithParams(element, url, param, value=null) {
     if (!value) {
         value = element.attributes[`${param}-value`].value;
     }
-
     // Obtener los parámetros existentes de la URL actual
     const urlParams = new URLSearchParams(window.location.search);
-    // Añadir o modificar el parámetro `cat`
+    // Añadir o modificar el parámetro
     urlParams.set(param, value);
+    // Redireccionar con los parámetros actualizados
+    window.location.href = `${url}?${urlParams.toString()}`;
+}
 
+function deleteParam(url, param) {
+    // Obtener los parámetros existentes de la URL actual
+    const urlParams = new URLSearchParams(window.location.search);
+    // Eliminar el parámetro
+    urlParams.delete(param);
     // Redireccionar con los parámetros actualizados
     window.location.href = `${url}?${urlParams.toString()}`;
 }
