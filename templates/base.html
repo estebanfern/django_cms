@@ -51,15 +51,118 @@
     </div><!-- End Logo -->
 
     <div class="search-bar">
-      <form class="search-form d-flex align-items-center" method="POST" action="#">
-        <input type="text" name="query" placeholder="Buscar" title="Enter search keyword">
-        <button type="submit" title="Search"><i class="bi bi-search"></i></button>
-      </form>
-    </div><!-- End Search Bar -->
+      <div class="input-group">
+        <input type="text" id="query" class="form-control form-control-sm border-secondary" placeholder="Buscar" title="Buscar por título">
+        <button class="btn btn-sm btn-outline-secondary" type="button" title="Buscar" onclick="redirectWithParams(this, '/', 'query', document.getElementById('query').value); return false;">
+          <i class="bi bi-search"></i>
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" type="button" onclick="deleteParam('/', 'query'); document.getElementById('query').value = ''; return false;" title="Limpiar">
+          <i class="bi bi-brush"></i>
+        </button>
+      </div>
+    </div>
+    
+
+    <nav class="header-nav ms-auto">
+      <ul class="d-flex align-items-center gap-4">
+        <!-- Todas las categorias (elimina el filtro) -->
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center" href="#" onclick="deleteParam('/', 'cat'); return false;"">
+            <span>Todas las categorias</span>
+          </a>
+        </li>
+
+        <!-- Publicas -->
+        <li class="nav-item dropdown">
+          <a class="nav-link d-flex align-items-center" href="#" data-bs-toggle="dropdown">
+            <span>Categorías Públicas</span>
+            <span class="d-none d-md-block dropdown-toggle ps-2"></span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
+            {% for cat in categories_publicas|slice:":5" %}
+            <a href="#" type="button" cat-value="{{cat.id}}" onclick="redirectWithParams(this, '/', 'cat'); return false;"">
+              <li class="notification-item">
+                <div>
+                  <h4>{{ cat.name }}</h4>
+                  <p>{{ cat.description }}</p>
+                </div>
+              </li>
+              <li>
+            </a>
+              <hr class="dropdown-divider">
+            </li>
+            {% endfor %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li class="dropdown-footer">
+              <a href="/category/Publico">Ver todas las categorias públicas</a>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Suscripción -->
+        <li class="nav-item dropdown">
+          <a class="nav-link d-flex align-items-center" href="#" data-bs-toggle="dropdown">
+            <span>Categorías de Suscripción</span>
+            <span class="d-none d-md-block dropdown-toggle ps-2"></span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
+            {% for cat in categories_suscriptores|slice:":5" %}
+            <a href="#" type="button" cat-value="{{cat.id}}" onclick="redirectWithParams(this, '/', 'cat'); return false;"">
+              <li class="notification-item">
+                <div>
+                  <h4>{{ cat.name }}</h4>
+                  <p>{{ cat.description }}</p>
+                </div>
+              </li>
+            </a>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endfor %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li class="dropdown-footer">
+              <a href="/category/Suscriptor">Ver todas las categorias de suscripción</a>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Pago -->
+        <li class="nav-item dropdown">
+          <a class="nav-link d-flex align-items-center" href="#" data-bs-toggle="dropdown">
+            <span>Categorías de Pago</span>
+            <span class="d-none d-md-block dropdown-toggle ps-2"></span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
+            {% for cat in categories_pago|slice:":5" %}
+            <a href="#" type="button" cat-value="{{cat.id}}" onclick="redirectWithParams(this, '/', 'cat'); return false;"">
+              <li class="notification-item">
+                <div>
+                  <h4>{{ cat.name }}</h4>
+                  <p>{{ cat.description }}</p>
+                </div>
+              </li>
+            </a>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endfor %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li class="dropdown-footer">
+              <a href="/category/Pago">Ver todas las categorias de pago</a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
 
     <nav class="header-nav ms-auto">
       <ul class="d-flex align-items-center">
-
         <li class="nav-item d-block d-lg-none">
           <a class="nav-link nav-icon search-bar-toggle " href="#">
             <i class="bi bi-search"></i>
@@ -137,7 +240,7 @@
         {% endif %}
 
         <li class="nav-item">
-          <a class="nav-link collapsed" href="#">
+          <a class="nav-link collapsed" href="/tablero">
             <i class="bi bi-table"></i>
             <span>Tablero</span>
           </a>
@@ -183,6 +286,7 @@
   {% block js %}
   <!-- Vendor JS Files -->
   <script src="{% static 'assets/js/jquery-3.7.1.min.js' %}"></script>
+  <script src="{% static 'assets/js/bootbox.min.js' %}"></script>
   <script src="{% static 'assets/vendor/apexcharts/apexcharts.min.js' %}"></script>
   <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'assets/vendor/chart.js/chart.umd.js' %}"></script>
@@ -193,7 +297,7 @@
   <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
   <!-- Template Main JS File -->
   <script src="{% static 'assets/js/main.js' %}"></script>
-  <script src="{% static 'assets/js/bootbox.min.js' %}"></script>
+  <script src="{% static 'assets/js/utils.js' %}"></script>
   {% endblock js %}
 
 

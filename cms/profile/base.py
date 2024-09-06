@@ -13,6 +13,8 @@ from pathlib import Path
 import os
 from decouple import config
 
+from category.context_processors import categories
+
 print(f'Using profile file: {config("DJANGO_SETTINGS_MODULE", default="Not specified")}')
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -44,6 +46,7 @@ INSTALLED_APPS = [
     'content',
     'ckeditor',
     'ckeditor_uploader', 
+    'taggit',
 ]
 
 MIDDLEWARE = [
@@ -54,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 ROOT_URLCONF = 'cms.urls'
@@ -69,6 +73,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'category.context_processors.categories',
             ],
         },
     },
@@ -215,12 +220,15 @@ JAZZMIN_UI_TWEAKS = {
 }
 
 CKEDITOR_UPLOAD_PATH = 'uploads/'
-
+CKEDITOR_FILENAME_GENERATOR = 'content.utils.get_filename'
 
 CKEDITOR_CONFIGS = {
     'default': {
         'toolbar': 'full',
         'height': 300,
         'width': '100%',
+        'extraPlugins': 'uploadimage',
+        'filebrowserUploadUrl': '/ckeditor/upload/',
+        'filebrowserBrowseUrl': '/ckeditor/browse/',
     },
 }
