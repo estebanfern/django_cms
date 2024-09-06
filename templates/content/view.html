@@ -62,22 +62,7 @@
         </div>
         <div class="card-footer">
           <div class="row">
-            <div class="col-6 text-start">
-              {% comment %} Mientras tanto que solo se puede subir un archivo adjunto {% endcomment %}
-            
-              {% if content.attachment %}
-              Archivos adjuntos: 
-              <a href="{{ content.attachment.url }}" target="_blank">{{ content.attachment.file.name }}</a>
-              {% else %} 
-                  No hay archivos adjuntos.
-              {% endif %}
-              
-              {% comment %} Usar cuando se tenga la lista de archivos adjuntos {% endcomment %}
-              {% comment %} {% for att in content.attachment.all %}
-                <a href="{{ att.url }}" target="_blank">{{ att.file.name }}</a>
-              {% endfor %} {% endcomment %}
-            </div>
-            <div class="col-6 text-end">
+            <div class="col-12 text-center">
               {% for tag in content.tags.all %}
               <span class="badge text-bg-secondary">{{ tag }}</span>
               {% endfor %}
