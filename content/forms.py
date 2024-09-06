@@ -16,7 +16,7 @@ class ContentForm(forms.ModelForm):
             'title': forms.TextInput(attrs={'class': 'form-control'}),  # Campo de texto con clase Bootstrap
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': '4', 'maxlength' : '255'}),  # Asegura que ocupe toda la línea
             'category': forms.Select(attrs={'class': 'form-select'}),  # Campo select con clase Bootstrap
-            'date_published': forms.DateInput(attrs={'type': 'date', 'class': 'form-control', 'min': (datetime.date.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d')}),
+            'date_published': forms.DateInput(attrs={'type': 'date', 'class': 'form-control', 'min': (datetime.date.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d'),'max': '2026-12-31'}),
         }
     def __init__(self, *args, **kwargs):
         super(ContentForm, self).__init__(*args, **kwargs)
@@ -36,8 +36,18 @@ class ContentForm(forms.ModelForm):
                 self.fields['tags'].widget.attrs['class'] = 'form-control'
             else:
                 # En modo edición por autor
-                self.fields['date_published'].widget = forms.DateInput(attrs={'type': 'date', 'class': 'form-control', 'min': (datetime.date.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d')})
+                #print(self.instance.date_published)
                 self.fields['tags'].widget.attrs['class'] = 'form-control'
+                self.fields['date_published'].widget = forms.DateInput(
+                    attrs={
+                        'type': 'date',
+                        'class': 'form-control',
+                        'min': (datetime.date.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d'),
+                        'max': '2026-12-31',
+                        'value': self.instance.date_published if self.instance.date_published else ''
+                    }
+                )
+                print(self.instance.date_published)
         else:
             # En modo de creación
             # Se hace algo?
