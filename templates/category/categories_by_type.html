@@ -39,45 +39,31 @@
     <div class="col-12">
 
       <div class="card">
-        {% if category != None or query != None %}
-            <div class="card-header">
-              <div class="row">
-                <div class="col-6">
-                {% if query != None %}
-                  Busqueda: {{ query }}
-                {% endif %}
-                </div>
-                <div class="col-6 text-end">
-                {% if category != None %}
-                  Categoria: {{ category.name }}
-                {% endif %}
-                </div>
-              </div>
-            </div>
-        {% endif %}
+          <div class="card-header text-center">
+            {{ type }}
+          </div>
         <div class="card-body">
-          <h5 class="card-title text-center">Lista de contenidos</h5>
+          <h5 class="card-title text-center">Lista de categorias</h5>
           <section class="row">
-            {% if page_obj.object_list|length == 0 %}
+            {% if categories|length == 0 %}
             <div class="col-12 mt-5 mb-5">
-              <h4 class="text-center">No hay contenidos por mostrar</h4>
+              <h4 class="text-center">No hay categorias por mostrar</h4>
             </div>
             {% endif %}
-            {% for content in page_obj %}
+            {% for category in categories %}
             <div class="col-6">
               <div class="card shadow">
-                <div class="card-header">{{ content.category.name  }}</div>
-                <div class="card-body">
-                  <h5 class="card-title text-center">{{ content.title }}</h5>
-                  {{ content.summary }}<a href="/content/{{content.id}}">...ver más</a>
+                <div class="card-header card-title text-center">{{ category.name  }}</div>
+                <div class="card-body mt-3">
+                  {{ category.description }}
                 </div>
-                <div class="card-footer">
-                  {{ content.autor }} - {{ content.date_create }}
+                <div class="card-footer text-center">
+                  <a href="/?cat={{category.id}}">Ver los contenidos de esta categoria</a>
                 </div>
               </div>
             </div>
             {% endfor %}
-            <nav aria-label="Page navigation">
+            {% comment %} <nav aria-label="Page navigation">
               <ul class="pagination justify-content-center">
                 {% if page_obj.has_previous %}
                 <li class="page-item">
@@ -101,7 +87,7 @@
                 </li>
                 {% endif %}
               </ul>
-            </nav>
+            </nav> {% endcomment %}
           </section>
         </div>
       </div>
