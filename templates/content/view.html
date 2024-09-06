@@ -90,6 +90,7 @@
   
 
     <!-- Historial del contenido -->
+    {% if perms.app.create_content and user.id == content.autor_id or perms.app.edit_content or perms.app.publish_content  %}
     <div class="col-lg-12">
         <div class="card">
             <div class="card-header">Historial del contenido</div>
@@ -136,8 +137,8 @@
                 </table>
             </div>
         </div>
-
     </div>
+    {% endif %}
 
   </div>
 </section>

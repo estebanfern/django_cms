@@ -16,6 +16,14 @@ from django.contrib import messages
 @login_required
 def kanban_board(request):
     user = request.user
+
+    if not (
+        user.has_perm('app.create_content') or 
+        user.has_perm('app.edit_content') or 
+        user.has_perm('app.publish_content')
+    ):
+        raise PermissionDenied
+    
     contents = {
         'Borrador': [],
         'Edicion': [],
@@ -56,6 +64,14 @@ def kanban_board(request):
 @login_required
 def update_content_state(request, content_id):
     user = request.user
+
+    if not (
+        user.has_perm('app.create_content') or 
+        user.has_perm('app.edit_content') or 
+        user.has_perm('app.publish_content')
+    ):
+        raise PermissionDenied
+
     content = get_object_or_404(Content, id=content_id)
 
     if request.method == 'POST':
@@ -239,7 +255,18 @@ def view_content(request, id):
     return render(request, 'content/view.html', {"content" : content, "history" : history})
 
 def view_version(request, content_id, history_id):
+    user = request.user
     content = get_object_or_404(Content, id=content_id)
+
+    if user.has_perm('app.create_content') and user.id == content.autor_id:
+        pass
+    elif user.has_perm('app.edit_content'):
+        pass
+    elif user.has_perm('app.publish_content'):
+        pass
+    else:
+        raise PermissionDenied
+
     history = content.history.filter(history_id=history_id).first()
 
     if not history:
