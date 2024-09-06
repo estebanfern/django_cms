@@ -20,7 +20,8 @@ def kanban_board(request):
     if not (
         user.has_perm('app.create_content') or 
         user.has_perm('app.edit_content') or 
-        user.has_perm('app.publish_content')
+        user.has_perm('app.publish_content') or
+        user.has_perm('app.edit_is_active')
     ):
         raise PermissionDenied
     
@@ -68,7 +69,8 @@ def update_content_state(request, content_id):
     if not (
         user.has_perm('app.create_content') or 
         user.has_perm('app.edit_content') or 
-        user.has_perm('app.publish_content')
+        user.has_perm('app.publish_content') or
+        user.has_perm('app.edit_is_active')
     ):
         raise PermissionDenied
 
@@ -260,9 +262,10 @@ def view_version(request, content_id, history_id):
 
     if user.has_perm('app.create_content') and user.id == content.autor_id:
         pass
-    elif user.has_perm('app.edit_content'):
-        pass
-    elif user.has_perm('app.publish_content'):
+    elif (user.has_perm('app.edit_content') 
+          or user.has_perm('app.publish_content')
+          or user.has_perm('app.edit_is_active')
+            ):
         pass
     else:
         raise PermissionDenied
