@@ -1,6 +1,6 @@
 from django.utils import timezone
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from .models import Content
 import json
@@ -234,18 +234,14 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
 
 def view_content(request, id):
     content = get_object_or_404(Content, id=id)
-    return render(request, 'content/view.html', {"content" : content})
+    #Traer la historia y renderizarla de manera descendente
+    history = content.history.all().order_by('-history_date')
+    return render(request, 'content/view.html', {"content" : content, "history" : history})
 
+def view_version(request, content_id, history_id):
+    content = get_object_or_404(Content, id=content_id)
+    history = content.history.filter(history_id=history_id).first()
 
-class ContentHistoryView(LoginRequiredMixin, View):
-    template_name = 'content/content_history.html'
-
-    def get(self, request, content_id):
-        content = get_object_or_404(Content, id=content_id)
-        # Obtener el historial del contenido
-        history = content.history.all().order_by('-history_date')
-        context = {
-            'content': content,
-            'history': history,
-        }
-        return render(request, self.template_name, context)
+    if not history:
+        raise Http404
+    return render(request, 'content/view_version.html', {"content" : content, "history" : history})

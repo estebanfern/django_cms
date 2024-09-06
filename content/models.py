@@ -136,3 +136,17 @@ class Content (models.Model):
             'estado' es la descripción del estado del contenido.
         """
         return f"{self.title} ({self.get_state_display()})"
+
+    def get_state_name(self, state):
+        if state == Content.StateChoices.draft:
+            return "Borrador"
+        elif state == Content.StateChoices.publish:
+            return "Publicado"
+        elif state == Content.StateChoices.inactive:
+            return "Inactivo"
+        elif state == Content.StateChoices.to_publish:
+            return "A publicar"
+        elif state == Content.StateChoices.revision:
+            return "Revision"
+        else:
+            return "Desconocido"

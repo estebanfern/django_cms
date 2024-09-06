@@ -29,7 +29,7 @@ Rutas:
     - 'change-password/': Ruta para cambiar la contraseña del usuario autenticado, utilizando `change_password`.
 """
 
-from content.views import kanban_board, update_content_state, ContentHistoryView
+from content.views import kanban_board, update_content_state, ContentHistoryView, view_version
 from django.contrib import admin
 from django.urls import include, path
 from app.auth.views import register_view, login_view, logout_view, reset_password_view, password_reset_confirm_view
@@ -63,7 +63,7 @@ urlpatterns = [
     path('content/new/', ContentCreateView.as_view(), name='content-create'),
     path('content/<int:pk>/edit/', ContentUpdateView.as_view(), name='content-update'),
     path('content/<int:id>/', view_content, name='content_view'),
-    path('content/<int:content_id>/history/', ContentHistoryView.as_view(), name='content_history'),
+    path('content/<int:content_id>/history/<int:history_id>', view_version, name='view_content_version'),
     path('tablero/', kanban_board, name='kanban_board'),
     path('api/update-content-state/<int:content_id>/', update_content_state, name='update_content_state'),
 

@@ -64,9 +64,14 @@
           <div class="row">
             <div class="col-6 text-start">
               {% comment %} Mientras tanto que solo se puede subir un archivo adjunto {% endcomment %}
+            
+              {% if content.attachment %}
               Archivos adjuntos: 
               <a href="{{ content.attachment.url }}" target="_blank">{{ content.attachment.file.name }}</a>
-
+              {% else %} 
+                  No hay archivos adjuntos.
+              {% endif %}
+              
               {% comment %} Usar cuando se tenga la lista de archivos adjuntos {% endcomment %}
               {% comment %} {% for att in content.attachment.all %}
                 <a href="{{ att.url }}" target="_blank">{{ att.file.name }}</a>
@@ -80,7 +85,58 @@
           </div>
         </div>
       </div>
-        <a href="{% url 'content_history' content.id %}" class="btn btn-secondary">Historial</a>
+
+    </div>
+  
+
+    <!-- Historial del contenido -->
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">Historial del contenido</div>
+            <div class="card-body">
+                <table class="table table-striped mt-3">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Usuario</th>
+                            <th>Estado</th>
+                            <th>Versiones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in history %}
+                        <tr>
+                            <td>{{ record.history_date }}</td>
+                            <td>{{ record.history_user }}</td>
+                            <td>
+                                {% if record.state == 'draft' %}
+                                Borrador
+                                {% elif record.state == 'revision' %}
+                                Revision
+                                {% elif record.state == 'publish' %}
+                                Publicado
+                                {% elif record.state == 'to_publish' %}
+                                A publicar
+                                {% elif record.state == 'inactive' %}
+                                Inactivo
+                                {% else %}
+                                Desconocido
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a class="btn btn-sm btn-primary" href="history/{{ record.history_id }}">Ver detalles</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4">No hay registros de historial para este contenido.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
   </div>
