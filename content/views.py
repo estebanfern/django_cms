@@ -138,6 +138,9 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         content.state = Content.StateChoices.draft
         content.save()
 
+        # Guarda las relaciones M2M (tags)
+        form.save_m2m()
+
         # Establece la razón de cambio en el historial como 'Creación de contenido'
         update_change_reason(content, 'Creación de contenido')
 
