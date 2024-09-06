@@ -165,7 +165,16 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
             raise PermissionDenied
         
         # Verifica que solo el autor del contenido edite su contenido en borrador
-        if self.request.user != self.get_object().autor and self.request.user.has_perm('app.create_content') and not self.request.user.has_perm('app.edit_content') :
+        # o que si sos editor el cotenido este en revision para poder editar/
+
+        if self.request.user.has_perm('app.edit_content') and self.get_object().state == Content.StateChoices.revision:
+            # Tiene permisos de edición, siga
+            pass
+        elif self.request.user.id == self.get_object().autor_id and self.request.user.has_perm('app.create_content') and self.get_object().state == Content.StateChoices.draft:
+            # Es tu contenido, sos autor y tu contenido está en borrador, pase
+            pass
+        else:
+            # No cumplis con alguno de los requisitos, F
             raise PermissionDenied
         
         return super().dispatch(request, *args, **kwargs)
