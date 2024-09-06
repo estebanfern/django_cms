@@ -53,11 +53,13 @@
                   {% for item in items %}
                     <div class="kanban-item bg-light p-3 mb-3 rounded shadow-sm" data-id="{{ item.id }}" style="cursor: pointer; border: 1px solid #ddd;">
                       <strong>
-                        {% if can_create_content %}
+                        {% if can_create_content and item.state != 'draft' %}
                           <a href="{% url 'content_view' item.id %}" class="kanban-title-link">{{ item.title }}</a>
+                        {% elif can_create_content and item.state == 'draft' %}
+                          <a href="{% url 'content-update' item.id %}" class="kanban-title-link">{{ item.title }}</a>
                         {% elif can_edit_content and item.state == 'revision' %}
                           <a href="{% url 'content-update' item.id %}" class="kanban-title-link">{{ item.title }}</a>
-                        {% elif can_edit_content or can_publish_content %}
+                        {% elif can_edit_content or can_publish_content or can_edit_is_active %}
                           <a href="{% url 'content_view' item.id %}" class="kanban-title-link">{{ item.title }}</a>
                         {% else %}
                           <span>{{ item.title }}</span> <!-- Fallback if no valid permission -->
@@ -126,7 +128,7 @@
   }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
 <script>
     document.querySelectorAll('.kanban-items').forEach(function (column) {
         new Sortable(column, {
@@ -190,13 +192,16 @@
                         canChangeState = true;
                     }
                 } else if (userPermissions.editIsActive) {
-                    if (originalState === 'Publicado' && newState === 'Inactivo') {
+                    if (
+                        (originalState === 'Publicado' && newState === 'Inactivo') ||
+                        (originalState === newState)  // Permite mover al mismo estado 
+                    ){ 
                         canChangeState = true;
                     }
                 }
 
                 if (!canChangeState) {
-                    alert('No tienes permiso para cambiar el estado.');
+                    modal.warning({message:'No tienes permiso para cambiar el estado.'});
                     evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
                     return;
                 }
@@ -212,15 +217,21 @@
                 }).then(response => {
                     if (!response.ok) {
                         return response.json().then(data => {
-                            alert(`Error al actualizar el estado: ${data.message}`);
+                            modal.error({message:`Error al actualizar el estado: ${data.message}`});
                             evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
                         });
                     } else {
                         console.log('Estado actualizado correctamente');
+                        if (newState === 'A publicar') {
+                            evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
+                        }
+                        if (newState === 'Edicion' && userPermissions.create) {
+                          evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
+                      }
                     }
                 }).catch(error => {
                     console.error('Error en la solicitud fetch:', error);
-                    alert('Error en la comunicación con el servidor.');
+                    modal.error({message:'Error en la comunicación con el servidor.'});
                     evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
                 });
             }

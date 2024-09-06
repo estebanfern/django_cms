@@ -51,16 +51,17 @@
     </div><!-- End Logo -->
 
     <div class="search-bar">
-      <form class="search-form d-flex align-items-center" method="GET" action="/">
-        <input type="text" name="query" placeholder="Buscar por autor" title="Enter search keyword">
-        <!-- <button type="submit" title="Limpiar">
-          <i class="bi bi-x-circle"></i>
-        </button> -->
-        <button type="submit" title="Buscar">
+      <div class="input-group">
+        <input type="text" id="query" class="form-control form-control-sm border-secondary" placeholder="Buscar" title="Buscar por título">
+        <button class="btn btn-sm btn-outline-secondary" type="button" title="Buscar" onclick="redirectWithParams(this, '/', 'query', document.getElementById('query').value); return false;">
           <i class="bi bi-search"></i>
         </button>
-      </form>
-    </div><!-- End Search Bar -->
+        <button class="btn btn-sm btn-outline-secondary" type="button" onclick="deleteParam('/', 'query'); document.getElementById('query').value = ''; return false;" title="Limpiar">
+          <i class="bi bi-brush"></i>
+        </button>
+      </div>
+    </div>
+    
 
     <nav class="header-nav ms-auto">
       <ul class="d-flex align-items-center gap-4">
@@ -95,7 +96,7 @@
               <hr class="dropdown-divider">
             </li>
             <li class="dropdown-footer">
-              <a href="#">Ver todas las categorias públicas</a>
+              <a href="/category/Publico">Ver todas las categorias públicas</a>
             </li>
           </ul>
         </li>
@@ -124,7 +125,7 @@
               <hr class="dropdown-divider">
             </li>
             <li class="dropdown-footer">
-              <a href="#">Ver todas las categorias de suscripción</a>
+              <a href="/category/Suscriptor">Ver todas las categorias de suscripción</a>
             </li>
           </ul>
         </li>
@@ -153,7 +154,7 @@
               <hr class="dropdown-divider">
             </li>
             <li class="dropdown-footer">
-              <a href="#">Ver todas las categorias de pago</a>
+              <a href="/category/Pago">Ver todas las categorias de pago</a>
             </li>
           </ul>
         </li>
