@@ -12,7 +12,9 @@ django-ckeditor==6.5.0
 django-crispy-forms==2.3
 django-jazzmin==3.0.0
 django-js-asset==2.2.0
+django-simple-history==3.7.0
 django-storages==1.14.4
+django-taggit==6.0.0
 docutils==0.20.1
 gunicorn==23.0.0
 idna==3.8
@@ -45,4 +47,3 @@ tomli==2.0.1
 typing_extensions==4.12.2
 tzdata==2024.1
 urllib3==2.2.2
-django-simple-history~=3.7.0

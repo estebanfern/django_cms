@@ -51,14 +51,26 @@
     </div><!-- End Logo -->
 
     <div class="search-bar">
-      <form class="search-form d-flex align-items-center" method="POST" action="#">
-        <input type="text" name="query" placeholder="Buscar" title="Enter search keyword">
-        <button type="submit" title="Search"><i class="bi bi-search"></i></button>
+      <form class="search-form d-flex align-items-center" method="GET" action="/">
+        <input type="text" name="query" placeholder="Buscar por autor" title="Enter search keyword">
+        <!-- <button type="submit" title="Limpiar">
+          <i class="bi bi-x-circle"></i>
+        </button> -->
+        <button type="submit" title="Buscar">
+          <i class="bi bi-search"></i>
+        </button>
       </form>
     </div><!-- End Search Bar -->
 
     <nav class="header-nav ms-auto">
       <ul class="d-flex align-items-center gap-4">
+        <!-- Todas las categorias (elimina el filtro) -->
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center" href="#" onclick="deleteParam('/', 'cat'); return false;"">
+            <span>Todas las categorias</span>
+          </a>
+        </li>
+
         <!-- Publicas -->
         <li class="nav-item dropdown">
           <a class="nav-link d-flex align-items-center" href="#" data-bs-toggle="dropdown">
@@ -67,7 +79,7 @@
           </a>
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
             {% for cat in categories_publicas|slice:":5" %}
-            <a href="/category/{{ cat.id }}">
+            <a href="#" type="button" cat-value="{{cat.id}}" onclick="redirectWithParams(this, '/', 'cat'); return false;"">
               <li class="notification-item">
                 <div>
                   <h4>{{ cat.name }}</h4>
@@ -96,7 +108,7 @@
           </a>
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
             {% for cat in categories_suscriptores|slice:":5" %}
-            <a href="/category/{{ cat.id }}">
+            <a href="#" type="button" cat-value="{{cat.id}}" onclick="redirectWithParams(this, '/', 'cat'); return false;"">
               <li class="notification-item">
                 <div>
                   <h4>{{ cat.name }}</h4>
@@ -125,7 +137,7 @@
           </a>
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
             {% for cat in categories_pago|slice:":5" %}
-            <a href="/category/{{ cat.id }}">
+            <a href="#" type="button" cat-value="{{cat.id}}" onclick="redirectWithParams(this, '/', 'cat'); return false;"">
               <li class="notification-item">
                 <div>
                   <h4>{{ cat.name }}</h4>

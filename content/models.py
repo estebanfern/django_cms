@@ -5,7 +5,7 @@ from ckeditor.fields import RichTextField
 from simple_history.models import HistoricalRecords
 from app.models import CustomUser
 from category.models import Category
-
+from taggit.managers import TaggableManager
 
 class Content (models.Model):
     """
@@ -56,6 +56,7 @@ class Content (models.Model):
     date_published = models.DateField(null=True, blank=True, verbose_name='Fecha de publicación')
     content = RichTextUploadingField(verbose_name='Contenido')  # Campo de texto enriquecido con CKEditor 5
     attachment = models.FileField(upload_to='attachments/', null=True, blank=True, verbose_name='Archivos adjuntos')
+    tags = TaggableManager()
     history = HistoricalRecords()
 
     class StateChoices(models.TextChoices):
