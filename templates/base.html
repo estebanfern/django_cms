@@ -239,12 +239,14 @@
         </li>
         {% endif %}
 
+        {% if perms.app.create_content or perms.app.edit_content or perms.app.publish_content or perms.app.edit_is_active  %}
         <li class="nav-item">
           <a class="nav-link collapsed" href="/tablero">
             <i class="bi bi-table"></i>
             <span>Tablero</span>
           </a>
         </li>
+        {% endif %}
         
         {% if user.is_admin %}
         <li class="nav-item">
