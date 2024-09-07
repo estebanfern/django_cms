@@ -54,18 +54,19 @@ class ContentForm(forms.ModelForm):
                 self.fields['tags'].widget.attrs['class'] = 'form-control'
             else:
                 # En modo edición por autor
-                #print(self.instance.date_published)
                 self.fields['tags'].widget.attrs['class'] = 'form-control'
-                self.fields['date_published'].widget = forms.DateInput(
+                self.fields['date_published'].widget = forms.TextInput(
                     attrs={
-                        'type': 'date',
+                        'type': 'datetime-local',
                         'class': 'form-control',
-                        'min': (datetime.date.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d'),
-                        'max': '2026-12-31',
-                        'value': self.instance.date_published if self.instance.date_published else ''
                     }
                 )
-                #print(self.instance.date_published)
+                self.fields['date_expire'].widget = forms.TextInput(
+                    attrs={
+                        'type': 'datetime-local',
+                        'class': 'form-control',
+                    }
+                )
         else:
             # En modo de creación
             # Se hace algo?
