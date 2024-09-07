@@ -150,11 +150,20 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         return form
 
     def form_valid(self, form):
+
+        # La fecha de publicacion no debe ser igual a la de expiracion
+        date_published = form.cleaned_data.get('date_published')
+        date_expire = form.cleaned_data.get('date_expire')
+
+        if date_published.date() >= date_expire.date():
+            messages.warning(self.request, 'La fecha de publicación debería ser antes de la fecha de expiración del contenido')
+            return self.form_invalid(form)
+
+
         content = form.save(commit=False)
         content.autor = self.request.user
         content.is_active = True
         content.date_create = timezone.now()
-        content.date_expire = None
         content.state = Content.StateChoices.draft
         content.save()
 
@@ -164,7 +173,7 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         # Establece la razón de cambio en el historial como 'Creación de contenido'
         update_change_reason(content, 'Creación de contenido')
 
-        messages.success(self.request, 'Contenido modificado exitosamente')
+        messages.success(self.request, 'Contenido creado exitosamente')
         return redirect(self.success_url)
         
     def form_invalid(self, form):
