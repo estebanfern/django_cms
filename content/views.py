@@ -224,6 +224,16 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
 
         if user.id == content.autor_id and user.has_perm('app.create_content') and content.state == Content.StateChoices.draft:
         # Si el usuario es el autor del contenido. tiene permisos de autoria y el cotenido está en estado borrador, OK
+
+            # La fecha de publicacion no debe ser igual a la de expiracion
+            date_published = form.cleaned_data.get('date_published')
+            date_expire = form.cleaned_data.get('date_expire')
+
+            if date_published.date() >= date_expire.date():
+                messages.warning(self.request, 'La fecha de publicación debería ser antes de la fecha de expiración del contenido')
+                return self.form_invalid(form)
+
+
             form_data = form.cleaned_data
             for field in form_data:
                 setattr(content, field, form_data[field])

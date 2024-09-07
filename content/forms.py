@@ -59,12 +59,16 @@ class ContentForm(forms.ModelForm):
                     attrs={
                         'type': 'datetime-local',
                         'class': 'form-control',
+                        'min': (datetime.datetime.now() + datetime.timedelta(days=1)).replace(hour=7, minute=0).strftime('%Y-%m-%dT%H:%M'),
+                        'max': '2026-12-31T23:00',
                     }
                 )
                 self.fields['date_expire'].widget = forms.TextInput(
                     attrs={
                         'type': 'datetime-local',
                         'class': 'form-control',
+                        'min': (datetime.datetime.now() + datetime.timedelta(days=1)).replace(hour=7, minute=0).strftime('%Y-%m-%dT%H:%M'),
+                        'max': '2026-12-31T23:00',
                     }
                 )
         else:
