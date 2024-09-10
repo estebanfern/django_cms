@@ -1,6 +1,6 @@
 from django.utils import timezone
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from .models import Content
 import json
@@ -10,10 +10,21 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from .forms import ContentForm
 from django.core.exceptions import PermissionDenied
 from simple_history.utils import update_change_reason
+from django.contrib import messages
+
 
 @login_required
 def kanban_board(request):
     user = request.user
+
+    if not (
+        user.has_perm('app.create_content') or 
+        user.has_perm('app.edit_content') or 
+        user.has_perm('app.publish_content') or
+        user.has_perm('app.edit_is_active')
+    ):
+        raise PermissionDenied
+    
     contents = {
         'Borrador': [],
         'Edicion': [],
@@ -54,6 +65,15 @@ def kanban_board(request):
 @login_required
 def update_content_state(request, content_id):
     user = request.user
+
+    if not (
+        user.has_perm('app.create_content') or 
+        user.has_perm('app.edit_content') or 
+        user.has_perm('app.publish_content') or
+        user.has_perm('app.edit_is_active')
+    ):
+        raise PermissionDenied
+
     content = get_object_or_404(Content, id=content_id)
 
     if request.method == 'POST':
@@ -120,7 +140,7 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     model = Content
     form_class = ContentForm
     template_name = 'content/content_form.html'
-    success_url = 'home' # a donde ir despues
+    success_url = '/tablero/' # a donde ir despues
     permission_required = 'app.create_content'
 
     def get_form(self, form_class=None):
@@ -130,11 +150,20 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         return form
 
     def form_valid(self, form):
+
+        # La fecha de publicacion no debe ser igual a la de expiracion
+        date_published = form.cleaned_data.get('date_published')
+        date_expire = form.cleaned_data.get('date_expire')
+
+        if date_published.date() >= date_expire.date():
+            messages.warning(self.request, 'La fecha de publicación debería ser antes de la fecha de expiración del contenido')
+            return self.form_invalid(form)
+
+
         content = form.save(commit=False)
         content.autor = self.request.user
         content.is_active = True
         content.date_create = timezone.now()
-        content.date_expire = None
         content.state = Content.StateChoices.draft
         content.save()
 
@@ -144,6 +173,7 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         # Establece la razón de cambio en el historial como 'Creación de contenido'
         update_change_reason(content, 'Creación de contenido')
 
+        messages.success(self.request, 'Contenido creado exitosamente')
         return redirect(self.success_url)
         
     def form_invalid(self, form):
@@ -154,7 +184,7 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
     model = Content
     form_class = ContentForm
     template_name = 'content/content_form.html'
-    success_url = 'home'  # donde ir despues
+    success_url = '/tablero/'
 
     # Lista de permisos
     required_permissions = ['app.create_content', 'app.edit_content']
@@ -163,16 +193,25 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
         # Verifica si el usuario tiene al menos uno de los permisos requeridos
         if not any(request.user.has_perm(perm) for perm in self.required_permissions):
             raise PermissionDenied
-        
+
         # Verifica que solo el autor del contenido edite su contenido en borrador
-        if self.request.user != self.get_object().autor and self.request.user.has_perm('app.create_content') and not self.request.user.has_perm('app.edit_content') :
+        # o que si sos editor el cotenido este en revision para poder editar/
+        if self.request.user.has_perm('app.edit_content') and self.get_object().state == Content.StateChoices.revision:
+            # Tiene permisos de edición, siga
+            pass
+        elif self.request.user.id == self.get_object().autor_id and self.request.user.has_perm('app.create_content') and self.get_object().state == Content.StateChoices.draft:
+            # Es tu contenido, sos autor y tu contenido está en borrador, pase
+            pass
+        else:
+            # No cumplis con alguno de los requisitos, F
             raise PermissionDenied
         
         return super().dispatch(request, *args, **kwargs)
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
- 
+        if self.get_object().state == Content.StateChoices.draft:
+            del form.fields['change_reason']
         return form
     
     def form_valid(self, form):
@@ -181,53 +220,77 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
         # Recupera el objeto original desde la base de datos
         content = self.get_object()
 
-        # Captura la razón de cambio desde el formulario
-        change_reason = form.cleaned_data.get('change_reason', '')
+        change_reason = None
+
+        if user.id == content.autor_id and user.has_perm('app.create_content') and content.state == Content.StateChoices.draft:
+        # Si el usuario es el autor del contenido. tiene permisos de autoria y el cotenido está en estado borrador, OK
+
+            # La fecha de publicacion no debe ser igual a la de expiracion
+            date_published = form.cleaned_data.get('date_published')
+            date_expire = form.cleaned_data.get('date_expire')
+
+            if date_published.date() >= date_expire.date():
+                messages.warning(self.request, 'La fecha de publicación debería ser antes de la fecha de expiración del contenido')
+                return self.form_invalid(form)
 
 
-        if user.has_perm('app.create_content'):
-            # Solo actualizar los campos que vienen del formulario
             form_data = form.cleaned_data
             for field in form_data:
                 setattr(content, field, form_data[field])
 
-        elif user.has_perm('app.edit_content'):
-                
-                # Solo actualiza el campo 'content' desde el formulario
-                content.content = form.cleaned_data['content']
+            content = form.save(commit=False)
+            tags = form.cleaned_data.get('tags', None)
+            if tags:
+                content.tags.set(tags)
+        elif user.has_perm('app.edit_content') and content.state == Content.StateChoices.revision:
+        # Si el usuario es un editor y el contenido está en revision
+            content.content = form.cleaned_data['content']
+            change_reason = form.cleaned_data.get('change_reason', '')
+        else:
+            raise PermissionDenied
 
-        # Guarda el contenido
         content.save()
 
+
+
+        if change_reason:
+            update_change_reason(content, change_reason)
+
         # Guarda las relaciones manualmente para el campo 'tags'
-        tags = form.cleaned_data.get('tags')
-        if tags is not None:
-            content.tags.set(tags)  # Asocia las nuevas etiquetas
+
 
         # Actualiza la razón de cambio en el historial
-        update_change_reason(content, change_reason)
 
+
+        messages.success(self.request, 'Contenido modificado exitosamente.')
         return redirect(self.success_url)
     
     def form_invalid(self, form):
-        print(form.errors)  # Mostrar errores en el formulario
         return super().form_invalid(form)
 
 
 def view_content(request, id):
     content = get_object_or_404(Content, id=id)
-    return render(request, 'content/view.html', {"content" : content})
+    #Traer la historia y renderizarla de manera descendente
+    history = content.history.all().order_by('-history_date')
+    return render(request, 'content/view.html', {"content" : content, "history" : history})
 
+def view_version(request, content_id, history_id):
+    user = request.user
+    content = get_object_or_404(Content, id=content_id)
 
-class ContentHistoryView(LoginRequiredMixin, View):
-    template_name = 'content/content_history.html'
+    if user.has_perm('app.create_content') and user.id == content.autor_id:
+        pass
+    elif (user.has_perm('app.edit_content') 
+          or user.has_perm('app.publish_content')
+          or user.has_perm('app.edit_is_active')
+            ):
+        pass
+    else:
+        raise PermissionDenied
 
-    def get(self, request, content_id):
-        content = get_object_or_404(Content, id=content_id)
-        # Obtener el historial del contenido
-        history = content.history.all().order_by('-history_date')
-        context = {
-            'content': content,
-            'history': history,
-        }
-        return render(request, self.template_name, context)
+    history = content.history.filter(history_id=history_id).first()
+
+    if not history:
+        raise Http404
+    return render(request, 'content/view_version.html', {"content" : content, "history" : history})
