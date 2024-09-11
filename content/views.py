@@ -128,14 +128,6 @@ def update_content_state(request, content_id):
                 content.save()
                 return JsonResponse({'status': 'success'})
 
-        elif user.has_perm('app.edit_is_active'):
-            # Permite mover de 'Publicado' a 'Inactivo' y desactiva el contenido
-            if content.state == 'publish' and new_state == 'inactive' or (content.state == new_state):
-                content.state = new_state
-                # content.is_active = False
-                content.save()
-                return JsonResponse({'status': 'success'})
-
         # Responder con un error si la acción no está permitida
         return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
 

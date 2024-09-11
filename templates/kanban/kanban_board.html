@@ -194,7 +194,6 @@
                     }
                 } else if (userPermissions.editIsActive) {
                     if (
-                        (originalState === 'Publicado' && newState === 'Inactivo') ||
                         (originalState === newState)  // Permite mover al mismo estado 
                     ){ 
                         canChangeState = true;
