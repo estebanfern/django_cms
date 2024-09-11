@@ -64,6 +64,7 @@ urlpatterns = [
     path('content/<int:content_id>/history/<int:history_id>', view_version, name='view_content_version'),
     path('tablero/', kanban_board, name='kanban_board'),
     path('api/update-content-state/<int:content_id>/', update_content_state, name='update_content_state'),
+    path('content/<int:pk>/edit/', ContentUpdateView.as_view(), name='edit_content'),
 
     # Category
     path('category/<str:type>/', categories_by_type, name='categories_by_type'),
