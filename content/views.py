@@ -160,7 +160,7 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         date_published = form.cleaned_data.get('date_published')
         date_expire = form.cleaned_data.get('date_expire')
 
-        if date_published.date() >= date_expire.date():
+        if date_published and date_published.date() >= date_expire.date():
             messages.warning(self.request, 'La fecha de publicación debería ser antes de la fecha de expiración del contenido')
             return self.form_invalid(form)
 
@@ -255,7 +255,7 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
             date_published = form.cleaned_data.get('date_published')
             date_expire = form.cleaned_data.get('date_expire')
 
-            if date_published.date() >= date_expire.date():
+            if date_published and date_published.date() >= date_expire.date():
                 messages.warning(self.request, 'La fecha de publicación debería ser antes de la fecha de expiración del contenido')
                 return self.form_invalid(form)
 
