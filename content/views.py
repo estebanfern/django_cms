@@ -113,8 +113,8 @@ def update_content_state(request, content_id):
                                             status=403)
 
         elif user.has_perm('app.edit_content'):
-            # Permite mover de 'Edición' a 'A publicar' y al mismo estado
-            if (content.state == 'revision' and new_state == 'to_publish') or (content.state == new_state):
+            # Permite mover de 'Edición' a 'A publicar', a 'Borrador'  al mismo estado
+            if (content.state == 'revision' and new_state in ['draft', 'revision', 'to_publish']) or (content.state == new_state):
                 content.state = new_state
                 content.save()
                 return JsonResponse({'status': 'success'})

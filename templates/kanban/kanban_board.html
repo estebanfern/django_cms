@@ -180,6 +180,7 @@
                 } else if (userPermissions.edit) {
                     if (
                         (originalState === 'Edicion' && newState === 'A publicar') ||
+                        (originalState === 'Edicion' && newState === 'Borrador') ||
                         (originalState === newState)  // Permite mover al mismo estado
                     ) {
                         canChangeState = true;
