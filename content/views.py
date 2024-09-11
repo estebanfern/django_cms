@@ -67,8 +67,8 @@ def update_content_state(request, content_id):
     user = request.user
 
     if not (
-        user.has_perm('app.create_content') or 
-        user.has_perm('app.edit_content') or 
+        user.has_perm('app.create_content') or
+        user.has_perm('app.edit_content') or
         user.has_perm('app.publish_content') or
         user.has_perm('app.edit_is_active')
     ):
@@ -79,6 +79,11 @@ def update_content_state(request, content_id):
     if request.method == 'POST':
         data = json.loads(request.body)
         new_state = data.get('state')
+
+        # **Verificación: Evitar actualización si no hay cambio en el estado**
+        if content.state == new_state:
+            # No realizar la actualización ni registrar en el historial si el estado no cambia
+            return JsonResponse({'status': 'no_change', 'message': 'El estado no ha cambiado, no se actualizará.'})
 
         # Verificar los estados válidos según los permisos
         if user.has_perm('app.create_content'):
@@ -205,8 +210,29 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
         else:
             # No cumplis con alguno de los requisitos, F
             raise PermissionDenied
-        
+
         return super().dispatch(request, *args, **kwargs)
+
+
+    def get_initial(self):
+        # Recuperar el history_id desde los parámetros de la URL
+        history_id = self.request.GET.get('history_id')
+
+        # Si history_id está presente, cargar los datos históricos
+        if history_id:
+            historical_record = get_object_or_404(Content.history.model, history_id=history_id)
+            initial_data = {
+                'title': historical_record.title,
+                'summary': historical_record.summary,
+                'category': historical_record.category,
+                'date_expire': historical_record.date_expire,
+                'date_published': historical_record.date_published,
+                'content': historical_record.content,
+                # Agrega otros campos necesarios aquí si son parte del historial
+            }
+            return initial_data
+        return super().get_initial()
+
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -260,6 +286,9 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
 
 
         # Actualiza la razón de cambio en el historial
+
+        # Establece la razón de cambio en el historial como 'Modificaciones del autor'
+        update_change_reason(content, 'Modificaciones del autor')
 
 
         messages.success(self.request, 'Contenido modificado exitosamente.')
