@@ -103,8 +103,9 @@ def update_content_state(request, content_id):
                 # Restricción para pasar de 'Borrador' a 'Publicado' si la categoría no es moderada
                 elif content.state == 'draft' and new_state == 'publish':
                     if not content.category.is_moderated:
+                        if content.date_published is None or content.date_published < timezone.now():
+                            content.date_published = timezone.now()
                         content.state = new_state
-                        content.date_published = timezone.now()
                         content.save()
                         return JsonResponse({'status': 'success'})
                     else:
@@ -123,7 +124,8 @@ def update_content_state(request, content_id):
             # Permite mover de 'A publicar' a 'Publicado', 'Revisión' y al mismo estado
             if content.state == 'to_publish' and new_state in ['publish', 'revision', 'to_publish'] or (content.state == new_state):
                 if new_state == 'publish' and  content.state != 'publish':
-                    content.date_published = timezone.now()
+                    if content.date_published is None or content.date_published < timezone.now():
+                        content.date_published = timezone.now()
                 content.state = new_state
                 content.save()
                 return JsonResponse({'status': 'success'})
