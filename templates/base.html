@@ -52,8 +52,8 @@
 
     <div class="search-bar">
       <div class="input-group">
-        <input type="text" id="query" class="form-control form-control-sm border-secondary" placeholder="Buscar" title="Buscar por título">
-        <button class="btn btn-sm btn-outline-secondary" type="button" title="Buscar" onclick="redirectWithParams(this, '/', 'query', document.getElementById('query').value); return false;">
+        <input type="text" id="query" class="form-control form-control-sm border-secondary" onkeyup="searchOnEnter(event)" placeholder="Buscar" title="Buscar por título">
+        <button class="btn btn-sm btn-outline-secondary" id="searchBtn" type="button" title="Buscar" onclick="redirectWithParams(this, '/', 'query', document.getElementById('query').value); return false;">
           <i class="bi bi-search"></i>
         </button>
         <button class="btn btn-sm btn-outline-secondary" type="button" onclick="deleteParam('/', 'query'); document.getElementById('query').value = ''; return false;" title="Limpiar">
@@ -301,6 +301,31 @@
   <script src="{% static 'assets/js/main.js' %}"></script>
   <script src="{% static 'assets/js/utils.js' %}"></script>
   {% endblock js %}
+
+  <script>
+    // Script que corre cuando el DOM cargo completamente
+    $(document).ready(() => {
+
+      // Inicializa el valor del query search en el input del navbar
+      setupQueryParam();
+
+    });
+
+    function setupQueryParam() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const query = urlParams.get('query');
+      if (query) {
+        $('#query').val(query);
+      }
+    }
+
+    function searchOnEnter(e) {
+      if (e.key === 'Enter') {
+        document.getElementById('searchBtn').click();
+      }
+    }
+
+  </script>
 
 
 </body>
