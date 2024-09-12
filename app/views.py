@@ -17,17 +17,19 @@ def home_view(request):
     # Si se busco una categoria, verificar si el usuario está logueado en caso de que no sea categoria publica
     # si no está loguead, redirigirle al login con un mensaje
     # TODO: suscripciones a categorias de pago
+    # UPDATE: se deja buscar a cualquiera nomas, hasta la previsualizacion
     if cat_query:
         category = get_object_or_404(Category, id=cat_query)
-        if not request.user.is_authenticated and not category.type == Category.TypeChoices.public:
-            messages.warning(request, 'Para poder acceder a categorias de suscripción o pago debes estar registrado')
-            return redirect('login')
+        # if not request.user.is_authenticated and not category.type == Category.TypeChoices.public:
+        #     messages.warning(request, 'Para poder acceder a categorias de suscripción o pago debes estar registrado')
+        #     return redirect('login')
         contents = contents.filter(category_id=cat_query)
     # Si no se filtra por categoria, verificar si el usuario está logueado, y si no mostrar solo los contenidos de categorias públicas
+    # UPDATE: se deja buscar a cualquiera nomas, hasta la previsualizacion
     # TODO: para usuarios logueados, mostrar los contenidos de categorias de pago a los que están suscriptos
-    else:
-        if not request.user.is_authenticated:
-            contents = contents.filter(category__type=Category.TypeChoices.public)
+    # else:
+    #     if not request.user.is_authenticated:
+    #         contents = contents.filter(category__type=Category.TypeChoices.public)
 
     # Si ingreso un parámetro de buscar, filtrar con un OR por titulo y nombre del autor
     if query:
