@@ -1,4 +1,5 @@
 from django.core.paginator import Paginator
+from django.db.models import Q
 from django.shortcuts import render, redirect
 from category.models import Category
 from content.models import Content
@@ -16,7 +17,9 @@ def home_view(request):
         category = Category.objects.get(id=cat_query)
         contents = contents.filter(category_id=cat_query)
     if query:
-        contents = contents.filter(title__icontains=query)
+        contents = contents.filter(
+            Q(title__icontains=query) | Q(autor__name__icontains=query)
+        )
     paginator = Paginator(contents, 10)
     str_page_number = request.GET.get('page')
     if str_page_number is None or str_page_number == '':
