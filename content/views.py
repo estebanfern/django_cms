@@ -2,6 +2,8 @@ from django.utils import timezone
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
+
+from category.models import Category
 from .models import Content
 import json
 from django.contrib.auth.decorators import login_required
@@ -296,10 +298,18 @@ def view_content(request, id):
     content = get_object_or_404(Content, id=id)
     if not content.is_active:
         raise Http404
-    #Traer la historia y renderizarla de manera descendente
+
+    # Verificar que si el usuario esta registrado y esta queriendo ver un contenido de categoria de suscripcion o pago
+    # en caso de que no, redirigirle al login con un mensaje
+    # TODO: verificar que el usuario este suscripto y al dia si es un contenido de categoria de pago
+    if not request.user.is_authenticated and not content.category.type == Category.TypeChoices.public:
+        messages.warning(request, 'Para poder acceder a contenidos de categorias de suscripción o pago debes estar registrado')
+        return redirect('login')
+
     history = content.history.all().order_by('-history_date')
     return render(request, 'content/view.html', {"content" : content, "history" : history})
 
+@login_required
 def view_version(request, content_id, history_id):
     user = request.user
     content = get_object_or_404(Content, id=content_id)
