@@ -294,6 +294,8 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
 
 def view_content(request, id):
     content = get_object_or_404(Content, id=id)
+    if not content.is_active:
+        raise Http404
     #Traer la historia y renderizarla de manera descendente
     history = content.history.all().order_by('-history_date')
     return render(request, 'content/view.html', {"content" : content, "history" : history})
@@ -314,6 +316,6 @@ def view_version(request, content_id, history_id):
 
     history = content.history.filter(history_id=history_id).first()
 
-    if not history:
+    if not history or not content.is_active:
         raise Http404
     return render(request, 'content/view_version.html', {"content" : content, "history" : history})
