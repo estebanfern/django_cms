@@ -1,24 +1,4 @@
 """
-URL configuration for cms project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.1/topics/http/urls/
-
-Examples:
-
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-"""
 Definición de rutas URL para la aplicación.
 
 Esta lista de patrones de URL define las rutas accesibles en la aplicación,
@@ -45,12 +25,17 @@ Rutas:
     - 'change-password/': Ruta para cambiar la contraseña del usuario autenticado, utilizando `change_password`.
 """
 
+from content.views import kanban_board, update_content_state, view_version
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 from app.auth.views import register_view, login_view, logout_view, reset_password_view, password_reset_confirm_view
 from app.profile.views import other_profile_view, profile_view, change_password
 from app.views import *
-from django.contrib.auth import views as auth_views
+from content.views import ContentCreateView, ContentUpdateView, view_content
+from ckeditor_uploader import views
+from django.conf import settings
+from django.conf.urls.static import static
+from category.views import categories_by_type
 
 urlpatterns = [
 
@@ -64,17 +49,28 @@ urlpatterns = [
     path('logout/', logout_view, name='logout'),
     path('password-reset/', reset_password_view, name='password_reset'),
     path('reset/<uidb64>/<token>/', password_reset_confirm_view, name='password_reset_confirm'),
-    #############aaaaaa
-    # path('password_reset/', auth_views.PasswordResetView.as_view(template_name='password_reset_form.html'), name='password_reset'),
-    # path('password_reset_done/', auth_views.PasswordResetDoneView.as_view(template_name='password_reset_done.html'), name='password_reset_done'),
-    # path('password_reset_confirm/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='password_reset_confirm.html'), name='password_reset_confirm'),
-    # path('password_reset_complete/', auth_views.PasswordResetCompleteView.as_view(template_name='password_reset_complete.html'), name='password_reset_complete'),
-    #####aaaaaaaaaaaaaaaaa
 
     # Profile
     path('profile/', profile_view, name='profile'),
     path('profile/<int:id>/', other_profile_view, name='profile_view'),
     path('change-password/', change_password, name='change_password'),
 
-]
+    # Content - Edit (Autor - Editor)
+    path('ckeditor/', include('ckeditor_uploader.urls')),
+    path("content-upload/", views.upload, name="content_ckeditor_upload"),
+    path('content/new/', ContentCreateView.as_view(), name='content-create'),
+    path('content/<int:pk>/edit/', ContentUpdateView.as_view(), name='content-update'),
+    path('content/<int:id>/', view_content, name='content_view'),
+    path('content/<int:content_id>/history/<int:history_id>', view_version, name='view_content_version'),
+    path('tablero/', kanban_board, name='kanban_board'),
+    path('api/update-content-state/<int:content_id>/', update_content_state, name='update_content_state'),
+    path('content/<int:pk>/edit/', ContentUpdateView.as_view(), name='edit_content'),
 
+    # Category
+    path('category/<str:type>/', categories_by_type, name='categories_by_type'),
+
+
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# if settings.DEBUG:
+#     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

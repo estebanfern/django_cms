@@ -1,5 +1,11 @@
+from ckeditor_uploader.fields import RichTextUploadingField
 from django.db import models
 from django.core.exceptions import ValidationError
+from ckeditor.fields import RichTextField
+from simple_history.models import HistoricalRecords
+from app.models import CustomUser
+from category.models import Category
+from taggit.managers import TaggableManager
 
 class Content (models.Model):
     """
@@ -39,15 +45,18 @@ class Content (models.Model):
     """
     title = models.CharField(max_length=255, verbose_name=('Título'))
     summary = models.TextField(max_length=255, verbose_name=('Resumen'))
-    # content = html enriquecido
     # reactions = Reacciones del contenido
     # ratings =  Calificaciones del contenido
     # record = Historial de cambios
-    category = models.ForeignKey('category.Category', on_delete=models.CASCADE, verbose_name=('Categoría'))
-    autor = models.ForeignKey('app.CustomUser', on_delete=models.CASCADE, verbose_name=('Autor'))
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name=('Categoría'))
+    autor = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name=('Autor'))
     is_active = models.BooleanField(default=True, verbose_name='Activo')
     date_create= models.DateTimeField(auto_now_add=True, verbose_name=('Fecha de creacion'))
-    date_expire = models.DateTimeField(verbose_name=('Fecha de expiración'))
+    date_expire = models.DateTimeField(null=True, blank=True,verbose_name=('Fecha de expiración'))
+    date_published = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de publicación')
+    content = RichTextUploadingField(verbose_name='Contenido')  # Campo de texto enriquecido con CKEditor 5
+    tags = TaggableManager()
+    history = HistoricalRecords()
 
     class StateChoices(models.TextChoices):
         """
@@ -67,11 +76,11 @@ class Content (models.Model):
             Esta enumeración se utiliza para limitar las opciones disponibles en el campo `state` del modelo Content,
             garantizando que solo se seleccionen valores válidos y predefinidos.
         """
-        draft = 'Borrador', ('Borrador')
-        revision = 'Revisión', ('Revisión')
-        to_publish = 'A publicar', ('A publicar')
-        publish = 'Publicado', ('Publicado')
-        rejected = 'Rechazado', ('Rechazado')
+        draft = 'draft', ('Borrador')
+        revision = 'revision', ('Revisión')
+        to_publish = 'to_publish', ('A publicar')
+        publish = 'publish', ('Publicado')
+        inactive = 'inactive', ('Inactivo')
 
     state = models.CharField(
         choices=StateChoices.choices,
@@ -126,3 +135,17 @@ class Content (models.Model):
             'estado' es la descripción del estado del contenido.
         """
         return f"{self.title} ({self.get_state_display()})"
+
+    def get_state_name(self, state):
+        if state == Content.StateChoices.draft:
+            return "Borrador"
+        elif state == Content.StateChoices.publish:
+            return "Publicado"
+        elif state == Content.StateChoices.inactive:
+            return "Inactivo"
+        elif state == Content.StateChoices.to_publish:
+            return "A publicar"
+        elif state == Content.StateChoices.revision:
+            return "Revision"
+        else:
+            return "Desconocido"

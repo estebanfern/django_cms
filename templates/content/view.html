@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block content %}
+
+{% if messages %}
+  {% for message in messages %}
+    {% if message.tags == 'success' %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-1"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% elif message.tags == 'error' %}
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-octagon me-1"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% elif message.tags == 'warning' %}
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endif %}
+<div class="pagetitle">
+  <h1>Contenido</h1>
+  <nav>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+      <!-- <li class="breadcrumb-item">Anterior</li> -->
+      <li class="breadcrumb-item active">Contenido</li>
+    </ol>
+  </nav>
+</div><!-- End Page Title -->
+<section class="section">
+  <div class="row">
+    <div class="col-lg-12">
+
+      <div class="card">
+        <div class="card-header">
+          <div class="row">
+            <div class="col-4 text-start">
+              {{ content.date_published|default:"" }}
+            </div>
+            <div class="col-4 text-center">
+              <a href="/profile/{{ content.autor_id }}">{{ content.autor.name }}</a>
+            </div>
+            <div class="col-4 text-end">
+              {{ content.category.name }}
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <h1 class="text-center mt-4 fw-bold">{{ content.title }}</h1>
+          <h4> {{content.summary}} </h4>
+          <section>
+            {{ content.content|safe }}
+          </section>
+        </div>
+        <div class="card-footer">
+          <div class="row">
+            <div class="col-12 text-center">
+              {% for tag in content.tags.all %}
+              <span class="badge text-bg-secondary">{{ tag }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  
+
+    <!-- Historial del contenido -->
+    {% if perms.app.create_content and user.id == content.autor_id or perms.app.edit_content or perms.app.publish_content or perms.app.edit_is_active  %}
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">Historial del contenido</div>
+            <div class="card-body">
+                <table class="table table-striped mt-3">
+                    <thead>
+                        <tr>
+                            <th>Version</th>
+                            <th>Fecha</th>
+                            <th>Usuario</th>
+                            <th>Estado</th>
+                            <th>Versiones</th>
+                            {% if user.id == content.autor_id and content.state == 'draft' %}
+                                <th>Recuperación</th> <!-- Mostrar solo si es autor y está en borrador -->
+                            {% endif %}     
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in history  %}
+                        <tr>
+                             <td>{{ forloop.revcounter }}</td> <!-- Número de versión -->
+                            <td>{{ record.history_date }}</td>
+                            <td>{{ record.history_user }}</td>
+                            <td>
+                                {% if record.state == 'draft' %}
+                                Borrador
+                                {% elif record.state == 'revision' %}
+                                Revision
+                                {% elif record.state == 'publish' %}
+                                Publicado
+                                {% elif record.state == 'to_publish' %}
+                                A publicar
+                                {% elif record.state == 'inactive' %}
+                                Inactivo
+                                {% else %}
+                                Desconocido
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a class="btn btn-sm btn-primary" href="history/{{ record.history_id }}">Ver detalles</a>
+                            </td>
+                            {% if user.id == content.autor_id and content.state == 'draft' %}
+                            <td>
+                                <a class="btn btn-sm btn-primary" href="{% url 'edit_content' content.id %}?history_id={{ record.history_id }}">Recuperar esta versión</a>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4">No hay registros de historial para este contenido.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endblock content %}

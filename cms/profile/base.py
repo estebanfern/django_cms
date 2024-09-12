@@ -13,6 +13,8 @@ from pathlib import Path
 import os
 from decouple import config
 
+from category.context_processors import categories
+
 print(f'Using profile file: {config("DJANGO_SETTINGS_MODULE", default="Not specified")}')
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -42,6 +44,9 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'category',
     'content',
+    'ckeditor',
+    'ckeditor_uploader', 
+    'taggit',
 ]
 
 MIDDLEWARE = [
@@ -52,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 ROOT_URLCONF = 'cms.urls'
@@ -67,6 +73,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'category.context_processors.categories',
             ],
         },
     },
@@ -113,11 +120,12 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'es-es'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Asuncion'
+USE_TZ = True
+
 
 USE_I18N = True
 
-USE_TZ = True
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -175,7 +183,7 @@ JAZZMIN_SETTINGS = {
     "custom_css": "assets/css/admin_panel.css",  
     "topmenu_links":  [
         {"name": "Volver al sitio", "url": "/", "new_window": False},
-        {"name": "Documentación", "url": f"{CMS_DOCS_URL}", "new_window": False},
+        {"name": "Documentación", "url": f"{CMS_DOCS_URL}", "new_window": True},
     ],
    
 }
@@ -210,4 +218,18 @@ JAZZMIN_UI_TWEAKS = {
         "success": "btn-success"
     },
     "actions_sticky_top": False
+}
+
+CKEDITOR_UPLOAD_PATH = 'uploads/'
+CKEDITOR_FILENAME_GENERATOR = 'content.utils.get_filename'
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'height': 300,
+        'width': '100%',
+        'extraPlugins': 'uploadimage',
+        'filebrowserUploadUrl': '/ckeditor/upload/',
+        'filebrowserBrowseUrl': '/ckeditor/browse/',
+    },
 }

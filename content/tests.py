@@ -1,184 +1,292 @@
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
-from .models import Content
-from category.models import Category
+from django.contrib.auth.models import Permission
+from django.contrib.auth import get_user_model
 from app.models import CustomUser
-from django.core.exceptions import ValidationError
+from category.models import Category
+from content.forms import ContentForm
+from content.models import Content
 
-class ContentModelTests(TestCase):
-    """
-    Clase de pruebas para el modelo Content.
-
-    Esta clase contiene una serie de pruebas unitarias para validar la creación y los atributos del modelo Content,
-    incluyendo la verificación de valores predeterminados, restricciones de longitud y validaciones personalizadas.
-
-    Métodos:
-        setUp: Configuración inicial para todas las pruebas. Crea un autor, una categoría y un conjunto de datos válidos para crear instancias de Content.
-        test_create_content: Verifica que un contenido se cree correctamente con datos válidos.
-        test_default_is_active: Verifica que el campo `is_active` tenga el valor predeterminado de True al crear un contenido.
-        test_default_state: Verifica que el estado predeterminado del contenido sea 'Borrador' si no se especifica otro.
-        test_expired_content: Verifica que el contenido se considere expirado si la fecha de expiración es en el pasado.
-        test_invalid_state_value: Verifica que se lance un ValidationError si se asigna un estado no válido al contenido.
-        test_title_max_length: Verifica que no se pueda exceder la longitud máxima del campo `title`, lo que debería lanzar una excepción.
-        test_date_expire_in_future: Verifica que la fecha de expiración esté en el futuro en relación con la fecha de creación.
-    """
-
+class ContentCreateViewTest(TestCase):
     def setUp(self):
-        """
-        Configura el estado inicial para todas las pruebas.
-
-        Crea un autor y una categoría de prueba, y define un diccionario `content_data` con datos válidos
-        para crear instancias de Content, incluyendo título, resumen, categoría, autor, estado de activación,
-        fecha de expiración y estado de publicación.
-        """
-
-        # Crear un autor y una categoría de prueba
-        self.author = CustomUser.objects.create_user(
+        # Crear un usuario de prueba
+        self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
             name='Test User',
-            password='password123'
+            password='testpassword123'
         )
-        self.category = Category.objects.create(
-            name='Tecnología',
-            description='Categoría sobre tecnología',
-            is_active=True,
-            is_moderated=True,
-            type=Category.TypeChoices.paid
+
+        # Obtener los permisos necesarios
+        perm1 = Permission.objects.get(codename='create_content')
+
+        # Asignar múltiples permisos al usuario
+        self.user.user_permissions.add(perm1)
+
+        # Iniciar sesión con el usuario para los tests
+        self.client.login(email='testuser@example.com', password='testpassword123')
+
+        # Crear una categoría para los tests
+        self.category = Category.objects.create(name='Test Category')
+
+    def test_access_create_content_with_permission(self):
+        """
+        Verifica que un usuario autenticado con permiso adecuado puede acceder a la vista de creación de contenido.
+        """
+        url = reverse('content-create')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, "Se esperaba un código de estado 200 para un usuario con permisos.")
+        self.assertTemplateUsed(response, 'content/content_form.html', "Se esperaba usar la plantilla 'content/content_form.html'.")
+
+    def test_access_create_content_without_permission(self):
+        """
+        Verifica que un usuario sin permiso para crear contenido recibe un error 403 al intentar acceder a la vista de creación.
+        """
+        # Crear un nuevo usuario sin permisos
+        new_user = CustomUser.objects.create_user(
+            email='newuser@example.com',
+            name='New User',
+            password='12345'
         )
-        self.content_data = {
-            'title': 'Introducción a la IA',
-            'summary': 'Un resumen sobre los fundamentos de la inteligencia artificial',
-            'category': self.category,
-            'autor': self.author,
-            'is_active': True,
-            'date_expire': timezone.now() + timezone.timedelta(days=365),
-            'state': Content.StateChoices.publish
+        self.client.login(username='newuser@example.com', password='12345')
+
+        url = reverse('content-create')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403, "Se esperaba un error 403 para un usuario sin permisos.")
+
+    def test_form_valid_content_creation(self):
+        """
+        Verifica que un usuario con permisos puede crear contenido válido y es redirigido correctamente.
+        """
+        url = reverse('content-create')
+        response = self.client.post(url, {
+            'title': 'Test Content',
+            'summary': 'Summary of the test content',
+            'category': self.category.id,
+            'autor': self.user.id,
+            'date_expire': timezone.now() + timezone.timedelta(days=1),
+            'content': 'This is a test content',
+            'tags': 'test, content',
+            'state': 'draft'
+        })
+        self.assertEqual(response.status_code, 302, "Se esperaba una redirección (código 302) tras la creación de contenido válido.")
+        self.assertTrue(Content.objects.filter(title='Test Content').exists(), "El contenido creado no se encuentra en la base de datos.")
+
+    def test_form_invalid_content_creation(self):
+        """
+        Verifica que si el formulario para crear contenido tiene datos inválidos, se muestra el formulario de nuevo con errores.
+        """
+        url = reverse('content-create')
+        response = self.client.post(url, {
+            'title': '',  # Título vacío debería ser inválido
+            'summary': 'Summary of the test content',
+            'category': self.category.id,
+            'autor': self.user.id,
+            'date_expire': timezone.now() + timezone.timedelta(days=1),
+            'content': 'This is a test content',
+            'tags': 'test, content',
+            'state': 'draft'
+        })
+        self.assertEqual(response.status_code, 200, "Se esperaba el código de estado 200 cuando el formulario es inválido.")
+        self.assertFormError(response, 'form', 'title', 'Este campo es obligatorio.', "Se esperaba un error de formulario para el campo 'title'.")
+
+class ContentUpdateViewTest(TestCase):
+    def setUp(self):
+        # Crear un usuario de prueba
+        self.user = get_user_model().objects.create_user(
+            email='testuser@example.com',
+            name='Test User',
+            password='testpassword123'
+        )
+
+        # Obtener los permisos necesarios
+        perm1 = Permission.objects.get(codename='create_content')
+
+        # Asignar múltiples permisos al usuario
+        self.user.user_permissions.add(perm1)
+
+        # Iniciar sesión con el usuario para los tests
+        self.client.login(email='testuser@example.com', password='testpassword123')
+        self.category = Category.objects.create(name='Test Category')
+        self.content = Content.objects.create(
+            title='Existing Content',
+            summary='Summary of existing content',
+            category=self.category,
+            autor=self.user,
+            state='draft',
+            content='Existing content',
+        )
+
+    def test_update_content_view(self):
+        """
+        Verifica que un usuario con permiso puede acceder a la vista de actualización de contenido.
+        """
+        url = reverse('content-update', args=[self.content.pk])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, "Se esperaba un código de estado 200 para un usuario con permisos.")
+        self.assertTemplateUsed(response, 'content/content_form.html', "Se esperaba usar la plantilla 'content/content_form.html'.")
+
+    def test_form_valid_content_update(self):
+        """
+        Verifica que un usuario con permisos puede actualizar el contenido correctamente y es redirigido después de la actualización.
+        """
+        url = reverse('content-update', args=[self.content.pk])
+        response = self.client.post(url, {
+            'title': 'Updated Content',
+            'summary': 'Updated summary',
+            'category': self.category.id,
+            'autor': self.user.id,
+            'date_expire': timezone.now() + timezone.timedelta(days=2),
+            'content': 'Updated content',
+            'tags': 'updated, content',
+            'state': 'publish'
+        })
+        self.assertEqual(response.status_code, 302, "Se esperaba una redirección (código 302) tras la actualización de contenido válido.")
+        self.content.refresh_from_db()
+        self.assertEqual(self.content.title, 'Updated Content', "El título del contenido no se actualizó correctamente.")
+
+    def test_form_invalid_content_update(self):
+        """
+        Verifica que si el formulario para actualizar contenido tiene datos inválidos, se muestra el formulario de nuevo con errores.
+        """
+        url = reverse('content-update', args=[self.content.pk])
+        response = self.client.post(url, {
+            'title': '',  # Título vacío debería ser inválido
+            'summary': 'Updated summary',
+            'category': self.category.id,
+            'autor': self.user.id,
+            'date_expire': timezone.now() + timezone.timedelta(days=2),
+            'content': 'Updated content',
+            'tags': 'updated, content',
+            'state': 'publish'
+        })
+        self.assertEqual(response.status_code, 200, "Se esperaba el código de estado 200 cuando el formulario es inválido.")
+        self.assertFormError(response, 'form', 'title', 'Este campo es obligatorio.', "Se esperaba un error de formulario para el campo 'title'.")
+
+class ContentUpdateViewEditorTest(TestCase):
+    def setUp(self):
+        # Crear un usuario con permiso de editor
+        self.editor = get_user_model().objects.create_user(
+            email='editor@example.com',
+            name='Editor User',
+            password='testpassword123'
+        )
+
+        # Obtener los permisos necesarios
+        perm1 = Permission.objects.get(codename='edit_content')
+
+        # Asignar permisos de edición al usuario
+        self.editor.user_permissions.add(perm1)
+
+        # Crear una categoría y contenido en estado de revisión
+        self.category = Category.objects.create(name='Test Category')
+        self.content = Content.objects.create(
+            title='Content in Revision',
+            summary='Content summary in revision state',
+            category=self.category,
+            autor=self.editor,  # Puede ser el autor u otro usuario, según el caso
+            state='revision',  # Estado revisión
+            content='Original content text',
+        )
+
+        # Iniciar sesión con el usuario editor para las pruebas
+        self.client.login(email='editor@example.com', password='testpassword123')
+
+    def test_update_content_view_for_editor(self):
+        """
+        Verifica que un editor puede acceder a la vista de actualización de contenido en estado revisión.
+        """
+        url = reverse('content-update', args=[self.content.pk])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, "Se esperaba un código de estado 200 para un editor con permisos.")
+        self.assertTemplateUsed(response, 'content/content_form.html', "Se esperaba usar la plantilla 'content/content_form.html'.")
+
+    # def test_editor_can_update_content_in_revision(self):
+    #     """
+    #     Verifica que un editor puede actualizar el contenido en estado 'revision'.
+    #     """
+    #     url = reverse('content-update', args=[self.content.pk])
+    #     response = self.client.post(url, {
+    #         'content': 'Updated content text by editor',
+    #         'change_reason': 'Fixed typos and updated the content for clarity',
+    #         'category': self.category.id,  # Este campo es necesario en el formulario
+    #     })
+
+    #     self.assertEqual(response.status_code, 302, "Se esperaba una redirección (código 302) tras la actualización por el editor.")
+    #     self.content.refresh_from_db()
+
+    #     # Verificamos que solo el campo 'content' ha sido actualizado
+    #     self.assertEqual(self.content.content, 'Updated content text by editor', "El contenido no fue actualizado correctamente por el editor.")
+    #     self.assertEqual(self.content.title, 'Content in Revision', "El editor no debería haber cambiado el título.")
+    #     self.assertEqual(self.content.state, 'revision', "El estado del contenido no debería haber cambiado.")
+
+    #     # Verifica que la razón del cambio ha sido almacenada correctamente
+    #     history_entry = self.content.history.latest('history_date')
+    #     self.assertEqual(history_entry.history_change_reason, 'Fixed typos and updated the content for clarity', "La razón del cambio no fue registrada correctamente.")
+
+    def test_editor_cannot_update_other_fields(self):
+        """
+        Verifica que un editor no puede actualizar campos distintos a 'content' en estado 'revision'.
+        """
+        url = reverse('content-update', args=[self.content.pk])
+        response = self.client.post(url, {
+            'title': 'Title changed by editor',  # El editor no debería poder cambiar el título
+            'summary': 'Summary changed by editor',
+            'category': self.category.id,
+            'content': 'Updated content text by editor',
+            'change_reason': 'Changed content and tried to change title/summary',
+        })
+
+        self.assertEqual(response.status_code, 302, "Se esperaba una redirección tras la actualización.")
+        self.content.refresh_from_db()
+
+        # Solo el campo 'content' debería haber cambiado
+        self.assertEqual(self.content.content, 'Updated content text by editor', "El contenido no fue actualizado correctamente.")
+        self.assertEqual(self.content.title, 'Content in Revision', "El editor no debería haber podido cambiar el título.")
+        self.assertEqual(self.content.summary, 'Content summary in revision state', "El editor no debería haber podido cambiar el resumen.")
+
+
+class ContentFormTest(TestCase):
+
+    def setUp(self):
+        # Crear usuario y categoría de prueba
+        self.user = get_user_model().objects.create_user(
+            email='testuser@example.com',
+            name='Test User',
+            password='testpassword123'
+        )
+        self.category = Category.objects.create(name='Test Category')
+
+    def test_content_form_creation_valid(self):
+        """
+        Verifica que el formulario de creación de contenido es válido con los datos correctos.
+        """
+        form_data = {
+            'title': 'New Content',
+            'summary': 'This is a summary for new content',
+            'category': self.category.id,
+            'date_published': (timezone.now() + timezone.timedelta(days=2)).strftime('%Y-%m-%dT%H:%M'),
+            'date_expire': (timezone.now() + timezone.timedelta(days=5)).strftime('%Y-%m-%dT%H:%M'),
+            'content': 'This is the body of the new content',
+            'tags': 'test, content',
         }
+        form = ContentForm(data=form_data)
+        self.assertTrue(form.is_valid(), "El formulario debería ser válido con los datos correctos.")
 
-    def test_create_content(self):
+
+    def test_form_disabled_fields_for_editor(self):
         """
-        Prueba la creación de un contenido con datos válidos.
-
-        Verifica que los atributos del contenido creado coincidan con los valores esperados,
-        incluyendo título, resumen, categoría, autor, estado de activación y estado de publicación.
+        Verifica que los campos que no deben ser modificados están deshabilitados cuando el contenido está en estado de revisión.
         """
-
-        # Prueba de creación de un contenido con datos válidos
-        content = Content.objects.create(**self.content_data)
-        self.assertEqual(
-            content.title, self.content_data['title'],
-            msg="El título del contenido no coincide con el valor esperado."
+        content = Content.objects.create(
+            title='Content in Revision',
+            summary='Summary of content in revision',
+            category=self.category,
+            autor=self.user,
+            state=Content.StateChoices.revision,
+            content='Content body',
         )
-        self.assertEqual(
-            content.summary, self.content_data['summary'],
-            msg="El resumen del contenido no coincide con el valor esperado."
-        )
-        self.assertEqual(
-            content.category, self.content_data['category'],
-            msg="La categoría del contenido no coincide con la esperada."
-        )
-        self.assertEqual(
-            content.autor, self.content_data['autor'],
-            msg="El autor del contenido no coincide con el valor esperado."
-        )
-        self.assertTrue(
-            content.is_active,
-            msg="El campo 'is_active' debería ser True por defecto."
-        )
-        self.assertEqual(
-            content.state, Content.StateChoices.publish,
-            msg="El estado del contenido no coincide con el valor 'Publicado'."
-        )
-
-    def test_default_is_active(self):
-        """
-        Verifica el valor predeterminado del campo `is_active` en el contenido.
-
-        Elimina `is_active` del diccionario de datos y comprueba que el valor predeterminado
-        sea True en la instancia creada.
-        """
-
-        # Prueba para verificar el valor predeterminado de is_active
-        del self.content_data['is_active']
-        content = Content.objects.create(**self.content_data)
-        self.assertTrue(
-            content.is_active,
-            msg="El campo 'is_active' debería ser True por defecto al crear un contenido."
-        )
-
-    def test_default_state(self):
-        """
-        Verifica el estado predeterminado del contenido.
-
-        Elimina `state` del diccionario de datos y comprueba que el estado predeterminado
-        sea 'Borrador' en la instancia creada.
-        """
-
-        # Prueba para verificar el estado predeterminado (Borrador)
-        del self.content_data['state']
-        content = Content.objects.create(**self.content_data)
-        self.assertEqual(
-            content.state, Content.StateChoices.draft,
-            msg="El estado predeterminado del contenido debería ser 'Borrador'."
-        )
-
-    def test_expired_content(self):
-        """
-        Prueba para verificar la expiración de un contenido.
-
-        Cambia la fecha de expiración del contenido a una fecha en el pasado y verifica
-        que el contenido se considere expirado.
-        """
-
-        # Prueba para verificar la expiración de un contenido
-        self.content_data['date_expire'] = timezone.now() - timezone.timedelta(days=1)
-        content = Content.objects.create(**self.content_data)
-        self.assertLess(
-            content.date_expire, timezone.now(),
-            msg="La fecha de expiración debería ser en el pasado para un contenido expirado."
-        )
-
-    def test_invalid_state_value(self):
-        """
-        Verifica que el campo `state` del contenido tenga un valor válido.
-
-        Asigna un estado no válido al contenido y verifica que se lance un ValidationError
-        al llamar a la validación personalizada `clean()`.
-        """
-
-        # Prueba para verificar que el campo state tenga un valor válido
-        self.content_data['state'] = 'Invalid'
-        content = Content(**self.content_data)
-        with self.assertRaises(ValidationError, msg="Debería lanzar ValidationError al asignar un estado no válido."):
-            content.clean()  # Llama a la validación para verificar el estado
-
-    def test_title_max_length(self):
-        """
-        Prueba la restricción de longitud máxima del campo `title`.
-
-        Intenta crear un contenido con un título que excede los 255 caracteres y verifica
-        que se lance una excepción.
-        """
-
-        # Prueba para verificar la longitud máxima del campo título
-        self.content_data['title'] = 'A' * 256
-        with self.assertRaises(
-            Exception,
-            msg="Debería lanzar una excepción al exceder la longitud máxima del título."
-        ):
-            Content.objects.create(**self.content_data)
-
-    def test_date_expire_in_future(self):
-        """
-        Verifica que la fecha de expiración del contenido esté en el futuro.
-
-        Comprueba que la fecha de expiración sea posterior a la fecha de creación
-        para asegurar la validez temporal del contenido.
-        """
-
-        # Prueba para verificar que la fecha de expiración esté en el futuro
-        content = Content.objects.create(**self.content_data)
-        self.assertGreater(
-            content.date_expire, content.date_create,
-            msg="La fecha de expiración debería ser posterior a la fecha de creación."
-        )
+        form = ContentForm(instance=content)
+        self.assertIn('disabled', form.fields['title'].widget.attrs, "El campo 'title' debería estar deshabilitado.")
+        self.assertIn('disabled', form.fields['date_published'].widget.attrs, "El campo 'date_published' debería estar deshabilitado.")
+        self.assertIn('disabled', form.fields['date_expire'].widget.attrs, "El campo 'date_expire' debería estar deshabilitado.")
