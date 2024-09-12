@@ -83,15 +83,20 @@
                 <table class="table table-striped mt-3">
                     <thead>
                         <tr>
+                            <th>Version</th>
                             <th>Fecha</th>
                             <th>Usuario</th>
                             <th>Estado</th>
                             <th>Versiones</th>
+                            {% if user.id == content.autor_id and content.state == 'draft' %}
+                                <th>Recuperación</th> <!-- Mostrar solo si es autor y está en borrador -->
+                            {% endif %}     
                         </tr>
                     </thead>
                     <tbody>
-                        {% for record in history %}
+                        {% for record in history  %}
                         <tr>
+                             <td>{{ forloop.revcounter }}</td> <!-- Número de versión -->
                             <td>{{ record.history_date }}</td>
                             <td>{{ record.history_user }}</td>
                             <td>
@@ -112,6 +117,11 @@
                             <td>
                                 <a class="btn btn-sm btn-primary" href="history/{{ record.history_id }}">Ver detalles</a>
                             </td>
+                            {% if user.id == content.autor_id and content.state == 'draft' %}
+                            <td>
+                                <a class="btn btn-sm btn-primary" href="{% url 'edit_content' content.id %}?history_id={{ record.history_id }}">Recuperar esta versión</a>
+                            </td>
+                            {% endif %}
                         </tr>
                         {% empty %}
                         <tr>

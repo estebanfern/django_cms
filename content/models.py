@@ -52,8 +52,8 @@ class Content (models.Model):
     autor = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name=('Autor'))
     is_active = models.BooleanField(default=True, verbose_name='Activo')
     date_create= models.DateTimeField(auto_now_add=True, verbose_name=('Fecha de creacion'))
-    date_expire = models.DateField(null=True, blank=True,verbose_name=('Fecha de expiración'))
-    date_published = models.DateField(null=True, blank=True, verbose_name='Fecha de publicación')
+    date_expire = models.DateTimeField(null=True, blank=True,verbose_name=('Fecha de expiración'))
+    date_published = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de publicación')
     content = RichTextUploadingField(verbose_name='Contenido')  # Campo de texto enriquecido con CKEditor 5
     tags = TaggableManager()
     history = HistoricalRecords()

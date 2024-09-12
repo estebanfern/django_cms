@@ -2,6 +2,8 @@ from django.utils import timezone
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
+
+from category.models import Category
 from .models import Content
 import json
 from django.contrib.auth.decorators import login_required
@@ -67,8 +69,8 @@ def update_content_state(request, content_id):
     user = request.user
 
     if not (
-        user.has_perm('app.create_content') or 
-        user.has_perm('app.edit_content') or 
+        user.has_perm('app.create_content') or
+        user.has_perm('app.edit_content') or
         user.has_perm('app.publish_content') or
         user.has_perm('app.edit_is_active')
     ):
@@ -79,6 +81,11 @@ def update_content_state(request, content_id):
     if request.method == 'POST':
         data = json.loads(request.body)
         new_state = data.get('state')
+
+        # **Verificación: Evitar actualización si no hay cambio en el estado**
+        if content.state == new_state:
+            # No realizar la actualización ni registrar en el historial si el estado no cambia
+            return JsonResponse({'status': 'no_change', 'message': 'El estado no ha cambiado, no se actualizará.'})
 
         # Verificar los estados válidos según los permisos
         if user.has_perm('app.create_content'):
@@ -98,8 +105,9 @@ def update_content_state(request, content_id):
                 # Restricción para pasar de 'Borrador' a 'Publicado' si la categoría no es moderada
                 elif content.state == 'draft' and new_state == 'publish':
                     if not content.category.is_moderated:
+                        if content.date_published is None or content.date_published < timezone.now():
+                            content.date_published = timezone.now()
                         content.state = new_state
-                        content.date_published = timezone.now()
                         content.save()
                         return JsonResponse({'status': 'success'})
                     else:
@@ -108,8 +116,8 @@ def update_content_state(request, content_id):
                                             status=403)
 
         elif user.has_perm('app.edit_content'):
-            # Permite mover de 'Edición' a 'A publicar' y al mismo estado
-            if (content.state == 'revision' and new_state == 'to_publish') or (content.state == new_state):
+            # Permite mover de 'Edición' a 'A publicar', a 'Borrador'  al mismo estado
+            if (content.state == 'revision' and new_state in ['draft', 'revision', 'to_publish']) or (content.state == new_state):
                 content.state = new_state
                 content.save()
                 return JsonResponse({'status': 'success'})
@@ -118,16 +126,9 @@ def update_content_state(request, content_id):
             # Permite mover de 'A publicar' a 'Publicado', 'Revisión' y al mismo estado
             if content.state == 'to_publish' and new_state in ['publish', 'revision', 'to_publish'] or (content.state == new_state):
                 if new_state == 'publish' and  content.state != 'publish':
-                    content.date_published = timezone.now()
+                    if content.date_published is None or content.date_published < timezone.now():
+                        content.date_published = timezone.now()
                 content.state = new_state
-                content.save()
-                return JsonResponse({'status': 'success'})
-
-        elif user.has_perm('app.edit_is_active'):
-            # Permite mover de 'Publicado' a 'Inactivo' y desactiva el contenido
-            if content.state == 'publish' and new_state == 'inactive' or (content.state == new_state):
-                content.state = new_state
-                # content.is_active = False
                 content.save()
                 return JsonResponse({'status': 'success'})
 
@@ -150,11 +151,20 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         return form
 
     def form_valid(self, form):
+
+        # La fecha de publicacion no debe ser igual a la de expiracion
+        date_published = form.cleaned_data.get('date_published')
+        date_expire = form.cleaned_data.get('date_expire')
+
+        if date_published and date_expire and date_published.date() > date_expire.date():
+            messages.warning(self.request, 'La fecha de publicación debería ser antes de la fecha de expiración del contenido')
+            return self.form_invalid(form)
+
+
         content = form.save(commit=False)
         content.autor = self.request.user
         content.is_active = True
         content.date_create = timezone.now()
-        content.date_expire = None
         content.state = Content.StateChoices.draft
         content.save()
 
@@ -164,7 +174,7 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         # Establece la razón de cambio en el historial como 'Creación de contenido'
         update_change_reason(content, 'Creación de contenido')
 
-        messages.success(self.request, 'Contenido modificado exitosamente')
+        messages.success(self.request, 'Contenido creado exitosamente')
         return redirect(self.success_url)
         
     def form_invalid(self, form):
@@ -196,8 +206,29 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
         else:
             # No cumplis con alguno de los requisitos, F
             raise PermissionDenied
-        
+
         return super().dispatch(request, *args, **kwargs)
+
+
+    def get_initial(self):
+        # Recuperar el history_id desde los parámetros de la URL
+        history_id = self.request.GET.get('history_id')
+
+        # Si history_id está presente, cargar los datos históricos
+        if history_id:
+            historical_record = get_object_or_404(Content.history.model, history_id=history_id)
+            initial_data = {
+                'title': historical_record.title,
+                'summary': historical_record.summary,
+                'category': historical_record.category,
+                'date_expire': historical_record.date_expire,
+                'date_published': historical_record.date_published,
+                'content': historical_record.content,
+                # Agrega otros campos necesarios aquí si son parte del historial
+            }
+            return initial_data
+        return super().get_initial()
+
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -215,6 +246,16 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
 
         if user.id == content.autor_id and user.has_perm('app.create_content') and content.state == Content.StateChoices.draft:
         # Si el usuario es el autor del contenido. tiene permisos de autoria y el cotenido está en estado borrador, OK
+
+            # La fecha de publicacion no debe ser igual a la de expiracion
+            date_published = form.cleaned_data.get('date_published')
+            date_expire = form.cleaned_data.get('date_expire')
+
+            if date_published and date_expire and date_published.date() > date_expire.date():
+                messages.warning(self.request, 'La fecha de publicación debería ser antes de la fecha de expiración del contenido')
+                return self.form_invalid(form)
+
+
             form_data = form.cleaned_data
             for field in form_data:
                 setattr(content, field, form_data[field])
@@ -242,6 +283,9 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
 
         # Actualiza la razón de cambio en el historial
 
+        # Establece la razón de cambio en el historial como 'Modificaciones del autor'
+        update_change_reason(content, 'Modificaciones del autor')
+
 
         messages.success(self.request, 'Contenido modificado exitosamente.')
         return redirect(self.success_url)
@@ -252,10 +296,20 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
 
 def view_content(request, id):
     content = get_object_or_404(Content, id=id)
-    #Traer la historia y renderizarla de manera descendente
+    if not content.is_active:
+        raise Http404
+
+    # Verificar que si el usuario esta registrado y esta queriendo ver un contenido de categoria de suscripcion o pago
+    # en caso de que no, redirigirle al login con un mensaje
+    # TODO: verificar que el usuario este suscripto y al dia si es un contenido de categoria de pago
+    if not request.user.is_authenticated and not content.category.type == Category.TypeChoices.public:
+        messages.warning(request, 'Para poder acceder a contenidos de categorias de suscripción o pago debes estar registrado')
+        return redirect('login')
+
     history = content.history.all().order_by('-history_date')
     return render(request, 'content/view.html', {"content" : content, "history" : history})
 
+@login_required
 def view_version(request, content_id, history_id):
     user = request.user
     content = get_object_or_404(Content, id=content_id)
@@ -272,6 +326,6 @@ def view_version(request, content_id, history_id):
 
     history = content.history.filter(history_id=history_id).first()
 
-    if not history:
+    if not history or not content.is_active:
         raise Http404
     return render(request, 'content/view_version.html', {"content" : content, "history" : history})

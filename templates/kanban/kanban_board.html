@@ -128,7 +128,7 @@
   }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
+<script src="{% static 'assets/js/Sortable.min.js' %}"></script>
 <script>
     document.querySelectorAll('.kanban-items').forEach(function (column) {
         new Sortable(column, {
@@ -180,6 +180,7 @@
                 } else if (userPermissions.edit) {
                     if (
                         (originalState === 'Edicion' && newState === 'A publicar') ||
+                        (originalState === 'Edicion' && newState === 'Borrador') ||
                         (originalState === newState)  // Permite mover al mismo estado
                     ) {
                         canChangeState = true;
@@ -193,7 +194,6 @@
                     }
                 } else if (userPermissions.editIsActive) {
                     if (
-                        (originalState === 'Publicado' && newState === 'Inactivo') ||
                         (originalState === newState)  // Permite mover al mismo estado 
                     ){ 
                         canChangeState = true;
