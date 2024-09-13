@@ -72,7 +72,7 @@
                   {{ content.summary }}<a href="/content/{{content.id}}">...ver más</a>
                 </div>
                 <div class="card-footer">
-                  {{ content.autor }} - {{ content.date_create }}
+                  {{ content.date_published|default:content.date_create }}
                 </div>
               </div>
             </div>
