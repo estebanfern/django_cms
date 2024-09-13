@@ -295,7 +295,7 @@
               evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
             });
           } else {
-            if (mappedState === 'to_publish' || mappedState === 'publish') {
+            if (mappedState === 'to_publish' || mappedState === 'publish' || mappedState === 'inactive' || mappedState === 'draft' ) { 
               evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
             }
             if (mappedState === 'revision' && userPermissions.create) {
