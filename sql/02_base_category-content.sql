@@ -42,5 +42,7 @@ VALUES
 ('Contenido no moderado 1', 'No moderado', 11, 2, TRUE, NOW(), NOW() + INTERVAL '1 week', NULL, '<p>Contenido expirado.</p>', 'draft'),
 ('Contenido no moderado 2', 'No moderado', 11, 2, TRUE, NOW(), NOW() + INTERVAL '1 week', NULL, '<p>Contenido expirado.</p>', 'draft'),
 ('Contenido no moderado 3', 'No moderado', 11, 2, TRUE, NOW(), NOW() + INTERVAL '1 week', NULL, '<p>Contenido expirado.</p>', 'draft'),
-('Contenido fecha de publicacion pasado', 'Tardo el tramite en publicar, se deberia poner la fecha actual al publicar', 10, 2, TRUE, NOW(), NOW() + INTERVAL '1 week', NOW(), '<p>Contenido expirado.</p>', 'to_publish');
+('Contenido fecha de publicacion pasado', 'Tardo el tramite en publicar, se deberia poner la fecha actual al publicar', 10, 2, TRUE, NOW(), NOW() + INTERVAL '1 week', NOW(), '<p>Contenido viejo.</p>', 'to_publish'),
+('Contenido programado', 'Contenido programado, no deberia cambiar la fecha de publicacion', 10, 2, TRUE, NOW(), NOW() + INTERVAL '3 week', NOW() + INTERVAL '1 week', '<p>Contenido programado.</p>', 'to_publish');
+;
 
