@@ -106,13 +106,12 @@ class Content (models.Model):
     def save(self, *args, **kwargs):
         """
         Sobrescribe el método save para incluir validaciones personalizadas antes de guardar el contenido.
-
         Este método llama a `clean()` para ejecutar validaciones personalizadas antes de guardar la instancia
         del contenido en la base de datos, asegurando que los datos sean consistentes y válidos.
 
         Parámetros:
-            *args: Argumentos posicionales adicionales.
-            **kwargs: Argumentos de palabra clave adicionales.
+            args: Argumentos posicionales adicionales.
+            kwargs: Argumentos de palabra clave adicionales.
         """
         self.clean()  # Llama a la validación personalizada
         super().save(*args, **kwargs)

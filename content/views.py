@@ -285,19 +285,19 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         """
-        Verifica los permisos del usuario antes de permitir la actualización del contenido.
+        Verifica los permisos del usuario antes de permitir la actualizacion del contenido.
 
         Acciones:
             - Verifica si el usuario tiene al menos uno de los permisos requeridos para acceder a la vista.
             - Permite la edición solo si:
                 - El usuario tiene permisos de edición y el contenido está en estado de revisión, o
                 - El usuario es el autor del contenido, tiene permisos de creación, y el contenido está en borrador.
-            - Si no cumple con los requisitos, se levanta un error de `PermissionDenied`.
+            - Si no cumple con los requisitos, se levanta un error de 'PermissionDenied'.
 
-        Parámetros:
+        Parametros:
             request (HttpRequest): El objeto de la solicitud HTTP.
-            *args: Argumentos adicionales.
-            **kwargs: Argumentos adicionales de palabras clave.
+            args: Argumentos adicionales.
+            kwargs: Argumentos adicionales de palabras clave.
 
         Retorna:
             HttpResponse: La respuesta de la vista si se cumplen los permisos.
