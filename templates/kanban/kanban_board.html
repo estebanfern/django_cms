@@ -229,7 +229,7 @@
                         });
                     } else {
                         console.log('Estado actualizado correctamente');
-                        if (newState === 'A publicar' || newState === 'Publicado') {
+                        if (newState === 'A publicar' || newState === 'Publicado' || newState === 'Inactivo' || newState === 'Borrador' ) { 
                             evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
                         }
                         if (newState === 'Edicion' && userPermissions.create) {
