@@ -34,12 +34,24 @@
   {% endfor %}
 {% endif %}
 <div class="pagetitle">
-  <h1>Crear contenido</h1>
+  <h1>
+    {% if object %}
+      Editar contenido
+    {% else %}
+      Crear contenido
+    {% endif %}
+  </h1>
   <nav>
     <ol class="breadcrumb">
       <li class="breadcrumb-item"><a href="/">Inicio</a></li>
       <!-- <li class="breadcrumb-item">Anterior</li> -->
-      <li class="breadcrumb-item active">Crear contenido</li>
+      <li class="breadcrumb-item active">
+        {% if object %}
+          Editar contenido
+        {% else %}
+          Crear contenido
+        {% endif %}
+      </li>
     </ol>
   </nav>
 </div><!-- End Page Title -->
