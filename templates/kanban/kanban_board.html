@@ -148,6 +148,7 @@
                 const itemId = evt.item.dataset.id;
                 const newState = evt.to.dataset.state;
                 const originalState = evt.from.dataset.state;
+                let changeReasonModal = null;
 
                 // Mapeo de etiquetas a claves internas del modelo
                 const stateMap = {
@@ -158,7 +159,36 @@
                     'Inactivo': 'inactive'
                 };
 
+                const stateFlow = {
+                  draft: {
+                    name: 'Borrador',
+                    next: ['revision', 'inactive', 'publish'],
+                    prev: [],
+                  },
+                  revision: {
+                    name: 'Edicion',
+                    next: ['to_publish', 'inactive'],
+                    prev: ['draft'],
+                  },
+                  to_publish: {
+                    name: 'A publicar',
+                    next: ['publish', 'inactive'],
+                    prev: ['revision'],
+                  },
+                  publish: {
+                    name: 'Publicado',
+                    next: ['inactive'],
+                    prev: [],
+                  },
+                  inactive: {
+                    name: 'Inactivo',
+                    next: [],
+                    prev: ['publish'],
+                  },
+                }
+
                 const mappedState = stateMap[newState];  // Convertir la etiqueta a la clave
+                const oldStateMapped = stateMap[originalState];  // Convertir la etiqueta a la clave
 
                 // Verifica los permisos en función de los atributos de estado del contenido
                 const userPermissions = {
@@ -213,37 +243,72 @@
                     return;
                 }
 
-                // Llamar a la API para actualizar el estado del contenido
-                fetch(`/api/update-content-state/${itemId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: JSON.stringify({ state: mappedState })
-                }).then(response => {
-                    if (!response.ok) {
-                        return response.json().then(data => {
-                            modal.error({message:`Error al actualizar el estado: ${data.message}`});
-                            evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
-                        });
-                    } else {
-                        console.log('Estado actualizado correctamente');
-                        if (newState === 'A publicar' || newState === 'Publicado' || newState === 'Inactivo' || newState === 'Borrador' ) { 
-                            evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
+                if (stateFlow[oldStateMapped].prev.includes(mappedState) && !userPermissions.create) {
+                  //Regresando de estado
+                  changeReasonModal = modal.info({
+                    message: `
+                        <div class="form-group col-12">
+                            <label for="name" class="form-label">Motivo de cambio (*)</label>
+                            <input type="text" class="form-control" name="change_reason_ipt" id="change_reason_ipt" placeholder="Ingrese el motivo de cambio" required />
+                            <label class="text-danger form-text" id="change_reason_iptHelp" hidden>Este campo es obligatorio</label>
+                        </div>
+                    `,
+                    buttons: {
+                      ok: {
+                        label: 'Ingresar',
+                        className: 'btn btn-success',
+                        callback: function() {
+                          var changeReasonVal = document.getElementById('change_reason_ipt').value;
+                          if (changeReasonVal.length > 0) {
+                            postState(itemId, mappedState, evt, userPermissions, changeReasonVal);
+                            return true;
+                          } else {
+                            document.getElementById('change_reason_iptHelp').hidden = false;
+                            return false;
+                          }
                         }
-                        if (newState === 'Edicion' && userPermissions.create) {
-                          evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
                       }
                     }
-                }).catch(error => {
-                    console.error('Error en la solicitud fetch:', error);
-                    modal.error({message:'Error en la comunicación con el servidor.'});
-                    evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
-                });
+                  });
+                } else {
+                  //Ascendiendo de estado
+                  postState(itemId, mappedState, evt, userPermissions);
+                }
+                
             }
         });
     });
+
+    function postState(itemId, mappedState, evt, userPermissions, message=null) {
+      // Llamar a la API para actualizar el estado del contenido
+      fetch(`/api/update-content-state/${itemId}/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ state: mappedState, reason: message })
+      }).then(response => {
+          if (!response.ok) {
+            return response.json().then(data => {
+              modal.error({message:`Error al actualizar el estado: ${data.message}`});
+              evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
+            });
+          } else {
+            if (mappedState === 'to_publish' || mappedState === 'publish') {
+              evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
+            }
+            if (mappedState === 'revision' && userPermissions.create) {
+              evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
+            }
+          }
+      }).catch(error => {
+          console.error('Error en la solicitud fetch:', error);
+          modal.error({message:'Error en la comunicación con el servidor.'});
+          evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
+      });
+    }
+
 </script>
 
 {% endblock content %}
