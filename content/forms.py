@@ -3,6 +3,24 @@ from django import forms
 from .models import Content
 
 class ContentForm(forms.ModelForm):
+    """
+    Formulario para la creación y edición de contenido.
+
+    Hereda de:
+        - forms.ModelForm: Utiliza un formulario basado en el modelo 'Content'.
+
+    Atributos:
+        change_reason (CharField): Campo opcional para especificar la razón de edición, presentado como un área de texto.
+
+    Meta:
+        - model: El modelo asociado al formulario es 'Content'.
+        - fields: Lista de campos del modelo que se incluyen en el formulario.
+        - widgets: Personaliza la apariencia y el comportamiento de los campos del formulario con clases CSS y otros atributos.
+
+    Métodos:
+        __init__: Inicializa el formulario y ajusta los campos según si el formulario está en modo de creación o edición.
+    """
+
     change_reason = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'required':'required'}),
@@ -10,6 +28,15 @@ class ContentForm(forms.ModelForm):
     )
 
     class Meta:
+        """
+        Configuración interna del formulario.
+
+        Atributos:
+            model (Model): Define el modelo asociado al formulario, que en este caso es 'Content'.
+            fields (list): Lista de campos del modelo que se incluirán en el formulario ('title', 'summary', 'category', 'date_published', 'date_expire', 'content', 'tags').
+            widgets (dict): Define los widgets personalizados para los campos del formulario, aplicando clases CSS como 'form-control' y ajustando atributos como el tipo de entrada y los rangos de fechas para los campos de fechas.
+        """
+
         model = Content
         fields = ['title', 'summary', 'category', 'date_published', 'date_expire', 'content', 'tags']
         widgets = {
@@ -35,6 +62,24 @@ class ContentForm(forms.ModelForm):
         
         }
     def __init__(self, *args, **kwargs):
+        """
+        Inicializa el formulario y ajusta los campos según si el formulario está en modo de creación o edición.
+
+        Lógica:
+            - Llama al método '__init__' de la clase padre para inicializar el formulario.
+            - Verifica si el formulario está en modo de edición (instancia existente) o creación (nueva instancia).
+            - Si está en modo de edición:
+                - Si el contenido no está en estado 'borrador', desactiva los campos para evitar cambios no permitidos.
+                - Si el contenido está en estado 'borrador', ajusta los campos relevantes para permitir la edición completa.
+            - En ambos modos, asegura que el campo 'tags' tenga la clase CSS 'form-control'.
+
+        Parámetros:
+            *args: Argumentos posicionales.
+            **kwargs: Argumentos nombrados.
+
+        Retorna:
+            None
+        """
         super(ContentForm, self).__init__(*args, **kwargs)
             # Verifica si el formulario está en modo de edición o creación
         if self.instance.pk:
