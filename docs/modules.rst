@@ -8,5 +8,5 @@ django_cms
    category
    cms
    content
-   gunicorn
    manage
+   gunicorn

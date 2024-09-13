@@ -17,7 +17,7 @@ Rutas:
 
     Comentadas:
     - Las rutas comentadas corresponden a vistas de restablecimiento de contraseña basadas en clases de Django, 
-      que pueden reemplazar a las vistas personalizadas si se desean utilizar las vistas predeterminadas de Django.
+    que pueden reemplazar a las vistas personalizadas si se desean utilizar las vistas predeterminadas de Django.
 
     Perfil (Profile):
     - 'profile/': Ruta para la vista del perfil del usuario autenticado, utilizando `profile_view`.
