@@ -9,7 +9,34 @@ from content.forms import ContentForm
 from content.models import Content
 
 class ContentCreateViewTest(TestCase):
+    """
+    Tests para la vista de creación de contenido (`ContentCreateView`).
+
+    Hereda de:
+        - TestCase: Clase base para escribir tests unitarios en Django.
+
+    Atributos:
+        user (CustomUser): Usuario de prueba con permisos para crear contenido.
+        category (Category): Categoría de prueba para asociar al contenido.
+
+    Métodos:
+        setUp: Configura los datos necesarios para los tests, incluyendo la creación de un usuario con permisos, una categoría y la sesión de usuario.
+        test_access_create_content_with_permission: Verifica que un usuario con los permisos adecuados puede acceder a la vista de creación de contenido.
+        test_access_create_content_without_permission: Verifica que un usuario sin los permisos adecuados recibe un error 403 al intentar acceder a la vista de creación de contenido.
+        test_form_valid_content_creation: Verifica que un formulario válido permite crear contenido y redirige correctamente.
+        test_form_invalid_content_creation: Verifica que un formulario con datos inválidos muestra el formulario de nuevo con errores indicados.
+    """
+
     def setUp(self):
+        """
+        Configura los datos necesarios para los tests.
+
+        Lógica:
+            - Crea un usuario de prueba con un permiso específico para crear contenido.
+            - Asigna el permiso al usuario y lo inicia sesión para los tests.
+            - Crea una categoría de prueba para asociar con el contenido.
+
+        """
         # Crear un usuario de prueba
         self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
@@ -32,6 +59,11 @@ class ContentCreateViewTest(TestCase):
     def test_access_create_content_with_permission(self):
         """
         Verifica que un usuario autenticado con permiso adecuado puede acceder a la vista de creación de contenido.
+
+        Lógica:
+            - Intenta acceder a la URL de creación de contenido con un usuario que tiene permisos.
+            - Verifica que la respuesta tiene un código de estado 200.
+            - Verifica que se utiliza la plantilla correcta para la vista.
         """
         url = reverse('content-create')
         response = self.client.get(url)
@@ -41,6 +73,12 @@ class ContentCreateViewTest(TestCase):
     def test_access_create_content_without_permission(self):
         """
         Verifica que un usuario sin permiso para crear contenido recibe un error 403 al intentar acceder a la vista de creación.
+
+        Lógica:
+            - Crea un nuevo usuario sin permisos.
+            - Intenta acceder a la URL de creación de contenido con el usuario sin permisos.
+            - Verifica que la respuesta tiene un código de estado 403.
+
         """
         # Crear un nuevo usuario sin permisos
         new_user = CustomUser.objects.create_user(
@@ -57,6 +95,11 @@ class ContentCreateViewTest(TestCase):
     def test_form_valid_content_creation(self):
         """
         Verifica que un usuario con permisos puede crear contenido válido y es redirigido correctamente.
+
+        Lógica:
+            - Envía un formulario con datos válidos a la URL de creación de contenido.
+            - Verifica que la respuesta es una redirección (código 302).
+            - Verifica que el contenido creado existe en la base de datos.
         """
         url = reverse('content-create')
         response = self.client.post(url, {
@@ -75,6 +118,11 @@ class ContentCreateViewTest(TestCase):
     def test_form_invalid_content_creation(self):
         """
         Verifica que si el formulario para crear contenido tiene datos inválidos, se muestra el formulario de nuevo con errores.
+
+        Lógica:
+            - Envía un formulario con un campo obligatorio vacío a la URL de creación de contenido.
+            - Verifica que la respuesta tiene un código de estado 200, indicando que el formulario se muestra de nuevo.
+            - Verifica que se muestra un error de formulario para el campo faltante.
         """
         url = reverse('content-create')
         response = self.client.post(url, {
@@ -90,8 +138,36 @@ class ContentCreateViewTest(TestCase):
         self.assertEqual(response.status_code, 200, "Se esperaba el código de estado 200 cuando el formulario es inválido.")
         self.assertFormError(response, 'form', 'title', 'Este campo es obligatorio.', "Se esperaba un error de formulario para el campo 'title'.")
 
+
 class ContentUpdateViewTest(TestCase):
+    """
+    Tests para la vista de actualización de contenido (`ContentUpdateView`).
+
+    Hereda de:
+        - TestCase: Clase base para escribir tests unitarios en Django.
+
+    Atributos:
+        user (CustomUser): Usuario de prueba con permisos para actualizar contenido.
+        category (Category): Categoría de prueba para asociar al contenido.
+        content (Content): Contenido de prueba existente para actualizar.
+
+    Métodos:
+        setUp: Configura los datos necesarios para los tests, incluyendo la creación de un usuario con permisos, una categoría, y un contenido existente.
+        test_update_content_view: Verifica que un usuario con los permisos adecuados puede acceder a la vista de actualización de contenido.
+        test_form_valid_content_update: Verifica que un formulario válido permite actualizar el contenido y redirige correctamente.
+        test_form_invalid_content_update: Verifica que un formulario con datos inválidos muestra el formulario de nuevo con errores indicados.
+    """
+
     def setUp(self):
+        """
+        Configura los datos necesarios para los tests.
+
+        Lógica:
+            - Crea un usuario de prueba con un permiso específico para crear contenido.
+            - Asigna el permiso al usuario y lo inicia sesión para los tests.
+            - Crea una categoría de prueba.
+            - Crea un contenido de prueba asociado al usuario y la categoría.
+        """
         # Crear un usuario de prueba
         self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
@@ -120,6 +196,10 @@ class ContentUpdateViewTest(TestCase):
     def test_update_content_view(self):
         """
         Verifica que un usuario con permiso puede acceder a la vista de actualización de contenido.
+        Lógica:
+            - Intenta acceder a la URL de actualización del contenido con un usuario que tiene permisos.
+            - Verifica que la respuesta tiene un código de estado 200.
+            - Verifica que se utiliza la plantilla correcta para la vista.
         """
         url = reverse('content-update', args=[self.content.pk])
         response = self.client.get(url)
@@ -129,6 +209,11 @@ class ContentUpdateViewTest(TestCase):
     def test_form_valid_content_update(self):
         """
         Verifica que un usuario con permisos puede actualizar el contenido correctamente y es redirigido después de la actualización.
+
+        Lógica:
+            - Envía un formulario con datos válidos a la URL de actualización del contenido.
+            - Verifica que la respuesta es una redirección (código 302).
+            - Actualiza la instancia de contenido desde la base de datos y verifica que los cambios se aplicaron correctamente.
         """
         url = reverse('content-update', args=[self.content.pk])
         response = self.client.post(url, {
@@ -148,6 +233,11 @@ class ContentUpdateViewTest(TestCase):
     def test_form_invalid_content_update(self):
         """
         Verifica que si el formulario para actualizar contenido tiene datos inválidos, se muestra el formulario de nuevo con errores.
+        Lógica:
+            - Envía un formulario con un campo obligatorio vacío a la URL de actualización de contenido.
+            - Verifica que la respuesta tiene un código de estado 200, indicando que el formulario se muestra de nuevo.
+            - Verifica que se muestra un error de formulario para el campo faltante.
+
         """
         url = reverse('content-update', args=[self.content.pk])
         response = self.client.post(url, {
@@ -164,7 +254,33 @@ class ContentUpdateViewTest(TestCase):
         self.assertFormError(response, 'form', 'title', 'Este campo es obligatorio.', "Se esperaba un error de formulario para el campo 'title'.")
 
 class ContentUpdateViewEditorTest(TestCase):
+    """
+    Tests para la vista de actualización de contenido por un editor (`ContentUpdateView`).
+
+    Hereda de:
+        - TestCase: Clase base para escribir tests unitarios en Django.
+
+    Atributos:
+        editor (CustomUser): Usuario de prueba con permisos de edición de contenido.
+        category (Category): Categoría de prueba para asociar al contenido.
+        content (Content): Contenido de prueba en estado de revisión para actualizar.
+
+    Métodos:
+        setUp: Configura los datos necesarios para los tests, incluyendo la creación de un usuario con permisos de editor, una categoría y un contenido en estado de revisión.
+        test_update_content_view_for_editor: Verifica que un editor puede acceder a la vista de actualización de contenido en estado revisión.
+        test_editor_cannot_update_other_fields: Verifica que un editor no puede actualizar campos distintos a 'content' en estado 'revision'.
+    """
+
     def setUp(self):
+        """
+        Configura los datos necesarios para los tests.
+
+        Lógica:
+            - Crea un usuario de prueba con permiso de editor.
+            - Asigna el permiso de edición al usuario y lo inicia sesión para los tests.
+            - Crea una categoría de prueba.
+            - Crea un contenido de prueba en estado de revisión asociado al usuario editor.
+        """
         # Crear un usuario con permiso de editor
         self.editor = get_user_model().objects.create_user(
             email='editor@example.com',
@@ -195,6 +311,10 @@ class ContentUpdateViewEditorTest(TestCase):
     def test_update_content_view_for_editor(self):
         """
         Verifica que un editor puede acceder a la vista de actualización de contenido en estado revisión.
+        Lógica:
+            - Intenta acceder a la URL de actualización del contenido con un usuario que tiene permisos de edición.
+            - Verifica que la respuesta tiene un código de estado 200.
+            - Verifica que se utiliza la plantilla correcta para la vista.
         """
         url = reverse('content-update', args=[self.content.pk])
         response = self.client.get(url)
@@ -227,6 +347,11 @@ class ContentUpdateViewEditorTest(TestCase):
     def test_editor_cannot_update_other_fields(self):
         """
         Verifica que un editor no puede actualizar campos distintos a 'content' en estado 'revision'.
+        Lógica:
+            - Envía un formulario con campos adicionales modificados (como título y resumen) junto con el contenido.
+            - Verifica que la respuesta es una redirección (código 302).
+            - Actualiza la instancia de contenido desde la base de datos y verifica que solo el campo 'content' ha sido actualizado.
+            - Verifica que los campos 'title' y 'summary' no han cambiado, asegurando que el editor no pudo modificarlos.
         """
         url = reverse('content-update', args=[self.content.pk])
         response = self.client.post(url, {
@@ -247,8 +372,30 @@ class ContentUpdateViewEditorTest(TestCase):
 
 
 class ContentFormTest(TestCase):
+    """
+    Tests para el formulario de creación y actualización de contenido (`ContentForm`).
+
+    Hereda de:
+        - TestCase: Clase base para escribir tests unitarios en Django.
+
+    Atributos:
+        user (CustomUser): Usuario de prueba.
+        category (Category): Categoría de prueba para asociar al contenido.
+
+    Métodos:
+        setUp: Configura los datos necesarios para los tests, incluyendo la creación de un usuario y una categoría de prueba.
+        test_content_form_creation_valid: Verifica que el formulario de creación de contenido es válido con los datos correctos.
+        test_form_disabled_fields_for_editor: Verifica que los campos que no deben ser modificados están deshabilitados cuando el contenido está en estado de revisión.
+    """
 
     def setUp(self):
+        """
+        Configura los datos necesarios para los tests.
+
+        Lógica:
+            - Crea un usuario de prueba con un correo electrónico, nombre y contraseña.
+            - Crea una categoría de prueba para asociar al contenido en los tests.
+        """
         # Crear usuario y categoría de prueba
         self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
@@ -260,6 +407,10 @@ class ContentFormTest(TestCase):
     def test_content_form_creation_valid(self):
         """
         Verifica que el formulario de creación de contenido es válido con los datos correctos.
+        Lógica:
+            - Define datos válidos para el formulario de contenido.
+            - Crea una instancia del formulario con los datos proporcionados.
+            - Verifica que el formulario es válido usando `assertTrue`.
         """
         form_data = {
             'title': 'New Content',
@@ -277,6 +428,11 @@ class ContentFormTest(TestCase):
     def test_form_disabled_fields_for_editor(self):
         """
         Verifica que los campos que no deben ser modificados están deshabilitados cuando el contenido está en estado de revisión.
+
+        Lógica:
+            - Crea un contenido de prueba en estado de revisión.
+            - Inicializa el formulario `ContentForm` con la instancia de contenido en estado de revisión.
+            - Verifica que los campos 'title', 'date_published' y 'date_expire' están deshabilitados en el formulario para los editores.
         """
         content = Content.objects.create(
             title='Content in Revision',
