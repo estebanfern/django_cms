@@ -9,10 +9,30 @@ from django.contrib import messages
 # Create your views here.
 
 def home_view(request):
+    """
+    Vista principal para mostrar contenidos publicados y activos.
+
+    Parámetros:
+        request (HttpRequest): La solicitud HTTP recibida.
+
+    Lógica:
+        - Obtiene el filtro de categoría y de búsqueda desde los parámetros de la URL.
+        - Filtra los contenidos activos y publicados, ordenándolos por fecha de publicación.
+        - Si se especifica una categoría, filtra los contenidos por esa categoría.
+        - Si se proporciona una consulta de búsqueda, filtra los contenidos por título o por nombre del autor.
+        - Pagina los resultados para mostrar un máximo de 10 contenidos por página.
+
+    Retorna:
+        HttpResponse: Renderiza la plantilla 'inicio.html' con los contenidos filtrados y paginados.
+    """
     cat_query = request.GET.get('cat')
     category = None
     query = request.GET.get('query')
-    contents = Content.objects.filter(is_active=True, state=Content.StateChoices.publish).select_related('category', 'autor').order_by('-date_published')
+    # Filtra los contenidos activos y publicados, y los ordena por fecha de publicación
+    contents = Content.objects.filter(
+        is_active=True,
+        state=Content.StateChoices.publish
+    ).select_related('category', 'autor').order_by('-date_published')
 
     # Si se busco una categoria, verificar si el usuario está logueado en caso de que no sea categoria publica
     # si no está loguead, redirigirle al login con un mensaje
@@ -37,12 +57,16 @@ def home_view(request):
             Q(title__icontains=query) | Q(autor__name__icontains=query)
         )
 
+    # Configura la paginación con un máximo de 10 contenidos por página
     paginator = Paginator(contents, 10)
     str_page_number = request.GET.get('page')
+    # Si no se especifica número de página, se establece en la primera página
     if str_page_number is None or str_page_number == '':
         page_number = 1
     else:
         page_number = int(str_page_number)
     if (page_number is None) or (page_number < 1): page_number = 1
     page_obj = paginator.get_page(page_number)
+
+    # Renderiza la plantilla con los contenidos paginados y la información de la categoría y búsqueda
     return render(request, 'inicio.html', {'page_obj': page_obj, 'category': category, 'query': query})

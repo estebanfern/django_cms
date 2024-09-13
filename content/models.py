@@ -1,11 +1,11 @@
 from ckeditor_uploader.fields import RichTextUploadingField
 from django.db import models
 from django.core.exceptions import ValidationError
-from ckeditor.fields import RichTextField
 from simple_history.models import HistoricalRecords
 from app.models import CustomUser
 from category.models import Category
 from taggit.managers import TaggableManager
+from ckeditor.fields import RichTextField
 
 class Content (models.Model):
     """
@@ -136,6 +136,15 @@ class Content (models.Model):
         return f"{self.title} ({self.get_state_display()})"
 
     def get_state_name(self, state):
+        """
+        Devuelve el nombre descriptivo del estado de un contenido en español, si no coincide con niguna opcion, devuelve Desconocido.
+
+        Parámetros:
+            state (str): El estado del contenido representado por las opciones de `Content.StateChoices`.
+
+        Retorna:
+            str: El nombre descriptivo del estado del contenido en español.
+        """
         if state == Content.StateChoices.draft:
             return "Borrador"
         elif state == Content.StateChoices.publish:
