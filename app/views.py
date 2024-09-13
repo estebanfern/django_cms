@@ -12,7 +12,7 @@ def home_view(request):
     cat_query = request.GET.get('cat')
     category = None
     query = request.GET.get('query')
-    contents = Content.objects.filter(is_active=True, state=Content.StateChoices.publish).select_related('category', 'autor').order_by('-date_create')
+    contents = Content.objects.filter(is_active=True, state=Content.StateChoices.publish).select_related('category', 'autor').order_by('-date_published')
 
     # Si se busco una categoria, verificar si el usuario está logueado en caso de que no sea categoria publica
     # si no está loguead, redirigirle al login con un mensaje
