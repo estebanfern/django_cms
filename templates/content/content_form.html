@@ -52,8 +52,20 @@
           <form method="post" class="my-4" enctype="multipart/form-data">
               {% csrf_token %}
               {{ form.as_p }}
-              <button type="button" onclick="history.back()"class="btn btn-secondary">Cancelar</button>
-              <button name="action" value="save" class="btn btn-success">Guardar</button>
+              <button type="button" onclick="history.back()"class="btn btn-secondary">
+                <i class="bi bi-x-circle me-1"></i>
+                Cancelar
+              </button>
+              <button name="action" value="save" class="btn btn-success">
+                <i class="bi bi-save me-1"></i>
+                Guardar
+              </button>
+              {% if content.id  %}
+              <a type="button" target="_blank" class="btn btn-info" href="/content/{{ content.id }}">
+                <i class="bi bi-eye me-1"></i>
+                Visualizar
+              </a>
+              {% endif %}
           </form>
 
         </div>
