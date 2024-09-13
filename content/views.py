@@ -97,8 +97,7 @@ def update_content_state(request, content_id):
                     (content.state == 'inactive' and new_state == 'publish' and timezone.now() < content.date_expire) or
                     (content.state == new_state)  # Permite mover al mismo estado
                 ):
-                    content.state = new_state
-                    content.save()
+                    Content.objects.filter(id=content.id).update(state=new_state)
                     return JsonResponse({'status': 'success'})
                 elif content.state == 'inactive' and new_state == 'publish' and timezone.now() >= content.date_expire:
                     return JsonResponse({'status': 'error', 'message': 'No se puede publicar un contenido expirado.'}, status=403)
@@ -107,8 +106,7 @@ def update_content_state(request, content_id):
                     if not content.category.is_moderated:
                         if content.date_published is None or content.date_published < timezone.now():
                             content.date_published = timezone.now()
-                        content.state = new_state
-                        content.save()
+                        Content.objects.filter(id=content.id).update(state=new_state)
                         return JsonResponse({'status': 'success'})
                     else:
                         return JsonResponse({'status': 'error',
@@ -118,8 +116,7 @@ def update_content_state(request, content_id):
         elif user.has_perm('app.edit_content'):
             # Permite mover de 'Edición' a 'A publicar', a 'Borrador'  al mismo estado
             if (content.state == 'revision' and new_state in ['draft', 'revision', 'to_publish']) or (content.state == new_state):
-                content.state = new_state
-                content.save()
+                Content.objects.filter(id=content.id).update(state=new_state)
                 return JsonResponse({'status': 'success'})
 
         elif user.has_perm('app.publish_content'):
@@ -128,8 +125,7 @@ def update_content_state(request, content_id):
                 if new_state == 'publish' and  content.state != 'publish':
                     if content.date_published is None or content.date_published < timezone.now():
                         content.date_published = timezone.now()
-                content.state = new_state
-                content.save()
+                Content.objects.filter(id=content.id).update(state=new_state)
                 return JsonResponse({'status': 'success'})
 
         # Responder con un error si la acción no está permitida
@@ -224,7 +220,6 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
                 'date_expire': historical_record.date_expire,
                 'date_published': historical_record.date_published,
                 'content': historical_record.content,
-                # Agrega otros campos necesarios aquí si son parte del historial
             }
             return initial_data
         return super().get_initial()
@@ -247,7 +242,7 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
         if user.id == content.autor_id and user.has_perm('app.create_content') and content.state == Content.StateChoices.draft:
         # Si el usuario es el autor del contenido. tiene permisos de autoria y el cotenido está en estado borrador, OK
 
-            # La fecha de publicacion no debe ser igual a la de expiracion
+            #La fecha de publicacion no debe ser igual a la de expiracion
             date_published = form.cleaned_data.get('date_published')
             date_expire = form.cleaned_data.get('date_expire')
 
@@ -259,6 +254,8 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
             form_data = form.cleaned_data
             for field in form_data:
                 setattr(content, field, form_data[field])
+
+            change_reason = 'Modificaciones de autor'
 
             content = form.save(commit=False)
             tags = form.cleaned_data.get('tags', None)
@@ -274,18 +271,8 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
         content.save()
 
 
-
         if change_reason:
             update_change_reason(content, change_reason)
-
-        # Guarda las relaciones manualmente para el campo 'tags'
-
-
-        # Actualiza la razón de cambio en el historial
-
-        # Establece la razón de cambio en el historial como 'Modificaciones del autor'
-        update_change_reason(content, 'Modificaciones del autor')
-
 
         messages.success(self.request, 'Contenido modificado exitosamente.')
         return redirect(self.success_url)
