@@ -34,12 +34,24 @@
   {% endfor %}
 {% endif %}
 <div class="pagetitle">
-  <h1>Crear contenido</h1>
+  <h1>
+    {% if object %}
+      Editar contenido
+    {% else %}
+      Crear contenido
+    {% endif %}
+  </h1>
   <nav>
     <ol class="breadcrumb">
       <li class="breadcrumb-item"><a href="/">Inicio</a></li>
       <!-- <li class="breadcrumb-item">Anterior</li> -->
-      <li class="breadcrumb-item active">Crear contenido</li>
+      <li class="breadcrumb-item active">
+        {% if object %}
+          Editar contenido
+        {% else %}
+          Crear contenido
+        {% endif %}
+      </li>
     </ol>
   </nav>
 </div><!-- End Page Title -->
@@ -52,8 +64,20 @@
           <form method="post" class="my-4" enctype="multipart/form-data">
               {% csrf_token %}
               {{ form.as_p }}
-              <button type="button" onclick="history.back()"class="btn btn-secondary">Cancelar</button>
-              <button name="action" value="save" class="btn btn-success">Guardar</button>
+              <button type="button" onclick="history.back()"class="btn btn-secondary">
+                <i class="bi bi-x-circle me-1"></i>
+                Cancelar
+              </button>
+              <button name="action" value="save" class="btn btn-success">
+                <i class="bi bi-save me-1"></i>
+                Guardar
+              </button>
+              {% if content.id  %}
+              <a type="button" target="_blank" class="btn btn-info" href="/content/{{ content.id }}">
+                <i class="bi bi-eye me-1"></i>
+                Visualizar
+              </a>
+              {% endif %}
           </form>
 
         </div>

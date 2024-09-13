@@ -90,42 +90,49 @@
 
 <!-- Añadir estilos CSS directamente aquí -->
 <style>
-  .kanban-items {
-      max-height: 600px; /* Aumenta la altura según lo necesites */
-      overflow-y: auto; /* Permite el desplazamiento vertical dentro de la columna */
-  }
+.kanban-items {
+    max-height: 600px; /* Aumenta la altura según lo necesites */
+    overflow-y: auto; /* Permite el desplazamiento vertical dentro de la columna */
+}
 
-  .kanban-column {
-      min-height: 600px; /* Ajusta la altura mínima para mayor uniformidad */
-      overflow-y: auto; /* Desplazamiento vertical en columnas */
-  }
+.kanban-column {
+    min-height: 600px; /* Ajusta la altura mínima para mayor uniformidad */
+    min-width: 220px; /* Ancho mínimo para cada columna */
+    flex: 1; /* Permite que las columnas crezcan y se ajusten */
+    overflow-y: auto; /* Desplazamiento vertical en columnas */
+}
 
-  .kanban-board {
-      display: flex;
-      flex-wrap: nowrap; /* Mantener las columnas alineadas horizontalmente */
-  }
+.kanban-board {
+    display: flex;
+    flex-wrap: nowrap; /* Mantener las columnas alineadas horizontalmente */
+    overflow-x: auto; /* Permite el desplazamiento horizontal si las columnas exceden el ancho */
+    gap: 10px; /* Añade espacio entre las columnas */
+    padding: 10px; /* Espacio interior para evitar bordes pegados */
+    width: 100%; /* Asegura que tome todo el ancho disponible */
+    box-sizing: border-box; /* Incluye el padding en el ancho total */
+}
 
-  .kanban-item {
+.kanban-item {
       border-radius: 8px;
       padding: 20px; /* Aumenta el padding para mayor grosor */
       margin-bottom: 15px; /* Aumenta el margen inferior para más espacio entre elementos */
       background-color: #f8f9fa; /* Color de fondo claro */
       transition: box-shadow 0.2s;
-  }
+}
 
-  .kanban-item:hover {
+.kanban-item:hover {
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Añade sombra al pasar el ratón para resaltar */
-  }
+}
 
   /* Estilo para subrayar el título al pasar el ratón */
-  .kanban-title-link {
+.kanban-title-link {
       text-decoration: none; /* Elimina el subrayado por defecto */
       color: inherit; /* Mantiene el color de texto */
-  }
+}
 
-  .kanban-title-link:hover {
+.kanban-title-link:hover {
       text-decoration: underline; /* Añade el subrayado al pasar el ratón */
-  }
+}
 </style>
 
 <script src="{% static 'assets/js/Sortable.min.js' %}"></script>
@@ -194,8 +201,8 @@
                     }
                 } else if (userPermissions.editIsActive) {
                     if (
-                        (originalState === newState)  // Permite mover al mismo estado 
-                    ){ 
+                        (originalState === newState)  // Permite mover al mismo estado
+                    ){
                         canChangeState = true;
                     }
                 }
@@ -222,7 +229,7 @@
                         });
                     } else {
                         console.log('Estado actualizado correctamente');
-                        if (newState === 'A publicar') {
+                        if (newState === 'A publicar' || newState === 'Publicado') {
                             evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
                         }
                         if (newState === 'Edicion' && userPermissions.create) {
