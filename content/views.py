@@ -17,6 +17,20 @@ from django.contrib import messages
 
 @login_required
 def kanban_board(request):
+    """
+    Muestra el tablero Kanban con los contenidos filtrados según los permisos del usuario.
+
+    Parámetros:
+        request (HttpRequest): La solicitud HTTP recibida.
+
+    Lógica:
+        - Verifica si el usuario tiene permisos específicos para ver y manejar contenidos.
+        - Filtra y organiza los contenidos en diferentes estados ('Borrador', 'Edicion', etc.) según los permisos del usuario.
+        - Pasa los contenidos y los permisos al contexto de la plantilla para su visualización.
+
+    Retorna:
+        HttpResponse: Renderiza la vista 'kanban_board.html' con los contenidos y permisos correspondientes.
+    """
     user = request.user
 
     if not (
@@ -66,6 +80,22 @@ def kanban_board(request):
 @csrf_exempt
 @login_required
 def update_content_state(request, content_id):
+    """
+    API para actualizar el estado de un contenido específico basado en los permisos del usuario.
+
+    Parámetros:
+        request (HttpRequest): La solicitud HTTP recibida.
+        content_id (int): El ID del contenido cuyo estado se actualizará.
+
+    Lógica:
+        - Verifica si el usuario tiene los permisos necesarios para actualizar el estado del contenido.
+        - Valida la solicitud para asegurarse de que el método es POST.
+        - Actualiza el estado del contenido según las reglas definidas para cada permiso.
+        - Registra la razón del cambio si se proporciona.
+
+    Retorna:
+        JsonResponse: Respuesta con el estado de la operación (éxito o error) y un mensaje informativo.
+    """
     user = request.user
 
     if not (
@@ -155,6 +185,31 @@ def update_content_state(request, content_id):
     return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
 
 class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    """
+    Vista para la creación de contenido.
+
+    Hereda de:
+        - LoginRequiredMixin: Requiere que el usuario esté autenticado.
+        - PermissionRequiredMixin: Requiere permisos específicos para acceder a la vista.
+        - CreateView: Proporciona la funcionalidad para crear objetos.
+
+    Atributos:
+        model (Content): Modelo del contenido a crear.
+        form_class (ContentForm): Formulario asociado para la creación de contenido.
+        template_name (str): Nombre de la plantilla para la vista de creación.
+        success_url (str): URL a redirigir tras la creación exitosa del contenido.
+        permission_required (str): Permiso requerido para acceder a la vista.
+
+    Métodos:
+        get_form:
+            Elimina el campo 'change_reason' del formulario para que no se muestre durante la creación.
+
+        form_valid:
+            Verifica que la fecha de publicación no sea posterior a la fecha de expiración.
+            Si es válido, establece el autor, estado, y fecha de creación del contenido.
+            Guarda las relaciones Many-to-Many (tags) y registra la razón del cambio como 'Creación de contenido'.
+            Redirige a la URL de éxito tras la creación exitosa.
+    """
     model = Content
     form_class = ContentForm
     template_name = 'content/content_form.html'
@@ -162,6 +217,7 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     permission_required = 'app.create_content'
 
     def get_form(self, form_class=None):
+
         form = super().get_form(form_class)
         # Elimina el campo 'change_reason' para que no se muestre en el formulario de creación
         del form.fields['change_reason']
@@ -176,7 +232,6 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         if date_published and date_expire and date_published.date() > date_expire.date():
             messages.warning(self.request, 'La fecha de publicación debería ser antes de la fecha de expiración del contenido')
             return self.form_invalid(form)
-
 
         content = form.save(commit=False)
         content.autor = self.request.user
@@ -199,6 +254,27 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
 
 
 class ContentUpdateView(LoginRequiredMixin, UpdateView):
+    """
+    Vista para la actualización de contenido.
+
+    Hereda de:
+        - LoginRequiredMixin: Requiere que el usuario esté autenticado.
+        - UpdateView: Proporciona la funcionalidad para actualizar objetos.
+
+    Atributos:
+        model (Content): Modelo del contenido a actualizar.
+        form_class (ContentForm): Formulario asociado para la actualización de contenido.
+        template_name (str): Nombre de la plantilla para la vista de actualización.
+        success_url (str): URL a redirigir tras la actualización exitosa del contenido.
+        required_permissions (list): Lista de permisos requeridos para acceder a la vista.
+
+    Métodos:
+        dispatch: Verifica los permisos del usuario antes de permitir la actualización.
+        get_initial: Obtiene los datos iniciales para el formulario, considerando posibles datos históricos.
+        get_form: Elimina campos del formulario según el estado del contenido.
+        form_valid: Valida el formulario y actualiza el contenido, registrando la razón de los cambios.
+        form_invalid: Maneja la respuesta si el formulario es inválido.
+    """
     model = Content
     form_class = ContentForm
     template_name = 'content/content_form.html'
@@ -208,6 +284,25 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
     required_permissions = ['app.create_content', 'app.edit_content']
 
     def dispatch(self, request, *args, **kwargs):
+        """
+        Verifica los permisos del usuario antes de permitir la actualización del contenido.
+
+        Acciones:
+            - Verifica si el usuario tiene al menos uno de los permisos requeridos para acceder a la vista.
+            - Permite la edición solo si:
+                - El usuario tiene permisos de edición y el contenido está en estado de revisión, o
+                - El usuario es el autor del contenido, tiene permisos de creación, y el contenido está en borrador.
+            - Si no cumple con los requisitos, se levanta un error de `PermissionDenied`.
+
+        Parámetros:
+            request (HttpRequest): El objeto de la solicitud HTTP.
+            *args: Argumentos adicionales.
+            **kwargs: Argumentos adicionales de palabras clave.
+
+        Retorna:
+            HttpResponse: La respuesta de la vista si se cumplen los permisos.
+        """
+
         # Verifica si el usuario tiene al menos uno de los permisos requeridos
         if not any(request.user.has_perm(perm) for perm in self.required_permissions):
             raise PermissionDenied
@@ -228,6 +323,18 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
 
 
     def get_initial(self):
+        """
+        Obtiene los datos iniciales para el formulario, considerando posibles datos históricos.
+
+        Acciones:
+            - Recupera el `history_id` desde los parámetros de la URL.
+            - Si `history_id` está presente, carga los datos históricos del contenido correspondiente.
+            - Retorna los datos iniciales históricos para el formulario.
+
+        Retorna:
+            dict: Diccionario con los datos iniciales para el formulario.
+        """
+
         # Recuperar el history_id desde los parámetros de la URL
         history_id = self.request.GET.get('history_id')
 
@@ -247,12 +354,41 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
 
 
     def get_form(self, form_class=None):
+        """
+        Obtiene el formulario para la actualización del contenido.
+
+        Parámetros:
+            form_class (Class, opcional): Clase del formulario a obtener. Si no se proporciona, se utiliza la clase de formulario predeterminada.
+
+        Acciones:
+            - Llama al método 'get_form' del padre para obtener el formulario inicial.
+            - Si el contenido está en estado de borrador, elimina el campo 'change_reason' del formulario.
+
+        Retorna:
+            Form: El formulario modificado, si es necesario, sin el campo 'change_reason'.
+        """
+
         form = super().get_form(form_class)
         if self.get_object().state == Content.StateChoices.draft:
             del form.fields['change_reason']
         return form
     
     def form_valid(self, form):
+        """
+        Valida el formulario y actualiza el contenido, registrando la razón de los cambios.
+
+        Parámetros:
+            form (Form): Formulario con los datos del contenido a actualizar.
+
+        Acciones:
+            - Verifica si la fecha de publicación no es posterior a la fecha de expiración.
+            - Si el usuario es el autor y el contenido está en borrador, actualiza todos los campos del formulario.
+            - Si el usuario es un editor y el contenido está en revisión, solo se permite actualizar el campo 'content'.
+            - Guarda el contenido y registra la razón del cambio si se proporciona.
+
+        Retorna:
+            HttpResponseRedirect: Redirige a la URL de éxito definida si el formulario es válido.
+        """
         user = self.request.user
 
         # Recupera el objeto original desde la base de datos
@@ -299,10 +435,38 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
         return redirect(self.success_url)
     
     def form_invalid(self, form):
+        """
+        Maneja la respuesta si el formulario es inválido.
+
+        Parámetros:
+            form (Form): Formulario con los datos inválidos.
+
+        Acciones:
+            - Llama al método 'form_invalid' del padre para manejar la respuesta cuando el formulario no es válido.
+
+        Retorna:
+            HttpResponse: Respuesta con el formulario y los errores correspondientes.
+        """
         return super().form_invalid(form)
 
 
 def view_content(request, id):
+    """
+    Vista para mostrar el contenido detallado.
+
+    Acciones:
+        - Verifica si el contenido está activo; si no, levanta un error 404.
+        - Verifica si el usuario está autenticado para acceder a contenidos de categorías de suscripción o pago.
+        - Si el usuario no está registrado y el contenido no es de categoría pública, redirige al login con un mensaje de advertencia.
+        - Recupera el historial del contenido ordenado por fecha.
+
+    Parámetros:
+        request (HttpRequest): El objeto de la solicitud HTTP.
+        id (int): ID del contenido a visualizar.
+
+    Retorna:
+        HttpResponse: Renderiza la plantilla 'content/view.html' con el contenido y su historial.
+    """
     content = get_object_or_404(Content, id=id)
     if not content.is_active:
         raise Http404
@@ -319,6 +483,23 @@ def view_content(request, id):
 
 @login_required
 def view_version(request, content_id, history_id):
+    """
+    Vista para mostrar una versión específica de un contenido basado en su historial.
+
+    Acciones:
+        - Verifica si el usuario tiene permisos para ver la versión del contenido según su rol (autor, editor, publicador).
+        - Si el usuario no tiene los permisos necesarios, levanta un error de `PermissionDenied`.
+        - Recupera el historial específico del contenido usando el `history_id`.
+        - Si la versión del historial no existe o el contenido no está activo, levanta un error 404.
+
+    Parámetros:
+        request (HttpRequest): El objeto de la solicitud HTTP.
+        content_id (int): ID del contenido.
+        history_id (int): ID del historial para la versión a visualizar.
+
+    Retorna:
+        HttpResponse: Renderiza la plantilla 'content/view_version.html' con el contenido y la versión del historial.
+    """
     user = request.user
     content = get_object_or_404(Content, id=content_id)
 
