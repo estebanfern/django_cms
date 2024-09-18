@@ -521,6 +521,28 @@ def view_version(request, content_id, history_id):
 
 
 def report_post(request, content_id):
+    """
+    Maneja la lógica para reportar un contenido.
+
+    Parámetros:
+        request (HttpRequest): La solicitud HTTP realizada por el usuario.
+        content_id (int): El ID del contenido que se va a reportar.
+
+    Comportamiento:
+        - Si la solicitud es POST, se procesa el formulario de reporte:
+            * Valida los datos enviados y guarda el reporte si es válido.
+            * Asigna el usuario autenticado como el autor del reporte, si corresponde.
+            * Muestra un mensaje de éxito y devuelve una respuesta en JSON si la solicitud es AJAX.
+            * Redirige a la vista del contenido reportado si no es AJAX.
+        - Si la solicitud no es POST:
+            * Devuelve el formulario de reporte.
+            * Si la solicitud es AJAX, renderiza un formulario parcial.
+            * Si no es AJAX, devuelve un error 400 (acceso no permitido).
+
+    Retorna:
+        HttpResponse: Una respuesta HTTP, que puede ser un JSON, una redirección, o un error 400.
+    """
+
     post = get_object_or_404(Content, id=content_id)
 
     if request.method == 'POST':

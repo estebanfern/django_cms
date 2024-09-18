@@ -160,6 +160,22 @@ class Content (models.Model):
         
 
 class Report(models.Model):
+    """
+    Representa un reporte de contenido en la plataforma.
+
+    Campos:
+        content (ForeignKey): Referencia al contenido reportado.
+        reported_by (ForeignKey): Usuario que reportó el contenido. Opcional.
+        email (EmailField): Correo electrónico de quien realiza el reporte.
+        name (CharField): Nombre de quien realiza el reporte.
+        reason (CharField): Motivo del reporte, elegido entre varias opciones predeterminadas.
+        description (TextField): Descripción adicional opcional del motivo del reporte.
+        created_at (DateTimeField): Fecha y hora en la que se creó el reporte.
+
+    Métodos:
+        __str__(): Retorna una representación legible del reporte, indicando el nombre o usuario que reporta y el contenido reportado.
+    """
+
     REASON_CHOICES = [
         ('spam', 'Spam'),
         ('inappropriate', 'Contenido inapropiado'),

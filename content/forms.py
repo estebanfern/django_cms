@@ -125,6 +125,25 @@ class ContentForm(forms.ModelForm):
 
 
 class ReportForm(forms.ModelForm):
+    """
+    Formulario para crear un reporte de contenido.
+
+    Campos:
+        name (CharField): Nombre de quien reporta. Oculto y completado automáticamente si el usuario está autenticado.
+        email (EmailField): Correo electrónico de quien reporta. Oculto y completado automáticamente si el usuario está autenticado.
+        reason (ChoiceField): Motivo del reporte, con una lista desplegable de opciones.
+        description (TextField): Descripción opcional del motivo del reporte.
+
+    Widgets:
+        Se personalizan los widgets para agregar clases CSS a los campos, facilitando la integración con un framework de frontend.
+
+    Métodos:
+        __init__(user): Inicializa el formulario, completando los campos de nombre y email si el usuario está autenticado.
+                        Si el usuario no está autenticado, los campos de nombre y correo son obligatorios.
+                        Además, oculta los campos de nombre y email para usuarios autenticados.
+    """
+
+
     class Meta:
         model = Report
         fields = ['name', 'email', 'reason', 'description']
