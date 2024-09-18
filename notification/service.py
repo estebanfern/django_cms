@@ -1,22 +1,15 @@
+import logging
+
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
-import app.models
 
+logger = logging.getLogger(__name__) # __name__ será 'notifications'
 
-def sendNotification(my_subject, my_message, recipient_list):
+def sendNotification(my_subject, recipient_list ,context, template):
 
-    name =  app.models.CustomUser.objects.get(email=recipient_list[0]).first_name
-    link_app = "http://localhost:8000"
-
-    context = {
-        "name":name,
-        "message": my_message,
-        "link_app": link_app
-    }
-
-    html_message = render_to_string("email/notification.html", context=context)
+    html_message = render_to_string(template, context=context)
     plain_message = strip_tags(html_message)
 
     message = EmailMultiAlternatives(
@@ -27,12 +20,19 @@ def sendNotification(my_subject, my_message, recipient_list):
     )
 
     message.attach_alternative(html_message, "text/html")
-    message.send()
 
+    try:
+        message.send()
+    except Exception as e:
+        logger.error(f"Error al enviar el correo: {e}")
 
-def changeState (recipient_list, title, state):
+def changeState (recipient_list, content, oldState):
 
-    recipient_list[0] = "fabri11fabian.fr@gmail.com"
+    template = "email/notification.html"
+    link_app = "http://localhost:8000"
+    title = content.title
+    newState = content.state
+    autor = content.autor
 
     mappState = {
         "draft": "Borrador",
@@ -42,12 +42,17 @@ def changeState (recipient_list, title, state):
         "inactive": "Inactivo"
     }
 
-    state = mappState[state]
+    mappOldstate = mappState[oldState]
+    mappNewstate = mappState[newState]
 
-    if len(recipient_list) > 1 or recipient_list is None:
-        raise ValueError("El destinatario debe ser un único usuario")
+    message = "Tu contenido " + title + " ha cambiado de estado " + mappOldstate + " a " + mappNewstate
 
-    message = "Tu contenido " + title + " ha cambiado de estado a " + state
-    sendNotification("Cambio de estado", message, recipient_list)
+    context = {
+        "name": autor,
+        "message": message,
+        "link_app": link_app
+    }
+
+    sendNotification("Cambio de estado", recipient_list, context, template)
 
 
