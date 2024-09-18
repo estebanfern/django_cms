@@ -3,6 +3,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 
+import notification.service
 from category.models import Category
 from .models import Content
 import json
@@ -107,6 +108,7 @@ def update_content_state(request, content_id):
         raise PermissionDenied
 
     content = get_object_or_404(Content, id=content_id)
+    oldState = content.state
 
     if not request.method == 'POST':
         return JsonResponse({'status': 'error', 'message': 'Método no permitido.'}, status=405)
@@ -136,6 +138,8 @@ def update_content_state(request, content_id):
                     update_change_reason(content, reason)
                 else:
                     Content.objects.filter(id=content.id).update(state=new_state)
+                    content.state = new_state
+                notification.service.changeState([content.autor.email], content, oldState)
                 return JsonResponse({'status': 'success'})
             elif content.state == 'inactive' and new_state == 'publish' and timezone.now() >= content.date_expire:
                 return JsonResponse({'status': 'error', 'message': 'No se puede publicar un contenido expirado.'}, status=403)
@@ -150,6 +154,8 @@ def update_content_state(request, content_id):
                         update_change_reason(content, reason)
                     else:
                         Content.objects.filter(id=content.id).update(state=new_state)
+                        content.state = new_state
+                    notification.service.changeState([content.autor.email], content, oldState)
                     return JsonResponse({'status': 'success'})
                 else:
                     return JsonResponse({'status': 'error',
@@ -165,6 +171,8 @@ def update_content_state(request, content_id):
                 update_change_reason(content, reason)
             else:
                 Content.objects.filter(id=content.id).update(state=new_state)
+                content.state = new_state
+            notification.service.changeState([content.autor.email], content, oldState)
             return JsonResponse({'status': 'success'})
 
     elif user.has_perm('app.publish_content'):
@@ -179,6 +187,8 @@ def update_content_state(request, content_id):
                 update_change_reason(content, reason)
             else:
                 Content.objects.filter(id=content.id).update(state=new_state)
+                content.state = new_state
+            notification.service.changeState([content.autor.email], content, oldState)
             return JsonResponse({'status': 'success'})
 
     # Responder con un error si la acción no está permitida
