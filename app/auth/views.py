@@ -35,6 +35,7 @@ def register_view(request):
             user = form.save()
             login(request, user)
             messages.success(request, '¡Registro exitoso!')
+            notification.service.welcomeUser(user)
             return redirect('home')
     else:
         form = CustomUserCreationForm()

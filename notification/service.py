@@ -80,4 +80,18 @@ def changeRole(user, groups, added):
     # Enviar la notificación al usuario
     sendNotification(subject, [user.email], context, template)
 
+def welcomeUser(user):
+    template = "email/notification.html"
+    subject = "¡Bienvenido a nuestra aplicación!"
+
+    message = f"¡Hola {user.name}! Gracias por registrarte en nuestra aplicación. Esperamos que disfrutes de tu experiencia."
+
+    link_app = "http://localhost:8000"
+
+    context = {
+        "message": message,
+        "link_app": link_app
+    }
+
+    sendNotification(subject, [user.email], context, template)
 
