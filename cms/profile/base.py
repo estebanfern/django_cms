@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'ckeditor',
     'ckeditor_uploader', 
     'taggit',
+    'scheduled',
+    'django_crontab',
 ]
 
 MIDDLEWARE = [
@@ -233,3 +235,7 @@ CKEDITOR_CONFIGS = {
         'filebrowserBrowseUrl': '/ckeditor/browse/',
     },
 }
+
+CRONJOBS = [
+    ('* * * * *', 'scheduled.jobs.expire_contents'),
+]

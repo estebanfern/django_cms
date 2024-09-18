@@ -10,4 +10,7 @@ if [ "$RUN_COLLECTSTATIC" = "true" ]; then
     python manage.py collectstatic --no-input
 fi
 
+# Crear las tareas programadas
+python manage.py crontab add
+
 gunicorn cms.wsgi:application -c gunicorn.conf.py
