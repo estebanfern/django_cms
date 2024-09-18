@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ENV DJANGO_SETTINGS_MODULE=cms.profile.prod
 
 RUN apt-get update -y
-RUN apt-get install -y libpq-dev gcc python3-dev musl-dev
+RUN apt-get install -y libpq-dev gcc python3-dev musl-dev cron
 
 COPY requirements.txt /app/requirements.txt
 RUN pip install --upgrade pip
@@ -26,6 +26,7 @@ RUN mkdir /app/logs
 RUN chown -R cms:cms /app/logs
 RUN chmod -R 775 /app/logs
 RUN chown cms:cms /app/entrypoint.sh
+RUN service cron start
 USER cms
 
 ENTRYPOINT [ "./entrypoint.sh" ]
