@@ -1,6 +1,7 @@
 import datetime
 from django import forms
 from .models import Content
+from .models import Report
 
 class ContentForm(forms.ModelForm):
     """
@@ -120,3 +121,37 @@ class ContentForm(forms.ModelForm):
             # En modo de creación
             # Se hace algo?
             self.fields['tags'].widget.attrs['class'] = 'form-control'
+
+
+
+class ReportForm(forms.ModelForm):
+    class Meta:
+        model = Report
+        fields = ['name', 'email', 'reason', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'reason': forms.Select(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control'}),
+        }
+        email = forms.EmailField(
+        error_messages={'invalid': 'Introduzca una dirección de correo electrónico válida.'}
+    )
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  
+        super(ReportForm, self).__init__(*args, **kwargs)
+
+        self.fields['reason'].choices = [('', 'Seleccione un motivo')] + list(self.fields['reason'].choices[1:])
+
+        # Si el usuario está autenticado, llenamos automáticamente nombre y email
+        if user and user.is_authenticated:
+            self.fields['name'].initial = user.name
+            self.fields['email'].initial = user.email
+            self.fields['name'].widget.attrs['hidden'] = 'hidden'  
+            self.fields['email'].widget.attrs['hidden'] = 'hidden'  
+        else:
+            # Si es un visitante, hacemos que estos campos sean obligatorios
+            self.fields['name'].required = True
+            self.fields['email'].required = True
+
