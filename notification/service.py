@@ -56,3 +56,28 @@ def changeState (recipient_list, content, oldState):
     sendNotification("Cambio de estado", recipient_list, context, template)
 
 
+def changeRole(user, groups, added):
+    template = "email/notification.html"
+
+    # Crear una lista de nombres de grupos
+    group_names = ", ".join([group.name for group in groups])
+
+    # Ajustar el asunto dependiendo si los grupos fueron añadidos o removidos
+    subject = f"Has sido {'añadido a' if added else 'removido de'} {'varios roles' if len(groups) > 1 else 'un rol'}."
+
+    # Crear el mensaje personalizado según el caso
+    message = f"Te informamos que {'se te han asignado' if added else 'se te han removido'} los siguientes roles: {group_names}."
+
+    # Definir el enlace a la aplicación
+    link_app = "http://localhost:8000"
+
+    # Crear el contexto para el template del correo
+    context = {
+        "message": message,
+        "link_app": link_app
+    }
+
+    # Enviar la notificación al usuario
+    sendNotification(subject, [user.email], context, template)
+
+
