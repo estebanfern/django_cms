@@ -1,8 +1,10 @@
 from django.utils import timezone
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse, Http404
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
+from .forms import ReportForm
 
+import notification.service
 from category.models import Category
 from .models import Content
 import json
@@ -13,7 +15,7 @@ from .forms import ContentForm
 from django.core.exceptions import PermissionDenied
 from simple_history.utils import update_change_reason
 from django.contrib import messages
-
+from django.urls import reverse
 
 @login_required
 def kanban_board(request):
@@ -107,6 +109,7 @@ def update_content_state(request, content_id):
         raise PermissionDenied
 
     content = get_object_or_404(Content, id=content_id)
+    oldState = content.state
 
     if not request.method == 'POST':
         return JsonResponse({'status': 'error', 'message': 'Método no permitido.'}, status=405)
@@ -136,6 +139,8 @@ def update_content_state(request, content_id):
                     update_change_reason(content, reason)
                 else:
                     Content.objects.filter(id=content.id).update(state=new_state)
+                    content.state = new_state
+                notification.service.changeState([content.autor.email], content, oldState)
                 return JsonResponse({'status': 'success'})
             elif content.state == 'inactive' and new_state == 'publish' and timezone.now() >= content.date_expire:
                 return JsonResponse({'status': 'error', 'message': 'No se puede publicar un contenido expirado.'}, status=403)
@@ -150,6 +155,8 @@ def update_content_state(request, content_id):
                         update_change_reason(content, reason)
                     else:
                         Content.objects.filter(id=content.id).update(state=new_state)
+                        content.state = new_state
+                    notification.service.changeState([content.autor.email], content, oldState)
                     return JsonResponse({'status': 'success'})
                 else:
                     return JsonResponse({'status': 'error',
@@ -165,6 +172,8 @@ def update_content_state(request, content_id):
                 update_change_reason(content, reason)
             else:
                 Content.objects.filter(id=content.id).update(state=new_state)
+                content.state = new_state
+            notification.service.changeState([content.autor.email], content, oldState)
             return JsonResponse({'status': 'success'})
 
     elif user.has_perm('app.publish_content'):
@@ -179,6 +188,8 @@ def update_content_state(request, content_id):
                 update_change_reason(content, reason)
             else:
                 Content.objects.filter(id=content.id).update(state=new_state)
+                content.state = new_state
+            notification.service.changeState([content.autor.email], content, oldState)
             return JsonResponse({'status': 'success'})
 
     # Responder con un error si la acción no está permitida
@@ -518,3 +529,57 @@ def view_version(request, content_id, history_id):
     if not history or not content.is_active:
         raise Http404
     return render(request, 'content/view_version.html', {"content" : content, "history" : history})
+
+
+def report_post(request, content_id):
+    """
+    Maneja la lógica para reportar un contenido.
+
+    Parámetros:
+        request (HttpRequest): La solicitud HTTP realizada por el usuario.
+        content_id (int): El ID del contenido que se va a reportar.
+
+    Comportamiento:
+        - Si la solicitud es POST, se procesa el formulario de reporte:
+            * Valida los datos enviados y guarda el reporte si es válido.
+            * Asigna el usuario autenticado como el autor del reporte, si corresponde.
+            * Muestra un mensaje de éxito y devuelve una respuesta en JSON si la solicitud es AJAX.
+            * Redirige a la vista del contenido reportado si no es AJAX.
+        - Si la solicitud no es POST:
+            * Devuelve el formulario de reporte.
+            * Si la solicitud es AJAX, renderiza un formulario parcial.
+            * Si no es AJAX, devuelve un error 400 (acceso no permitido).
+
+    Retorna:
+        HttpResponse: Una respuesta HTTP, que puede ser un JSON, una redirección, o un error 400.
+    """
+
+    post = get_object_or_404(Content, id=content_id)
+
+    if request.method == 'POST':
+        form = ReportForm(request.POST, user=request.user)
+        if form.is_valid():
+            report = form.save(commit=False)
+            report.content = post
+            if request.user.is_authenticated:
+                report.reported_by = request.user
+            report.save()
+
+        
+            messages.success(request, 'Contenido reportado exitosamente.')
+
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True})
+            else:
+                return HttpResponseRedirect(reverse('content_view', args=[post.id]))
+        else:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': form.errors})
+            else:
+                return HttpResponseBadRequest("No se permite acceso directo")
+    else:
+        form = ReportForm(user=request.user)
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return render(request, 'content/report_form_partial.html', {'form': form, 'post': post})
+        else:
+            return HttpResponseBadRequest("No se permite acceso directo")
