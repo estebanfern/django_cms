@@ -29,7 +29,6 @@ def sendNotification(my_subject, recipient_list ,context, template):
 def changeState (recipient_list, content, oldState):
 
     template = "email/notification.html"
-    link_app = "http://localhost:8000"
     title = content.title
     newState = content.state
     autor = content.autor
@@ -49,8 +48,7 @@ def changeState (recipient_list, content, oldState):
 
     context = {
         "name": autor,
-        "message": message,
-        "link_app": link_app
+        "message": message
     }
 
     sendNotification("Cambio de estado", recipient_list, context, template)
@@ -68,13 +66,9 @@ def changeRole(user, groups, added):
     # Crear el mensaje personalizado según el caso
     message = f"Te informamos que {'se te han asignado' if added else 'se te han removido'} los siguientes roles: {group_names}."
 
-    # Definir el enlace a la aplicación
-    link_app = "http://localhost:8000"
-
     # Crear el contexto para el template del correo
     context = {
         "message": message,
-        "link_app": link_app
     }
 
     # Enviar la notificación al usuario
@@ -86,11 +80,8 @@ def welcomeUser(user):
 
     message = f"¡Hola {user.name}! Gracias por registrarte en nuestra aplicación. Esperamos que disfrutes de tu experiencia."
 
-    link_app = "http://localhost:8000"
-
     context = {
         "message": message,
-        "link_app": link_app
     }
 
     sendNotification(subject, [user.email], context, template)
