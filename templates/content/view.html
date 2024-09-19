@@ -64,23 +64,6 @@
           <section>
             {{ content.content|safe }}
           </section>
-          <div class="content-interaction">
-            <div class="d-flex justify-content-center mt-4">
-              <!-- Botón de Me gusta -->
-              <button id="like-btn" class="btn btn-outline-secondary" data-content-id="{{ content.id }}">
-                  <i class="bi bi-hand-thumbs-up"></i>
-                  Me gusta
-                  ({{ content.likes.count }})
-              </button>
-
-              <!-- Botón de No me gusta -->
-              <button id="dislike-btn" class="btn btn-outline-secondary" data-content-id="{{ content.id }}">
-                  <i class="bi bi-hand-thumbs-down"></i>
-                  No me gusta
-                 ({{ content.dislikes.count }})
-              </button>
-            </div>
-          </div>
         </div>
         <div class="card-footer">
           <div class="row">
@@ -88,6 +71,35 @@
               {% for tag in content.tags.all %}
               <span class="badge text-bg-secondary">{{ tag }}</span>
               {% endfor %}
+            </div>
+            <div class="col-12 text-center mt-4">
+              {% if user_has_liked %}
+                <button id="like-btn" class="btn btn-outline-primary" data-content-id="{{ content.id }}">
+                  <i class="bi bi-hand-thumbs-up-fill"></i>
+                  Me gusta
+                  ({{ content.likes.count }})
+                </button>
+              {% else %}
+                <button id="like-btn" class="btn btn-outline-secondary" data-content-id="{{ content.id }}">
+                  <i class="bi bi-hand-thumbs-up"></i>
+                  Me gusta
+                  ({{ content.likes.count }})
+                </button>
+              {% endif %}
+
+              {% if user_has_disliked %}
+                <button id="dislike-btn" class="btn btn-outline-danger" data-content-id="{{ content.id }}">
+                  <i class="bi bi-hand-thumbs-down-fill"></i>
+                  No me gusta
+                  ({{ content.dislikes.count }})
+                </button>
+              {% else %}
+                <button id="dislike-btn" class="btn btn-outline-secondary" data-content-id="{{ content.id }}">
+                  <i class="bi bi-hand-thumbs-down"></i>
+                  No me gusta
+                  ({{ content.dislikes.count }})
+                </button>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -205,8 +217,7 @@
   </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
+<!-- Reportes -->
 <script>
     $(document).ready(function() {
        
@@ -269,12 +280,35 @@
 </script>
 
 
-{#  Script de aumentar like o dislike  #}
+<!-- Reacciones -->
 <script>
   $(document).ready(function() {
     // Evento para el botón de Me gusta
     let likeBtn = $('#like-btn')
     let dislikeBtn = $('#dislike-btn')
+
+    let BTN_CONST = {
+      like: {
+        active: {
+          class: 'btn btn-outline-primary',
+          body: (count) => `<i class="bi bi-hand-thumbs-up-fill"></i> Me gusta ( ${count} )`
+        },
+        inactive: {
+          class: 'btn btn-outline-secondary',
+          body: (count) => `<i class="bi bi-hand-thumbs-up"></i> Me gusta ( ${count} )`
+        },
+      },
+      dislike: {
+        active: {
+          class: 'btn btn-outline-danger',
+          body: (count) => `<i class="bi bi-hand-thumbs-down-fill"></i> No me gusta ( ${count} )`
+        },
+        inactive: {
+          class: 'btn btn-outline-secondary',
+          body: (count) => `<i class="bi bi-hand-thumbs-down"></i> No me gusta ( ${count} )`
+        },
+      }
+    }
       
     likeBtn.on('click', function() {
       var contentId = $(this).data('content-id');
@@ -285,17 +319,18 @@
           'X-CSRFToken': '{{ csrf_token }}'  // Agrega el token CSRF para seguridad
         },
         success: function(response) {
-          if (response.status === 'success') {
-            // Actualizar el contador de likes en la interfaz
-            likeBtn.html('<i class="bi bi-hand-thumbs-up-fill"></i> Me gusta (' + response.likes_count + ')');
-            likeBtn.attr("class", "btn btn-outline-primary")
-            dislikeBtn.html('<i class="bi bi-hand-thumbs-down"></i> No me gusta (' + response.dislikes_count + ')');
-            dislikeBtn.attr("class", "btn btn-outline-secondary")
-            
+          if (response.message === 'Me gusta agregado') {
+            likeBtn.html(BTN_CONST.like.active.body(response.likes_count));
+            likeBtn.attr('class', BTN_CONST.like.active.class)
+            dislikeBtn.html(BTN_CONST.dislike.inactive.body(response.dislikes_count));
+            dislikeBtn.attr('class', BTN_CONST.dislike.inactive.class) 
+          } else {
+            likeBtn.html(BTN_CONST.like.inactive.body(response.likes_count));
+            likeBtn.attr('class', BTN_CONST.like.inactive.class)
           }
         },
         error: function(xhr, status, error) {
-          console.error("Error en la solicitud AJAX:", error);
+          console.error('Error en la solicitud AJAX:', error);
         }
       });
     });
@@ -310,16 +345,18 @@
           'X-CSRFToken': '{{ csrf_token }}'  // Agrega el token CSRF para seguridad
         },
         success: function(response) {
-          if (response.status === 'success') {
-            // Actualizar el contador de dislikes en la interfaz
-            likeBtn.html('<i class="bi bi-hand-thumbs-up"></i> Me gusta (' + response.likes_count + ')');
-            likeBtn.attr("class", "btn btn-outline-secondary")
-            dislikeBtn.html('<i class="bi bi-hand-thumbs-down-fill"></i> No me gusta (' + response.dislikes_count + ')');
-            dislikeBtn.attr("class", "btn btn-outline-danger")
+          if (response.message === 'No me gusta agregado') {
+            likeBtn.html(BTN_CONST.like.inactive.body(response.likes_count));
+            likeBtn.attr('class', BTN_CONST.like.inactive.class)
+            dislikeBtn.html(BTN_CONST.dislike.active.body(response.dislikes_count));
+            dislikeBtn.attr('class', BTN_CONST.dislike.active.class)
+          } else {
+            dislikeBtn.html(BTN_CONST.dislike.inactive.body(response.dislikes_count));
+            dislikeBtn.attr('class', BTN_CONST.dislike.inactive.class)
           }
         },
         error: function(xhr, status, error) {
-          console.error("Error en la solicitud AJAX:", error);
+          console.error('Error en la solicitud AJAX:', error);
         }
       });
     });

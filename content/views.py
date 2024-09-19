@@ -490,7 +490,14 @@ def view_content(request, id):
         return redirect('login')
 
     history = content.history.all().order_by('-history_date')
-    return render(request, 'content/view.html', {"content" : content, "history" : history})
+    user_has_liked = content.likes.filter(id=request.user.id).exists()
+    user_has_disliked = content.dislikes.filter(id=request.user.id).exists()
+    return render(request, 'content/view.html', {
+        "content" : content,
+        "history" : history,
+        "user_has_liked" : user_has_liked,
+        "user_has_disliked" : user_has_disliked,
+    })
 
 @login_required
 def view_version(request, content_id, history_id):
