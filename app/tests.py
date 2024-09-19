@@ -171,7 +171,7 @@ class CustomAuthenticationFormTest(TestCase):
 
         form_data = {
             'username': 'testuser@example.com',
-            'password': 'wrongpassword'
+            'password': 'testpassword123'
         }
         form = CustomAuthenticationForm(data=form_data)
         self.assertFalse(form.is_valid(), "El formulario no debería ser válido con una contraseña incorrecta")
