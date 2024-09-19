@@ -1,6 +1,8 @@
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils.datetime_safe import datetime
+
 from category.models import Category
 from content.models import Content
 from django.contrib import messages
@@ -31,7 +33,8 @@ def home_view(request):
     # Filtra los contenidos activos y publicados, y los ordena por fecha de publicación
     contents = Content.objects.filter(
         is_active=True,
-        state=Content.StateChoices.publish
+        state=Content.StateChoices.publish,
+        date_published__lt=datetime.now()
     ).select_related('category', 'autor').order_by('-date_published')
 
     # Si se busco una categoria, verificar si el usuario está logueado en caso de que no sea categoria publica

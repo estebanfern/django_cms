@@ -1,7 +1,8 @@
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin, UserAdmin
 from django.contrib.auth.models import Group
 from django.contrib import admin, messages
-from app import models
+
+import notification.service
 from app.models import CustomUser
 from django.utils.translation import gettext_lazy as _
 from django.forms.models import fields_for_model
@@ -83,6 +84,34 @@ class CustomUserAdmin(UserAdmin):
     filter_horizontal = ('groups', 'user_permissions',)
 
     readonly_fields = ('name', 'email', 'photo', 'about', 'last_login', 'date_joined')
+
+    def save_model(self, request, obj, form, change):
+
+        """
+        Sobrescribe el método save_model para manejar la lógica de guardado del grupo
+        y enviar notificaciones cuando se cambian los roles de un usuario.
+        """
+
+        if not 'groups' in form.changed_data:
+            super().save_model(request, obj, form, change)
+            return
+
+
+        old_groups = set(obj.groups.all())  # Grupos antes de guardar
+
+        super().save_model(request, obj, form, change)
+
+        new_groups = set(form.cleaned_data['groups'])  # Grupos seleccionados en el formulario
+
+        # Comparar usuarios y enviar notificaciones si se les ha asignado o quitado el grupo
+        added_groups = new_groups - old_groups
+        removed_groups = old_groups - new_groups
+
+        # Enviar notificación a los usuarios añadidos al grupo
+        if added_groups:
+            notification.service.changeRole(obj, added_groups, True)
+        if removed_groups:
+            notification.service.changeRole(obj, removed_groups, False)
 
     # Boton de Cancelar al modificar
     def change_view(self, request, object_id, form_url='', extra_context=None):

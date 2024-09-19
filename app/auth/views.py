@@ -1,3 +1,5 @@
+from lib2to3.fixes.fix_input import context
+
 from decouple import config
 from django.contrib.auth import logout, get_user_model
 from django.contrib.auth.tokens import default_token_generator
@@ -8,6 +10,7 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 
+import notification.service
 from app.forms import CustomAuthenticationForm, CustomUserCreationForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth import login, authenticate
 from django.contrib import messages
@@ -32,6 +35,7 @@ def register_view(request):
             user = form.save()
             login(request, user)
             messages.success(request, '¡Registro exitoso!')
+            notification.service.welcomeUser(user)
             return redirect('home')
     else:
         form = CustomUserCreationForm()
@@ -105,20 +109,13 @@ def reset_password_view(request):
                 reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
             )
 
-            # Renderizar el email
+            # Enviar el email
             email_subject = 'Restablecimiento de contraseña'
-            email_body = render_to_string('password_reset_email.html', {'reset_link': reset_link})
-
-            # Enviar el correo electrónico
-            send_mail(
-                email_subject,
-                '',
-                config('EMAIL_HOST_USER'),  # Puedes personalizar esto o usar DEFAULT_FROM_EMAIL
-                [user.email],
-                fail_silently=False,
-                html_message=email_body,
-            )
-
+            template='email/password_reset_email.html'
+            context = {
+                "reset_link": reset_link
+            }
+            notification.service.sendNotification(email_subject, [user.email], context, template)
             messages.success(request, "¡Envío de correo electrónico de recuperación exitoso!")
             return redirect('login')
         else:
@@ -128,7 +125,7 @@ def reset_password_view(request):
             return redirect('password_reset')
     else:
         form = PasswordResetForm()
-    return render(request, 'password-reset.html', {'form': form})
+    return render(request, 'email/../../templates/password-reset.html', {'form': form})
 
 def password_reset_confirm_view(request, uidb64, token):
     """
@@ -166,7 +163,7 @@ def password_reset_confirm_view(request, uidb64, token):
                 for field, errors in form.errors.items():
                     for error in errors:
                         messages.error(request, error)
-                return render(request, 'password_reset_confirm.html', {'form': form})
+                return render(request, 'email/../../templates/password_reset_confirm.html', {'form': form})
         else:
             form = SetPasswordForm()
 
@@ -174,4 +171,4 @@ def password_reset_confirm_view(request, uidb64, token):
         messages.error(request, "El enlace de restablecimiento de contraseña no es válido.")
         return redirect('login')
 
-    return render(request, 'password_reset_confirm.html', {'form': form})
+    return render(request, 'email/../../templates/password_reset_confirm.html', {'form': form})
