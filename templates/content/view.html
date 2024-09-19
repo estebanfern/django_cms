@@ -27,12 +27,17 @@
 {% endif %}
 <div class="pagetitle">
   <h1>Contenido</h1>
-  <nav>
-    <ol class="breadcrumb">
+  <nav class="d-flex justify-content-between align-items-center">
+    <ol class="breadcrumb mb-0 mx-0 justify-content-center">
       <li class="breadcrumb-item"><a href="/">Inicio</a></li>
       <!-- <li class="breadcrumb-item">Anterior</li> -->
       <li class="breadcrumb-item active">Contenido</li>
     </ol>
+    <div>
+      <button type="button" id="reportBtn" class="btn btn-outline-danger" data-content-id="{{ content.id }}">
+        <i class="bi bi-exclamation-circle-fill"></i> Reportar contenido
+      </button>
+    </div>
   </nav>
 </div><!-- End Page Title -->
 <section class="section">
@@ -160,4 +165,91 @@
 
   </div>
 </section>
+
+
+
+
+<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reportModalLabel">Reportar Contenido</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="modalFormContainer">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="submit" form="reportForm" class="btn btn-primary">Enviar reporte</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+       
+        $('#reportBtn').on('click', function(e) {
+            e.preventDefault();
+            var contentId = $(this).data('content-id');
+           
+            $.ajax({
+                url: "/report/" + contentId + "/",
+                type: "GET",
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    $('#modalFormContainer').html(response);  
+                    var reportModal = new bootstrap.Modal(document.getElementById('reportModal')); 
+                    reportModal.show();  
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error en la solicitud AJAX:", error);
+                }
+            });
+        });
+
+        
+        $(document).on('submit', '#reportForm', function(e) {
+            e.preventDefault();
+            var form = $(this);
+            $.ajax({
+                url: form.attr('action'),
+                type: "POST",
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                data: form.serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        var reportModal = bootstrap.Modal.getInstance(document.getElementById('reportModal'));
+                        reportModal.hide();  
+                        location.reload();
+                    } else {
+                       
+                        $('.form-error').remove();
+
+                       
+                        $.each(response.errors, function(field, errors) {
+                            var fieldElement = $('[name="' + field + '"]');
+                            if (fieldElement.length > 0) {
+                                fieldElement.after('<div class="form-error text-danger">' + errors.join(', ') + '</div>');
+                            }
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error en la solicitud AJAX:", error);
+                }
+            });
+        });
+    });
+</script>
+
+
 {% endblock content %}

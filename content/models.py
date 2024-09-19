@@ -157,3 +157,38 @@ class Content (models.Model):
             return "Revision"
         else:
             return "Desconocido"
+        
+
+class Report(models.Model):
+    """
+    Representa un reporte de contenido en la plataforma.
+
+    Campos:
+        content (ForeignKey): Referencia al contenido reportado.
+        reported_by (ForeignKey): Usuario que reportó el contenido. Opcional.
+        email (EmailField): Correo electrónico de quien realiza el reporte.
+        name (CharField): Nombre de quien realiza el reporte.
+        reason (CharField): Motivo del reporte, elegido entre varias opciones predeterminadas.
+        description (TextField): Descripción adicional opcional del motivo del reporte.
+        created_at (DateTimeField): Fecha y hora en la que se creó el reporte.
+
+    Métodos:
+        __str__(): Retorna una representación legible del reporte, indicando el nombre o usuario que reporta y el contenido reportado.
+    """
+
+    REASON_CHOICES = [
+        ('spam', 'Spam'),
+        ('inappropriate', 'Contenido inapropiado'),
+        ('abuse', 'Abuso o acoso'),
+    ]
+
+    content = models.ForeignKey(Content, on_delete=models.CASCADE,verbose_name=('Contenido'))
+    reported_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True,verbose_name=('Reportado por'))  # Para que el campo sea opcional
+    email = models.EmailField(verbose_name=('Correo Electrónico'))
+    name = models.CharField(max_length=255, verbose_name=('Nombre'))
+    reason = models.CharField(max_length=50, choices=REASON_CHOICES,verbose_name=('Motivo'))
+    description = models.TextField(blank=True, null=True,verbose_name=('Descripción'))
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Reporte de {self.nombre if self.nombre else self.reported_by} sobre {self.content.title}"
