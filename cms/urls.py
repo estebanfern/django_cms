@@ -25,7 +25,7 @@ Rutas:
     - 'change-password/': Ruta para cambiar la contraseña del usuario autenticado, utilizando `change_password`.
 """
 
-from content.views import kanban_board, report_post, update_content_state, view_version
+from content.views import kanban_board, report_post, update_content_state, view_version, like_content, dislike_content
 from django.contrib import admin
 from django.urls import include, path
 from app.auth.views import register_view, login_view, logout_view, reset_password_view, password_reset_confirm_view
@@ -66,6 +66,10 @@ urlpatterns = [
     path('api/update-content-state/<int:content_id>/', update_content_state, name='update_content_state'),
     path('content/<int:pk>/edit/', ContentUpdateView.as_view(), name='edit_content'),
     path('report/<int:content_id>/', report_post, name='report_post'),  # Ruta para reportar
+
+    # Content - Reactions
+    path('like/<int:content_id>/', like_content, name='like_content'),
+    path('dislike/<int:content_id>/', dislike_content, name='dislike_content'),
 
     # Category
     path('category/<str:type>/', categories_by_type, name='categories_by_type'),

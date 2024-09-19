@@ -583,3 +583,43 @@ def report_post(request, content_id):
             return render(request, 'content/report_form_partial.html', {'form': form, 'post': post})
         else:
             return HttpResponseBadRequest("No se permite acceso directo")
+
+
+@login_required
+def like_content(request, content_id):
+    content = get_object_or_404(Content, id=content_id)
+
+    if content.likes.filter(id=request.user.id).exists():
+        content.likes.remove(request.user)
+        message = "Me gusta eliminado"
+    else:
+        content.likes.add(request.user)
+        content.dislikes.remove(request.user)  # Elimina el dislike si existe
+        message = "Me gusta agregado"
+
+    return JsonResponse({
+        'status': 'success',
+        'message': message,
+        'likes_count': content.likes.count(),  # Retorna el conteo actualizado de likes
+        'dislikes_count': content.dislikes.count()  # Retorna el conteo actualizado de dislikes
+    })
+
+
+@login_required
+def dislike_content(request, content_id):
+    content = get_object_or_404(Content, id=content_id)
+
+    if content.dislikes.filter(id=request.user.id).exists():
+        content.dislikes.remove(request.user)
+        message = "No me gusta eliminado"
+    else:
+        content.dislikes.add(request.user)
+        content.likes.remove(request.user)  # Elimina el like si existe
+        message = "No me gusta agregado"
+
+    return JsonResponse({
+        'status': 'success',
+        'message': message,
+        'likes_count': content.likes.count(),  # Retorna el conteo actualizado de likes
+        'dislikes_count': content.dislikes.count()  # Retorna el conteo actualizado de dislikes
+    })

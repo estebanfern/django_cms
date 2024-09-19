@@ -64,6 +64,23 @@
           <section>
             {{ content.content|safe }}
           </section>
+          <div class="content-interaction">
+            <div class="d-flex justify-content-center mt-4">
+              <!-- Botón de Me gusta -->
+              <button id="like-btn" class="btn btn-outline-secondary" data-content-id="{{ content.id }}">
+                  <i class="bi bi-hand-thumbs-up"></i>
+                  Me gusta
+                  ({{ content.likes.count }})
+              </button>
+
+              <!-- Botón de No me gusta -->
+              <button id="dislike-btn" class="btn btn-outline-secondary" data-content-id="{{ content.id }}">
+                  <i class="bi bi-hand-thumbs-down"></i>
+                  No me gusta
+                 ({{ content.dislikes.count }})
+              </button>
+            </div>
+          </div>
         </div>
         <div class="card-footer">
           <div class="row">
@@ -252,4 +269,62 @@
 </script>
 
 
+{#  Script de aumentar like o dislike  #}
+<script>
+  $(document).ready(function() {
+    // Evento para el botón de Me gusta
+    let likeBtn = $('#like-btn')
+    let dislikeBtn = $('#dislike-btn')
+      
+    likeBtn.on('click', function() {
+      var contentId = $(this).data('content-id');
+      $.ajax({
+        url: '/like/' + contentId + '/',
+        type: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}'  // Agrega el token CSRF para seguridad
+        },
+        success: function(response) {
+          if (response.status === 'success') {
+            // Actualizar el contador de likes en la interfaz
+            likeBtn.html('<i class="bi bi-hand-thumbs-up-fill"></i> Me gusta (' + response.likes_count + ')');
+            likeBtn.attr("class", "btn btn-outline-primary")
+            dislikeBtn.html('<i class="bi bi-hand-thumbs-down"></i> No me gusta (' + response.dislikes_count + ')');
+            dislikeBtn.attr("class", "btn btn-outline-secondary")
+            
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error("Error en la solicitud AJAX:", error);
+        }
+      });
+    });
+
+    // Evento para el botón de No me gusta
+    dislikeBtn.on('click', function() {
+      var contentId = $(this).data('content-id');
+      $.ajax({
+        url: '/dislike/' + contentId + '/',
+        type: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}'  // Agrega el token CSRF para seguridad
+        },
+        success: function(response) {
+          if (response.status === 'success') {
+            // Actualizar el contador de dislikes en la interfaz
+            likeBtn.html('<i class="bi bi-hand-thumbs-up"></i> Me gusta (' + response.likes_count + ')');
+            likeBtn.attr("class", "btn btn-outline-secondary")
+            dislikeBtn.html('<i class="bi bi-hand-thumbs-down-fill"></i> No me gusta (' + response.dislikes_count + ')');
+            dislikeBtn.attr("class", "btn btn-outline-danger")
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error("Error en la solicitud AJAX:", error);
+        }
+      });
+    });
+  });
+</script>
+    
+    
 {% endblock content %}

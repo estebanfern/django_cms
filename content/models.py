@@ -5,6 +5,7 @@ from simple_history.models import HistoricalRecords
 from app.models import CustomUser
 from category.models import Category
 from taggit.managers import TaggableManager
+from django.contrib.auth import get_user_model
 from ckeditor.fields import RichTextField
 
 class Content (models.Model):
@@ -57,6 +58,8 @@ class Content (models.Model):
     content = RichTextUploadingField(verbose_name='Contenido')  # Campo de texto enriquecido con CKEditor 5
     tags = TaggableManager()
     history = HistoricalRecords()
+    likes = models.ManyToManyField(get_user_model(), related_name='liked_content', blank=True)
+    dislikes = models.ManyToManyField(get_user_model(), related_name='disliked_content', blank=True)
 
     class StateChoices(models.TextChoices):
         """
