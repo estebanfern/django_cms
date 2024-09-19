@@ -52,20 +52,20 @@ def kanban_board(request):
     }
 
     # Filtrar contenidos según los permisos del usuario y que estén activos
-    if user.has_perm('app.create_content'):
-        # Los autores ven solo sus contenidos activos en cualquier estado
-        contents['Borrador'] = Content.objects.filter(state='draft', autor=user, is_active=True)
-        contents['Edicion'] = Content.objects.filter(state='revision', autor=user, is_active=True)
-        contents['A publicar'] = Content.objects.filter(state='to_publish', autor=user, is_active=True)
-        contents['Publicado'] = Content.objects.filter(state='publish', autor=user, is_active=True)
-        contents['Inactivo'] = Content.objects.filter(state='inactive', autor=user, is_active=True)
-    elif user.has_perm('app.edit_content') or user.has_perm('app.publish_content') or user.has_perm('app.edit_is_active'):
+    if user.has_perm('app.edit_content') or user.has_perm('app.publish_content') or user.has_perm('app.edit_is_active'):
         # Los editores y publicadores ven todos los contenidos activos sin importar el autor
         contents['Borrador'] = Content.objects.filter(state='draft', is_active=True)
         contents['Edicion'] = Content.objects.filter(state='revision', is_active=True)
         contents['A publicar'] = Content.objects.filter(state='to_publish', is_active=True)
         contents['Publicado'] = Content.objects.filter(state='publish', is_active=True)
         contents['Inactivo'] = Content.objects.filter(state='inactive', is_active=True)
+    elif user.has_perm('app.create_content'):
+        # Los autores ven solo sus contenidos activos en cualquier estado
+        contents['Borrador'] = Content.objects.filter(state='draft', autor=user, is_active=True)
+        contents['Edicion'] = Content.objects.filter(state='revision', autor=user, is_active=True)
+        contents['A publicar'] = Content.objects.filter(state='to_publish', autor=user, is_active=True)
+        contents['Publicado'] = Content.objects.filter(state='publish', autor=user, is_active=True)
+        contents['Inactivo'] = Content.objects.filter(state='inactive', autor=user, is_active=True)
 
     # Pasar permisos al contexto de la plantilla
     context = {
@@ -98,22 +98,23 @@ def update_content_state(request, content_id):
     Retorna:
         JsonResponse: Respuesta con el estado de la operación (éxito o error) y un mensaje informativo.
     """
+
     user = request.user
 
     if not (
-        user.has_perm('app.create_content') or
-        user.has_perm('app.edit_content') or
-        user.has_perm('app.publish_content') or
-        user.has_perm('app.edit_is_active')
+            user.has_perm('app.create_content') or
+            user.has_perm('app.edit_content') or
+            user.has_perm('app.publish_content') or
+            user.has_perm('app.edit_is_active')
     ):
         raise PermissionDenied
-
-    content = get_object_or_404(Content, id=content_id)
-    oldState = content.state
 
     if not request.method == 'POST':
         return JsonResponse({'status': 'error', 'message': 'Método no permitido.'}, status=405)
 
+    newDate = False
+    content = get_object_or_404(Content, id=content_id)
+    oldState = content.state
     data = json.loads(request.body)
     new_state = data.get('state')
     reason = data.get('reason')
@@ -123,77 +124,101 @@ def update_content_state(request, content_id):
         # No realizar la actualización ni registrar en el historial si el estado no cambia
         return JsonResponse({'status': 'no_change', 'message': 'El estado no ha cambiado, no se actualizará.'})
 
-    # Verificar los estados válidos según los permisos
-    if user.has_perm('app.create_content'):
-        # Permite mover de 'Borrador' a 'Edición', de 'Publicado' a 'Inactivo', viceversa, y al mismo estado
-        if content.autor == user:
-            if (
-                (content.state == 'draft' and new_state == 'revision') or
-                (content.state == 'publish' and new_state == 'inactive') or
-                (content.state == 'inactive' and new_state == 'publish' and timezone.now() < content.date_expire) or
-                (content.state == new_state)  # Permite mover al mismo estado
-            ):
-                if reason:
-                    content.state = new_state
-                    content.save()
-                    update_change_reason(content, reason)
-                else:
-                    Content.objects.filter(id=content.id).update(state=new_state)
-                    content.state = new_state
-                notification.service.changeState([content.autor.email], content, oldState)
-                return JsonResponse({'status': 'success'})
-            elif content.state == 'inactive' and new_state == 'publish' and timezone.now() >= content.date_expire:
-                return JsonResponse({'status': 'error', 'message': 'No se puede publicar un contenido expirado.'}, status=403)
-            # Restricción para pasar de 'Borrador' a 'Publicado' si la categoría no es moderada
-            elif content.state == 'draft' and new_state == 'publish':
-                if not content.category.is_moderated:
-                    if content.date_published is None or content.date_published < timezone.now():
-                        content.date_published = timezone.now()
-                    if reason:
-                        content.state = new_state
-                        content.save()
-                        update_change_reason(content, reason)
-                    else:
-                        Content.objects.filter(id=content.id).update(state=new_state)
-                        content.state = new_state
-                    notification.service.changeState([content.autor.email], content, oldState)
-                    return JsonResponse({'status': 'success'})
-                else:
-                    return JsonResponse({'status': 'error',
-                                         'message': 'No se puede publicar un contenido de categoría moderada desde el estado de Borrador.'},
-                                        status=403)
+    stateFlow = {
+        'draft': {
+            'name': 'Borrador',
+            'next': ['revision', 'publish'],
+            'prev': [],
+        },
+        'revision': {
+            'name': 'Edicion',
+            'next': ['to_publish'],
+            'prev': ['draft'],
+        },
+        'to_publish': {
+            'name': 'A publicar',
+            'next': ['publish'],
+            'prev': ['revision'],
+        },
+        'publish': {
+            'name': 'Publicado',
+            'next': ['inactive'],
+            'prev': [],
+        },
+        'inactive': {
+            'name': 'Inactivo',
+            'next': [],
+            'prev': ['publish'],
+        },
+    }
 
-    elif user.has_perm('app.edit_content'):
-        # Permite mover de 'Edición' a 'A publicar', a 'Borrador'  al mismo estado
-        if (content.state == 'revision' and new_state in ['draft', 'revision', 'to_publish']) or (content.state == new_state):
-            if reason:
-                content.state = new_state
-                content.save()
-                update_change_reason(content, reason)
-            else:
-                Content.objects.filter(id=content.id).update(state=new_state)
-                content.state = new_state
-            notification.service.changeState([content.autor.email], content, oldState)
-            return JsonResponse({'status': 'success'})
+    # Verificar si el estado es válido
+    if new_state not in stateFlow[content.state]['next'] and new_state not in stateFlow[content.state]['prev'] and new_state != oldState:
+        # el mensaje quiero que sea que no es posible cambiar de estado de oldState a newState
+        return JsonResponse({'status': 'error', 'message': f'No es posible cambiar de {stateFlow[oldState]["name"]} a {stateFlow[new_state]["name"]}.'}, status=400)
 
-    elif user.has_perm('app.publish_content'):
-        # Permite mover de 'A publicar' a 'Publicado', 'Revisión' y al mismo estado
-        if content.state == 'to_publish' and new_state in ['publish', 'revision', 'to_publish'] or (content.state == new_state):
-            if new_state == 'publish' and  content.state != 'publish':
-                if content.date_published is None or content.date_published < timezone.now():
-                    content.date_published = timezone.now()
-            if reason:
-                content.state = new_state
-                content.save()
-                update_change_reason(content, reason)
-            else:
-                Content.objects.filter(id=content.id).update(state=new_state)
-                content.state = new_state
-            notification.service.changeState([content.autor.email], content, oldState)
-            return JsonResponse({'status': 'success'})
+    # Verificar los permisos del usuario
+    if new_state == 'draft' and not user.has_perm('app.edit_content'):
+        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
 
-    # Responder con un error si la acción no está permitida
-    return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
+    if new_state == 'revision' and not user.has_perm('app.create_content') and not user.has_perm('app.edit_content'):
+        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
+
+    if new_state == 'to_publish' and not user.has_perm('app.edit_content'):
+        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
+
+    if new_state == 'publish' and not user.has_perm('app.publish_content') and not user.has_perm('app.create_content') and not user.has_perm('app.edit_is_active'):
+        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
+
+    if new_state == 'inactive' and not user.has_perm('app.edit_is_active') and not user.has_perm('app.create_content'):
+        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
+
+    # Restricciones adicionales para cambios de estados subiendo el flujo de estados
+    if new_state == 'publish' and oldState == 'draft' and content.category.is_moderated and user.has_perm('app.create_content'):
+        return JsonResponse({'status': 'error', 'message': 'No se puede publicar un contenido de categoría moderada desde el estado de Borrador.'}, status=403)
+
+    if new_state == 'publish' and oldState == 'draft' and not user.has_perm('app.create_content'):
+        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
+
+    if new_state == 'publish' and oldState == 'to_publish' and not user.has_perm('app.publish_content'):
+        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
+
+    if new_state == 'revision' and oldState == 'draft' and not user.has_perm('app.create_content'):
+        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
+
+    # Restricciones adicionales para cambios de estados bajando el flujo de estados
+    if new_state == 'draft' and oldState == 'revision' and not user.has_perm('app.edit_content'):
+        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
+
+    if new_state == 'revision' and oldState == 'to_publish' and not user.has_perm('app.publish_content'):
+        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
+
+    if new_state == 'publish' and oldState == 'inactive' and not user.has_perm('app.edit_is_active') and not user.has_perm('app.create_content'):
+        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
+
+    # Verificar si el contenido está expirado
+    if new_state == 'publish' and oldState == 'inactive' and timezone.now() >= content.date_expire:
+        return JsonResponse({'status': 'error', 'message': 'No se puede publicar un contenido expirado.'}, status=403)
+
+    # Verificar si el  contenido no tiene fecha de publicacion o si la fecha de publicacion es menor a la actual
+    if new_state == 'publish' and (content.date_published is None or content.date_published < timezone.now()): # probar
+        content.date_published = timezone.now()
+        newDate = True
+
+    if reason:
+        content.state = new_state
+        content.save()
+        update_change_reason(content, reason)
+    else:
+        if newDate:
+            Content.objects.filter(id=content.id).update(state=new_state, date_published=content.date_published)
+        else:
+            Content.objects.filter(id=content.id).update(state=new_state)
+        content.state = new_state
+
+    notification.service.changeState([content.autor.email], content, oldState)
+    return JsonResponse({'status': 'success'})
+
 
 class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     """
