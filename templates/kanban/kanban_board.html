@@ -232,10 +232,10 @@
           if (mappedState === 'to_publish' || mappedState === 'publish' || mappedState === 'inactive') { 
             evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
           }
-          if (mappedState === 'draft' && currentUser != autor) {
+          if (mappedState === 'draft' && currentUser !== autor) {
             evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
           }
-          if (mappedState === 'draft' && currentUser == autor) {
+          if (mappedState === 'draft' && currentUser === autor) {
             evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}/edit`;
           }
           if (mappedState === 'revision' && !userPermissions.edit) {
