@@ -51,7 +51,7 @@
                 <h4 class="text-center">{{ state }}</h4>
                 <div class="kanban-items p-2 border rounded" data-state="{{ state }}">
                   {% for item in items %}
-                    <div class="kanban-item bg-light p-3 mb-3 rounded shadow-sm" data-id="{{ item.id }}" style="cursor: pointer; border: 1px solid #ddd;">
+                    <div class="kanban-item bg-light p-3 mb-3 rounded shadow-sm" data-id="{{ item.id }}" data-autor="{{ item.autor }}" style="cursor: pointer; border: 1px solid #ddd;">
                       <strong>
                         {% if can_create_content and item.state == 'draft' and item.autor == user %}
                           <!-- El autor puede editar su contenido si está en borrador -->
@@ -183,6 +183,8 @@
     editIsActive: {{ can_edit_is_active|yesno:"true,false" }}
   };
 
+  const currentUser = '{{ user }}';
+  
   document.querySelectorAll('.kanban-items').forEach(function (column) {
       new Sortable(column, {
         group: 'kanban',
@@ -194,6 +196,7 @@
             const itemId = evt.item.dataset.id;
             const newState = evt.to.dataset.state;
             const originalState = evt.from.dataset.state;
+            const autor = evt.item.dataset.autor;
 
             const mappedState = stateMap[newState];  // Convertir la etiqueta a la clave
             const oldStateMapped = stateMap[originalState];  // Convertir la etiqueta a la clave
@@ -203,12 +206,12 @@
               return;
             }
 
-            changeState(itemId,mappedState,oldStateMapped,evt)
+            changeState(itemId,mappedState,oldStateMapped,evt,autor);
           }
       });
   });
 
-  function postState(itemId, mappedState, evt, message=null) {
+  function postState(itemId, mappedState, evt, message=null, autor) {
     // Llamar a la API para actualizar el estado del contenido
     fetch(`/api/update-content-state/${itemId}/`, {
       method: 'POST',
@@ -225,11 +228,21 @@
             evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
           });
         } else {
-          if (mappedState === 'to_publish' || mappedState === 'publish' || mappedState === 'inactive' || mappedState === 'draft' ) { 
+
+          if (mappedState === 'to_publish' || mappedState === 'publish' || mappedState === 'inactive') { 
             evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
           }
-          if (mappedState === 'revision' && userPermissions.create) {
+          if (mappedState === 'draft' && currentUser !== autor) {
             evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
+          }
+          if (mappedState === 'draft' && currentUser === autor) {
+            evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}/edit`;
+          }
+          if (mappedState === 'revision' && !userPermissions.edit) {
+            evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
+          }
+          if (mappedState === 'revision' && userPermissions.edit) {
+            evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}/edit`;
           }
         }
     }).catch(error => {
@@ -239,7 +252,7 @@
     });
   }
 
-  function changeState(itemId,mappedState,oldStateMapped,evt){
+  function changeState(itemId,mappedState,oldStateMapped,evt,autor){
     // Llamar a la API para validar el cambio de estado
     fetch(`/api/validate-permission-kanban/`, {
       method: 'POST',
@@ -256,7 +269,7 @@
             evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
           });
         } 
-        doChangeState(oldStateMapped,mappedState,evt,itemId);
+        doChangeState(oldStateMapped,mappedState,evt,itemId,autor);
     }).catch(error => {
         console.error('Error en la solicitud fetch:', error);
         modal.error({message:'Error en la comunicación con el servidor.'});
@@ -264,7 +277,7 @@
     });
   }
 
-  function doChangeState(oldStateMapped,mappedState,evt,itemId) {
+  function doChangeState(oldStateMapped,mappedState,evt,itemId,autor) {
     let changeReasonModal = null;
     if (stateFlow[oldStateMapped].prev.includes(mappedState) ) {
       //Regresando de estado
@@ -286,7 +299,7 @@
             callback: function() {
               var changeReasonVal = document.getElementById('change_reason_ipt').value;
               if (changeReasonVal.length > 0) {
-                postState(itemId, mappedState, evt, changeReasonVal);
+                postState(itemId, mappedState, evt, changeReasonVal,autor);
                 return true;
               } else {
                 document.getElementById('change_reason_iptHelp').hidden = false;
@@ -317,7 +330,7 @@
             label: '<span class="fas fa-trash"></span> Confirmar',
             className: 'btn btn-success',
             callback: function() {
-              postState(itemId, mappedState, evt);
+              postState(itemId, mappedState, evt, autor);
             }
           },
           cancel: {
