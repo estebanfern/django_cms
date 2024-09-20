@@ -2,6 +2,8 @@ from django.utils import timezone
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
+
+from . import service
 from .forms import ReportForm
 
 import notification.service
@@ -16,6 +18,9 @@ from django.core.exceptions import PermissionDenied
 from simple_history.utils import update_change_reason
 from django.contrib import messages
 from django.urls import reverse
+
+from .service import validate_permission_kanban
+
 
 @login_required
 def kanban_board(request):
@@ -124,84 +129,17 @@ def update_content_state(request, content_id):
         # No realizar la actualización ni registrar en el historial si el estado no cambia
         return JsonResponse({'status': 'no_change', 'message': 'El estado no ha cambiado, no se actualizará.'})
 
-    stateFlow = {
-        'draft': {
-            'name': 'Borrador',
-            'next': ['revision', 'publish'],
-            'prev': [],
-        },
-        'revision': {
-            'name': 'Edicion',
-            'next': ['to_publish'],
-            'prev': ['draft'],
-        },
-        'to_publish': {
-            'name': 'A publicar',
-            'next': ['publish'],
-            'prev': ['revision'],
-        },
-        'publish': {
-            'name': 'Publicado',
-            'next': ['inactive'],
-            'prev': [],
-        },
-        'inactive': {
-            'name': 'Inactivo',
-            'next': [],
-            'prev': ['publish'],
-        },
-    }
-
-    # Verificar si el estado es válido
-    if new_state not in stateFlow[content.state]['next'] and new_state not in stateFlow[content.state]['prev'] and new_state != oldState:
-        # el mensaje quiero que sea que no es posible cambiar de estado de oldState a newState
-        return JsonResponse({'status': 'error', 'message': f'No es posible cambiar de {stateFlow[oldState]["name"]} a {stateFlow[new_state]["name"]}.'}, status=400)
-
-    # Verificar los permisos del usuario
-    if new_state == 'draft' and not user.has_perm('app.edit_content'):
-        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
-
-    if new_state == 'revision' and not user.has_perm('app.create_content') and not user.has_perm('app.edit_content'):
-        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
-
-    if new_state == 'to_publish' and not user.has_perm('app.edit_content'):
-        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
-
-    if new_state == 'publish' and not user.has_perm('app.publish_content') and not user.has_perm('app.create_content') and not user.has_perm('app.edit_is_active'):
-        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
-
-    if new_state == 'inactive' and not user.has_perm('app.edit_is_active') and not user.has_perm('app.create_content'):
-        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
-
-    # Restricciones adicionales para cambios de estados subiendo el flujo de estados
-    if new_state == 'publish' and oldState == 'draft' and content.category.is_moderated and user.has_perm('app.create_content'):
-        return JsonResponse({'status': 'error', 'message': 'No se puede publicar un contenido de categoría moderada desde el estado de Borrador.'}, status=403)
-
-    if new_state == 'publish' and oldState == 'draft' and not user.has_perm('app.create_content'):
-        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
-
-    if new_state == 'publish' and oldState == 'to_publish' and not user.has_perm('app.publish_content'):
-        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
-
-    if new_state == 'revision' and oldState == 'draft' and not user.has_perm('app.create_content'):
-        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
-
-    # Restricciones adicionales para cambios de estados bajando el flujo de estados
-    if new_state == 'draft' and oldState == 'revision' and not user.has_perm('app.edit_content'):
-        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
-
-    if new_state == 'revision' and oldState == 'to_publish' and not user.has_perm('app.publish_content'):
-        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
-
-    if new_state == 'publish' and oldState == 'inactive' and not user.has_perm('app.edit_is_active') and not user.has_perm('app.create_content'):
-        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
+    # Verificar si el usuario tiene permisos para cambiar el estado
+    response = service.validate_permission_kanban(user, content, new_state, oldState)
+    if response['status'] == 'error':
+        return JsonResponse(response, status=403)
 
     # Verificar si el contenido está expirado
     if new_state == 'publish' and oldState == 'inactive' and timezone.now() >= content.date_expire:
         return JsonResponse({'status': 'error', 'message': 'No se puede publicar un contenido expirado.'}, status=403)
 
     # Verificar si el  contenido no tiene fecha de publicacion o si la fecha de publicacion es menor a la actual
-    if new_state == 'publish' and (content.date_published is None or content.date_published < timezone.now()): # probar
+    if new_state == 'publish' and oldState != 'inactive' and (content.date_published is None or content.date_published < timezone.now()):
         content.date_published = timezone.now()
         newDate = True
 
@@ -218,6 +156,35 @@ def update_content_state(request, content_id):
 
     notification.service.changeState([content.autor.email], content, oldState)
     return JsonResponse({'status': 'success'})
+
+# API para validar los permisos de cambio de estado en el kanban
+@csrf_exempt
+@login_required
+def validate_permission_kanban_api(request):
+    if not request.method == 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Método no permitido.'}, status=405)
+
+    # Obtener los datos de la petición
+    user = request.user
+    data = json.loads(request.body)
+    content_id = data.get('content_id', None)
+    new_state = data.get('new_state', None)
+    old_state = data.get('old_state', None)
+
+    # Validar que los datos sean correctos
+    if not user or not content_id or not new_state or not old_state:
+        return JsonResponse({'status': 'error', 'message': 'Datos incorrectos.'}, status=400)
+
+    # Obtener el contenido
+    content = get_object_or_404(Content, id=content_id)
+
+    # Validar los permisos
+    validation_result = validate_permission_kanban(user=user, content=content, newState=new_state, oldState=old_state)
+
+    # validation_result en un JsonResponse
+    if validation_result['status'] == 'error':
+        return JsonResponse(validation_result, status=403)
+    return JsonResponse(validation_result, status=200)
 
 
 class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):

@@ -24,8 +24,7 @@ Rutas:
     - 'profile/<int:id>/': Ruta para la vista de perfil de otro usuario, utilizando `other_profile_view`.
     - 'change-password/': Ruta para cambiar la contraseña del usuario autenticado, utilizando `change_password`.
 """
-
-from content.views import kanban_board, report_post, update_content_state, view_version
+from content.views import kanban_board, report_post, update_content_state, view_version, validate_permission_kanban_api
 from django.contrib import admin
 from django.urls import include, path
 from app.auth.views import register_view, login_view, logout_view, reset_password_view, password_reset_confirm_view
@@ -66,6 +65,7 @@ urlpatterns = [
     path('api/update-content-state/<int:content_id>/', update_content_state, name='update_content_state'),
     path('content/<int:pk>/edit/', ContentUpdateView.as_view(), name='edit_content'),
     path('report/<int:content_id>/', report_post, name='report_post'),  # Ruta para reportar
+    path('api/validate-permission-kanban/', validate_permission_kanban_api, name='validate_permission_kanban_api'),
 
     # Category
     path('category/<str:type>/', categories_by_type, name='categories_by_type'),
