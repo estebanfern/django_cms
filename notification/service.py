@@ -7,7 +7,7 @@ from django.utils.html import strip_tags
 
 logger = logging.getLogger(__name__) # __name__ será 'notifications'
 
-async def sendNotification(my_subject, recipient_list ,context, template):
+def sendNotification(my_subject, recipient_list ,context, template):
 
     html_message = render_to_string(template, context=context)
     plain_message = strip_tags(html_message)
