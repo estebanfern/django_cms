@@ -104,6 +104,14 @@ def update_content_state(request, content_id):
         JsonResponse: Respuesta con el estado de la operación (éxito o error) y un mensaje informativo.
     """
 
+    mappState = {
+        'draft': 'Borrador',
+        'revision': 'Edicion',
+        'to_publish': 'A publicar',
+        'publish': 'Publicado',
+        'inactive': 'Inactivo',
+    }
+
     user = request.user
 
     if not (
@@ -141,18 +149,13 @@ def update_content_state(request, content_id):
     # Verificar si el  contenido no tiene fecha de publicacion o si la fecha de publicacion es menor a la actual
     if new_state == 'publish' and oldState != 'inactive' and (content.date_published is None or content.date_published < timezone.now()):
         content.date_published = timezone.now()
-        newDate = True
 
-    if reason:
-        content.state = new_state
-        content.save()
-        update_change_reason(content, reason)
-    else:
-        if newDate:
-            Content.objects.filter(id=content.id).update(state=new_state, date_published=content.date_published)
-        else:
-            Content.objects.filter(id=content.id).update(state=new_state)
-        content.state = new_state
+    if not reason:
+        reason = f"Cambio de estado de {mappState[oldState]} a {mappState[new_state]}"
+
+    content.state = new_state
+    content.save()
+    update_change_reason(content, reason)
 
     notification.service.changeState([content.autor.email], content, oldState)
     return JsonResponse({'status': 'success'})
