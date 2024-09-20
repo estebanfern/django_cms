@@ -196,6 +196,11 @@
             const mappedState = stateMap[newState];  // Convertir la etiqueta a la clave
             const oldStateMapped = stateMap[originalState];  // Convertir la etiqueta a la clave
 
+            // Evitar cambios innecesarios
+            if (mappedState === oldStateMapped) {
+              return;
+            }
+
             changeState(itemId,mappedState,oldStateMapped,evt)
           }
       });
@@ -298,7 +303,31 @@
       });
     } else {
       //Ascendiendo de estado
-      postState(itemId, mappedState, evt);
+      modal.info({
+        onEscape: function() {
+          evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
+        },
+        message: 'Estas seguro que deseas cambiar de estado?',
+        centerVertical: true,
+        title : '<i class="fa-solid fa-triangle-exclamation text-danger"></i> Confirmación de cambio de estado',
+        buttons: {
+          confirm: {
+            label: '<span class="fas fa-trash"></span> Confirmar',
+            className: 'btn btn-success',
+            callback: function() {
+              postState(itemId, mappedState, evt);
+            }
+          },
+          cancel: {
+            label: 'Cancelar',
+            className: 'btn btn-danger',
+            callback: function() {
+              evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
+            }
+          }
+        }
+    });
+
     }
   }
 </script>
