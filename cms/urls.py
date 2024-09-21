@@ -36,6 +36,8 @@ from ckeditor_uploader import views
 from django.conf import settings
 from django.conf.urls.static import static
 from category.views import categories_by_type
+from rating import views as rating_views
+
 
 urlpatterns = [
 
@@ -70,6 +72,10 @@ urlpatterns = [
     # Content - Reactions
     path('like/<int:content_id>/', like_content, name='like_content'),
     path('dislike/<int:content_id>/', dislike_content, name='dislike_content'),
+
+    # Rating
+    path('rate/<int:content_id>/', rating_views.rate_content, name='rate_content'),
+
 
     # Category
     path('category/<str:type>/', categories_by_type, name='categories_by_type'),

@@ -2,6 +2,8 @@ from django.utils import timezone
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
+
+from rating.models import Rating
 from .forms import ReportForm
 
 import notification.service
@@ -490,13 +492,26 @@ def view_content(request, id):
         return redirect('login')
 
     history = content.history.all().order_by('-history_date')
-    user_has_liked = content.likes.filter(id=request.user.id).exists()
-    user_has_disliked = content.dislikes.filter(id=request.user.id).exists()
+    # Obtener si el usuario ha dado like o dislike
+    user_has_liked = content.likes.filter(id=request.user.id).exists() if request.user.is_authenticated else False
+    user_has_disliked = content.dislikes.filter(id=request.user.id).exists() if request.user.is_authenticated else False
+
+    # Verificar si el usuario ya ha dado una calificación (rating) al contenido
+    user_rating = 0
+    if request.user.is_authenticated:
+        try:
+            user_rating = Rating.objects.get(user=request.user, content=content).rating
+        except Rating.DoesNotExist:
+            user_rating = 0  # Si no ha dado ninguna calificación, usar 0
+
+    # Pasar todos los datos necesarios al contexto
     return render(request, 'content/view.html', {
-        "content" : content,
-        "history" : history,
-        "user_has_liked" : user_has_liked,
-        "user_has_disliked" : user_has_disliked,
+        "content": content,
+        "history": history,
+        "user_has_liked": user_has_liked,
+        "user_has_disliked": user_has_disliked,
+        "user_rating": user_rating,
+        "is_authenticated": request.user.is_authenticated,  # Para verificar en el frontend
     })
 
 @login_required
