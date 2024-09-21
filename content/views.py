@@ -598,9 +598,11 @@ def report_post(request, content_id):
         else:
             return HttpResponseBadRequest("No se permite acceso directo")
 
-
-@login_required
 def like_content(request, content_id):
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Para poder reaccionar a contenidos debes estar registrado'}, status=403)
+
     content = get_object_or_404(Content, id=content_id)
 
     if content.likes.filter(id=request.user.id).exists():
@@ -618,9 +620,11 @@ def like_content(request, content_id):
         'dislikes_count': content.dislikes.count()  # Retorna el conteo actualizado de dislikes
     })
 
-
-@login_required
 def dislike_content(request, content_id):
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Para poder reaccionar a contenidos debes estar registrado'}, status=403)
+
     content = get_object_or_404(Content, id=content_id)
 
     if content.dislikes.filter(id=request.user.id).exists():

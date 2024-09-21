@@ -1,13 +1,15 @@
-from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from .models import Rating
 from content.models import Content
 from django.views.decorators.http import require_POST
 
-@login_required
 @require_POST
 def rate_content(request, content_id):
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Para poder puntuar contenidos debes estar registrado'}, status=403)
+
     content = get_object_or_404(Content, id=content_id)
     user = request.user
 

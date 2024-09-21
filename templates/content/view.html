@@ -325,12 +325,6 @@
       
     likeBtn.on('click', function() {
         
-      // Redirigir al login si no está autenticado
-      if (!isAuthenticated) {
-        window.location.href = "/login/?next=" + window.location.pathname;
-        return;
-      }
-        
       var contentId = $(this).data('content-id');
       $.ajax({
         url: '/like/' + contentId + '/',
@@ -350,19 +344,19 @@
           }
         },
         error: function(xhr, status, error) {
+          if (xhr.status === 403) {
+            modal.warning({
+              message: xhr.responseJSON.message,
+            });
+          }
           console.error('Error en la solicitud AJAX:', error);
         }
       });
+
     });
 
     // Evento para el botón de No me gusta
     dislikeBtn.on('click', function() {
-        
-      // Redirigir al login si no está autenticado
-      if (!isAuthenticated) {
-        window.location.href = "/login/?next=" + window.location.pathname;
-        return;
-      }
         
       var contentId = $(this).data('content-id');
       $.ajax({
@@ -383,9 +377,15 @@
           }
         },
         error: function(xhr, status, error) {
+          if (xhr.status === 403) {
+            modal.warning({
+              message: xhr.responseJSON.message,
+            });
+          }
           console.error('Error en la solicitud AJAX:', error);
         }
       });
+
     });
   });
 </script>
@@ -394,13 +394,6 @@
   $(document).ready(function() {
     // Manejar el clic en las estrellas
     $('.star-btn').on('click', function() {
-      var isAuthenticated = {{ is_authenticated|default:"false" |lower }};  // Saber si el usuario está autenticado
-
-      if (!isAuthenticated) {
-        // Redirigir al login si no está autenticado
-        window.location.href = "/login/?next=" + window.location.pathname;
-        return;
-      }
 
       var contentId = $('#rating-form').data('content-id');  // Obtener el ID del contenido
       var rating = parseInt($(this).data('value'));  // Obtener el valor de la estrella seleccionada y asegurarse de que sea un entero
@@ -430,7 +423,12 @@
           }
         },
         error: function(xhr, status, error) {
-          console.error("Error en la solicitud AJAX: ", error);
+          if (xhr.status === 403) {
+            modal.warning({
+              message: xhr.responseJSON.message,
+            });
+          }
+          console.error("Error en la solicitud AJAX:", error);
         }
       });
     });
