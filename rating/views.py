@@ -31,5 +31,8 @@ def rate_content(request, content_id):
     rating.rating = rating_value
     rating.save()
 
+    # Actualizar el promedio en el modelo Content
+    content.update_rating_avg()
+
     return JsonResponse(
         {'status': 'success', 'message': 'Calificación guardada correctamente', 'rating': rating.rating})

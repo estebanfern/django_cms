@@ -1,3 +1,5 @@
+from email.policy import default
+
 from ckeditor_uploader.fields import RichTextUploadingField
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -6,6 +8,7 @@ from app.models import CustomUser
 from category.models import Category
 from taggit.managers import TaggableManager
 from django.contrib.auth import get_user_model
+from django.db.models import Avg
 from ckeditor.fields import RichTextField
 
 class Content (models.Model):
@@ -46,9 +49,6 @@ class Content (models.Model):
     """
     title = models.CharField(max_length=255, verbose_name=('Título'))
     summary = models.TextField(max_length=255, verbose_name=('Resumen'))
-    # reactions = Reacciones del contenido
-    # ratings =  Calificaciones del contenido
-    # record = Historial de cambios
     category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name=('Categoría'))
     autor = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name=('Autor'))
     is_active = models.BooleanField(default=True, verbose_name='Activo')
@@ -60,6 +60,7 @@ class Content (models.Model):
     history = HistoricalRecords()
     likes = models.ManyToManyField(get_user_model(), related_name='liked_content', blank=True)
     dislikes = models.ManyToManyField(get_user_model(), related_name='disliked_content', blank=True)
+    rating_avg = models.FloatField(default = 0.0, verbose_name="Promedio de calificacion")
 
     class StateChoices(models.TextChoices):
         """
@@ -137,6 +138,12 @@ class Content (models.Model):
             'estado' es la descripción del estado del contenido.
         """
         return f"{self.title} ({self.get_state_display()})"
+
+
+    def update_rating_avg(self):
+        avg_rating = self.rating_set.aggregate(Avg('rating'))['rating__avg']
+        self.rating_avg = avg_rating or 0.0
+        self.save()
 
     def get_state_name(self, state):
         """
