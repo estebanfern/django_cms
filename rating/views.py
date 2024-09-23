@@ -1,5 +1,7 @@
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+
+from content.tasks import update_rating_avg
 from .models import Rating
 from content.models import Content
 from django.views.decorators.http import require_POST
@@ -32,7 +34,7 @@ def rate_content(request, content_id):
     rating.save()
 
     # Actualizar el promedio en el modelo Content
-    content.update_rating_avg()
+    update_rating_avg.delay(content_id)
 
     return JsonResponse(
         {'status': 'success', 'message': 'Calificación guardada correctamente', 'rating': rating.rating})
