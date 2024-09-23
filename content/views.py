@@ -2,7 +2,7 @@ from django.utils import timezone
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
-
+from rating.models import Rating
 from . import service
 from .forms import ReportForm
 
@@ -484,7 +484,27 @@ def view_content(request, id):
         return redirect('login')
 
     history = content.history.all().order_by('-history_date')
-    return render(request, 'content/view.html', {"content" : content, "history" : history})
+    # Obtener si el usuario ha dado like o dislike
+    user_has_liked = content.likes.filter(id=request.user.id).exists() if request.user.is_authenticated else False
+    user_has_disliked = content.dislikes.filter(id=request.user.id).exists() if request.user.is_authenticated else False
+
+    # Verificar si el usuario ya ha dado una calificación (rating) al contenido
+    user_rating = 0
+    if request.user.is_authenticated:
+        try:
+            user_rating = Rating.objects.get(user=request.user, content=content).rating
+        except Rating.DoesNotExist:
+            user_rating = 0  # Si no ha dado ninguna calificación, usar 0
+
+    # Pasar todos los datos necesarios al contexto
+    return render(request, 'content/view.html', {
+        "content": content,
+        "history": history,
+        "user_has_liked": user_has_liked,
+        "user_has_disliked": user_has_disliked,
+        "user_rating": user_rating,
+        "is_authenticated": request.user.is_authenticated,  # Para verificar en el frontend
+    })
 
 @login_required
 def view_version(request, content_id, history_id):
@@ -577,3 +597,47 @@ def report_post(request, content_id):
             return render(request, 'content/report_form_partial.html', {'form': form, 'post': post})
         else:
             return HttpResponseBadRequest("No se permite acceso directo")
+
+def like_content(request, content_id):
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Para poder reaccionar a contenidos debes estar registrado'}, status=403)
+
+    content = get_object_or_404(Content, id=content_id)
+
+    if content.likes.filter(id=request.user.id).exists():
+        content.likes.remove(request.user)
+        message = "Me gusta eliminado"
+    else:
+        content.likes.add(request.user)
+        content.dislikes.remove(request.user)  # Elimina el dislike si existe
+        message = "Me gusta agregado"
+
+    return JsonResponse({
+        'status': 'success',
+        'message': message,
+        'likes_count': content.likes.count(),  # Retorna el conteo actualizado de likes
+        'dislikes_count': content.dislikes.count()  # Retorna el conteo actualizado de dislikes
+    })
+
+def dislike_content(request, content_id):
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Para poder reaccionar a contenidos debes estar registrado'}, status=403)
+
+    content = get_object_or_404(Content, id=content_id)
+
+    if content.dislikes.filter(id=request.user.id).exists():
+        content.dislikes.remove(request.user)
+        message = "No me gusta eliminado"
+    else:
+        content.dislikes.add(request.user)
+        content.likes.remove(request.user)  # Elimina el like si existe
+        message = "No me gusta agregado"
+
+    return JsonResponse({
+        'status': 'success',
+        'message': message,
+        'likes_count': content.likes.count(),  # Retorna el conteo actualizado de likes
+        'dislikes_count': content.dislikes.count()  # Retorna el conteo actualizado de dislikes
+    })

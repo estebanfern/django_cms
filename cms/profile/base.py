@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'ckeditor_uploader', 
     'taggit',
     'notification',
+    'rating',
     'django_celery_beat',
 ]
 
