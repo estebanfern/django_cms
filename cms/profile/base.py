@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'ckeditor_uploader', 
     'taggit',
     'notification',
+    'rating',
 ]
 
 MIDDLEWARE = [
