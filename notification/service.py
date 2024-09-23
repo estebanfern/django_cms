@@ -1,4 +1,4 @@
-from notification.task import send_notification_task
+from notification.tasks import send_notification_task
 
 
 def changeState (recipient_list, content, oldState):
@@ -59,3 +59,14 @@ def welcomeUser(user):
 
     send_notification_task.delay(subject, [user.email], context, template)
 
+
+def expire_content(autor, content):
+    template = "email/notification.html"
+    subject = "Contenido vencido"
+    message = f"Tu contenido {content.title} ha expirado"
+
+    context = {
+        "message": message,
+    }
+
+    send_notification_task.delay(subject, [autor.email], context, template)

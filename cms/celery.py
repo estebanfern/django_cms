@@ -13,7 +13,12 @@ app = Celery('cms')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Celery beat settings
-# app.conf.beat_schedule = {}
+app.conf.beat_schedule = {
+    'expire_contents_task': {
+        'task': 'content.tasks.expire_contents',
+        'schedule': 60.0,  # Cada minuto
+    },
+}
 
 # Load tasks from all registered Django app configs.
 app.autodiscover_tasks(lambda: base.INSTALLED_APPS)

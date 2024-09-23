@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from notification.task import send_notification_task
+from notification.tasks import send_notification_task
 
 import notification.service
 from app.forms import CustomAuthenticationForm, CustomUserCreationForm, PasswordResetForm, SetPasswordForm
