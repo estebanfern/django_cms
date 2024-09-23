@@ -72,6 +72,45 @@
               <span class="badge text-bg-secondary">{{ tag }}</span>
               {% endfor %}
             </div>
+            <div class="col-12 text-center mt-4">
+              {% if user_has_liked %}
+                <button id="like-btn" class="btn btn-outline-primary" data-content-id="{{ content.id }}">
+                  <i class="bi bi-hand-thumbs-up-fill"></i>
+                  Me gusta
+                  ({{ content.likes.count }})
+                </button>
+              {% else %}
+                <button id="like-btn" class="btn btn-outline-secondary" data-content-id="{{ content.id }}">
+                  <i class="bi bi-hand-thumbs-up"></i>
+                  Me gusta
+                  ({{ content.likes.count }})
+                </button>
+              {% endif %}
+
+              {% if user_has_disliked %}
+                <button id="dislike-btn" class="btn btn-outline-danger" data-content-id="{{ content.id }}">
+                  <i class="bi bi-hand-thumbs-down-fill"></i>
+                  No me gusta
+                  ({{ content.dislikes.count }})
+                </button>
+              {% else %}
+                <button id="dislike-btn" class="btn btn-outline-secondary" data-content-id="{{ content.id }}">
+                  <i class="bi bi-hand-thumbs-down"></i>
+                  No me gusta
+                  ({{ content.dislikes.count }})
+                </button>
+              {% endif %}
+            </div>
+          
+            <div class="col-12 text-center mt-4">
+              <form id="rating-form" data-content-id="{{ content.id }}">
+                <div class="rating-stars">
+                  {% for star in "12345" %}
+                    <i class="bi {% if star|add:'0' <= user_rating|default:0 %}bi-star-fill{% else %}bi-star{% endif %} star-btn" data-value="{{ star }}"></i>
+                  {% endfor %}
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </div>
@@ -188,8 +227,7 @@
   </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
+<!-- Reportes -->
 <script>
     $(document).ready(function() {
        
@@ -252,4 +290,165 @@
 </script>
 
 
+<!-- Reacciones -->
+<script>
+  $(document).ready(function() {
+    // Evento para el botón de Me gusta
+    let likeBtn = $('#like-btn')
+    let dislikeBtn = $('#dislike-btn')
+
+    let BTN_CONST = {
+      like: {
+        active: {
+          class: 'btn btn-outline-primary',
+          body: (count) => `<i class="bi bi-hand-thumbs-up-fill"></i> Me gusta ( ${count} )`
+        },
+        inactive: {
+          class: 'btn btn-outline-secondary',
+          body: (count) => `<i class="bi bi-hand-thumbs-up"></i> Me gusta ( ${count} )`
+        },
+      },
+      dislike: {
+        active: {
+          class: 'btn btn-outline-danger',
+          body: (count) => `<i class="bi bi-hand-thumbs-down-fill"></i> No me gusta ( ${count} )`
+        },
+        inactive: {
+          class: 'btn btn-outline-secondary',
+          body: (count) => `<i class="bi bi-hand-thumbs-down"></i> No me gusta ( ${count} )`
+        },
+      }
+    }
+      
+    // Verificación de autenticación
+    let isAuthenticated = {{ is_authenticated|default:"false" |lower }};
+      
+    likeBtn.on('click', function() {
+        
+      var contentId = $(this).data('content-id');
+      $.ajax({
+        url: '/like/' + contentId + '/',
+        type: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}'  // Agrega el token CSRF para seguridad
+        },
+        success: function(response) {
+          if (response.message === 'Me gusta agregado') {
+            likeBtn.html(BTN_CONST.like.active.body(response.likes_count));
+            likeBtn.attr('class', BTN_CONST.like.active.class)
+            dislikeBtn.html(BTN_CONST.dislike.inactive.body(response.dislikes_count));
+            dislikeBtn.attr('class', BTN_CONST.dislike.inactive.class) 
+          } else {
+            likeBtn.html(BTN_CONST.like.inactive.body(response.likes_count));
+            likeBtn.attr('class', BTN_CONST.like.inactive.class)
+          }
+        },
+        error: function(xhr, status, error) {
+          if (xhr.status === 403) {
+            modal.warning({
+              message: xhr.responseJSON.message,
+            });
+          }
+          console.error('Error en la solicitud AJAX:', error);
+        }
+      });
+
+    });
+
+    // Evento para el botón de No me gusta
+    dislikeBtn.on('click', function() {
+        
+      var contentId = $(this).data('content-id');
+      $.ajax({
+        url: '/dislike/' + contentId + '/',
+        type: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}'  // Agrega el token CSRF para seguridad
+        },
+        success: function(response) {
+          if (response.message === 'No me gusta agregado') {
+            likeBtn.html(BTN_CONST.like.inactive.body(response.likes_count));
+            likeBtn.attr('class', BTN_CONST.like.inactive.class)
+            dislikeBtn.html(BTN_CONST.dislike.active.body(response.dislikes_count));
+            dislikeBtn.attr('class', BTN_CONST.dislike.active.class)
+          } else {
+            dislikeBtn.html(BTN_CONST.dislike.inactive.body(response.dislikes_count));
+            dislikeBtn.attr('class', BTN_CONST.dislike.inactive.class)
+          }
+        },
+        error: function(xhr, status, error) {
+          if (xhr.status === 403) {
+            modal.warning({
+              message: xhr.responseJSON.message,
+            });
+          }
+          console.error('Error en la solicitud AJAX:', error);
+        }
+      });
+
+    });
+  });
+</script>
+    
+<script>
+  $(document).ready(function() {
+    // Manejar el clic en las estrellas
+    $('.star-btn').on('click', function() {
+
+      var contentId = $('#rating-form').data('content-id');  // Obtener el ID del contenido
+      var rating = parseInt($(this).data('value'));  // Obtener el valor de la estrella seleccionada y asegurarse de que sea un entero
+
+      // Enviar la calificación vía AJAX
+      $.ajax({
+        url: '/rate/' + contentId + '/',  // URL que envía la calificación al servidor
+        type: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',  // Asegurarse de agregar el token CSRF para seguridad
+        },
+        data: {
+          'rating': rating  // Calificación seleccionada
+        },
+        success: function(response) {
+          if (response.status === 'success' && response.rating !== undefined) {
+            // Actualizar la visualización de las estrellas según la calificación
+            $('.star-btn').each(function(index) {
+              if (index < rating) {
+                $(this).removeClass('bi-star').addClass('bi-star-fill');
+              } else {
+                $(this).removeClass('bi-star-fill').addClass('bi-star');
+              }
+            });
+          } else {
+            console.error("Error en la respuesta del servidor: " + response.message);
+          }
+        },
+        error: function(xhr, status, error) {
+          if (xhr.status === 403) {
+            modal.warning({
+              message: xhr.responseJSON.message,
+            });
+          }
+          console.error("Error en la solicitud AJAX:", error);
+        }
+      });
+    });
+
+    // Asegurar que las estrellas se muestren correctamente al cargar la página
+    var userRating = parseInt({{ user_rating|default:0 }});  // Valor de la calificación actual del usuario
+    $('.star-btn').each(function(index) {
+      if (index < userRating) {
+        $(this).removeClass('bi-star').addClass('bi-star-fill');
+      } else {
+        $(this).removeClass('bi-star-fill').addClass('bi-star');
+      }
+    });
+  });
+</script>
+
+
+
+
+
+    
+    
 {% endblock content %}
