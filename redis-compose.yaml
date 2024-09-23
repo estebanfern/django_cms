@@ -1,0 +1,10 @@
+services:
+  cms-redis:
+    image: redis:7.4.0-bookworm
+    container_name: cms-redis
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=local-dev
+      - REDIS_PORT=6379
+      - REDIS_DATABASES=16
