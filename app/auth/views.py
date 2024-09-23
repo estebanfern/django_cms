@@ -1,14 +1,10 @@
-from lib2to3.fixes.fix_input import context
-
-from decouple import config
 from django.contrib.auth import logout, get_user_model
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
 from django.shortcuts import render, redirect
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from notification.task import send_notification_task
 
 import notification.service
 from app.forms import CustomAuthenticationForm, CustomUserCreationForm, PasswordResetForm, SetPasswordForm
@@ -115,7 +111,7 @@ def reset_password_view(request):
             context = {
                 "reset_link": reset_link
             }
-            notification.service.sendNotification(email_subject, [user.email], context, template)
+            send_notification_task.delay(email_subject, [user.email], context, template)
             messages.success(request, "¡Envío de correo electrónico de recuperación exitoso!")
             return redirect('login')
         else:

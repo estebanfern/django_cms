@@ -234,3 +234,13 @@ CKEDITOR_CONFIGS = {
         'filebrowserBrowseUrl': '/ckeditor/browse/',
     },
 }
+
+# Configuración de Celery con Redis como broker
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+
+# Opciones de Celery
+CELERY_ACCEPT_CONTENT=['application/json']
+CELERY_RESULT_SERIALIZER='json'
+CELERY_TASK_SERIALIZER='json'
+CELERY_TIMEZONE='America/Asuncion'
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
