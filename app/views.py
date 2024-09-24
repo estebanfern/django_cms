@@ -37,7 +37,10 @@ def home_view(request):
         date_published__lt=timezone.now()
     ).select_related('category', 'autor').order_by('-date_published')
 
-    suscribed_categories = Suscription.objects.filter(user=request.user).values_list('category', flat=True)
+    if request.user.is_authenticated:
+        suscribed_categories = Suscription.objects.filter(user=request.user).values_list('category', flat=True)
+    else:
+        suscribed_categories = []
 
     if favs:
         contents = contents.filter(category_id__in=suscribed_categories)
