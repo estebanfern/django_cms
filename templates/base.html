@@ -99,9 +99,15 @@
             <a href="#" type="button" cat-value="{{cat.id}}" onclick="deleteParam(null, 'favs'); redirectWithParams(this, '/', 'cat'); return false;"">
               <li class="notification-item">
                 <div>
-                  <h4>{{ cat.name }}</h4>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ cat.name }}</h4>
+                    {% if cat.id in user_suscriptions %}
+                      <i class="bi bi-heart-fill fav-heart"></i>
+                    {% endif %}
+                  </div>
                   <p>{{ cat.description }}</p>
                 </div>
+
               </li>
               <li>
             </a>
@@ -127,10 +133,10 @@
             {% for cat in categories_suscriptores|slice:":5" %}
             <a href="#" type="button" cat-value="{{cat.id}}" onclick="deleteParam(null, 'favs'); redirectWithParams(this, '/', 'cat'); return false;"">
               <li class="notification-item">
-                <div>
+                <div class="d-flex justify-content-between">
                   <h4>{{ cat.name }}</h4>
                   {% if cat.id in user_suscriptions  %}
-                    <i class="bi bi-heart-fill"></i>
+                    <i class="bi bi-heart-fill fav-heart"></i>
                   {% endif %}
                   <p>{{ cat.description }}</p>
                 </div>
@@ -160,10 +166,12 @@
             <a href="#" type="button" cat-value="{{cat.id}}" onclick="deleteParam(null, 'favs'); redirectWithParams(this, '/', 'cat'); return false;"">
               <li class="notification-item">
                 <div>
-                  <h4>{{ cat.name }}</h4>
-                  {% if cat.id in user_suscriptions  %}
-                    <i class="bi bi-heart-fill"></i>
-                  {% endif %}
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ cat.name }}</h4>
+                    {% if cat.id in user_suscriptions %}
+                      <i class="bi bi-heart-fill fav-heart"></i>
+                    {% endif %}
+                  </div>
                   <p>{{ cat.description }}</p>
                 </div>
               </li>
