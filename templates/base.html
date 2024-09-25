@@ -133,11 +133,13 @@
             {% for cat in categories_suscriptores|slice:":5" %}
             <a href="#" type="button" cat-value="{{cat.id}}" onclick="deleteParam(null, 'favs'); redirectWithParams(this, '/', 'cat'); return false;"">
               <li class="notification-item">
-                <div class="d-flex justify-content-between">
-                  <h4>{{ cat.name }}</h4>
-                  {% if cat.id in user_suscriptions  %}
-                    <i class="bi bi-heart-fill fav-heart"></i>
-                  {% endif %}
+                <div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ cat.name }}</h4>
+                    {% if cat.id in user_suscriptions %}
+                      <i class="bi bi-heart-fill fav-heart"></i>
+                    {% endif %}
+                  </div>
                   <p>{{ cat.description }}</p>
                 </div>
               </li>
