@@ -179,7 +179,7 @@ class Report(models.Model):
         email (EmailField): Correo electrónico de quien realiza el reporte.
         name (CharField): Nombre de quien realiza el reporte.
         reason (CharField): Motivo del reporte, elegido entre varias opciones predeterminadas.
-        description (TextField): Descripción adicional opcional del motivo del reporte.
+        description (TextField): Descripción del motivo del reporte.
         created_at (DateTimeField): Fecha y hora en la que se creó el reporte.
 
     Métodos:
@@ -190,6 +190,7 @@ class Report(models.Model):
         ('spam', 'Spam'),
         ('inappropriate', 'Contenido inapropiado'),
         ('abuse', 'Abuso o acoso'),
+        ('other', 'Otro'),
     ]
 
     content = models.ForeignKey(Content, on_delete=models.CASCADE,verbose_name=('Contenido'))
@@ -197,7 +198,7 @@ class Report(models.Model):
     email = models.EmailField(verbose_name=('Correo Electrónico'))
     name = models.CharField(max_length=255, verbose_name=('Nombre'))
     reason = models.CharField(max_length=50, choices=REASON_CHOICES,verbose_name=('Motivo'))
-    description = models.TextField(blank=True, null=True,verbose_name=('Descripción'))
+    description = models.TextField(verbose_name=('Descripción'))
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
