@@ -1,5 +1,5 @@
 from django.contrib import admin, messages
-from .models import Content
+from .models import Content, Report
 from django.urls import reverse
 
 class ContentAdmin(admin.ModelAdmin):
@@ -64,8 +64,21 @@ class ContentAdmin(admin.ModelAdmin):
             incluyendo el contexto adicional con la URL de cancelación.
         """
         extra_context = extra_context or {}
+        
+        # Obtener el contenido que se está editando
+        content = self.get_object(request, object_id)
+        
+        # Obtener los reportes relacionados con ese contenido
+        related_reports = Report.objects.filter(content=content)
+
+        # Pasar la URL de cancelar al contexto
         cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
         extra_context['cancel_url'] = cancel_url
+
+        # Pasar los reportes relacionados al contexto
+        extra_context['related_reports'] = related_reports
+
+        # Llamar a la vista original con el contexto adicional
         return super().change_view(request, object_id, form_url, extra_context=extra_context)
 
     # Acción para activar contenidos seleccionados
@@ -215,3 +228,6 @@ admin.site.register(Content, ContentAdmin)
 
 Content._meta.verbose_name = ("Contenido")  # Singular: "Categoría"
 Content._meta.verbose_name_plural = ("Contenidos")  # Plural: "Categorías"
+
+Report._meta.verbose_name = ("Reporte") 
+Report._meta.verbose_name_plural = ("Reporte") 

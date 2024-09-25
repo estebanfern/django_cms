@@ -1,0 +1,39 @@
+{% extends "admin/change_form.html" %}
+
+{% block content  %}
+    {{ block.super }}
+
+    <div style="width: 100%;"><h4>Reportes relacionados</h4>
+
+    {% if related_reports %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Correo Electrónico</th>
+                    <th>Motivo</th>
+                    <th>Fecha de creación</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in related_reports %}
+                <tr>
+                    <td>{{ report.name }}</td>
+                    <td>{{ report.email }}</td>
+                    <td>{{ report.get_reason_display }}</td>
+                    <td>{{ report.created_at }}</td>
+                    <td>
+                        <a href="{% url 'content:report-detail' report.id %}">
+                            Ver reporte
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p>No hay reportes para este contenido.</p>
+    {% endif %}
+{% endblock %}

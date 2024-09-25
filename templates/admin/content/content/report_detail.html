@@ -1,0 +1,22 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <h4 class="mt-4 mb-4">Detalles del Reporte</h4>
+    <div class="card">
+        <div class="card-body">
+            <p><strong>Contenido:</strong> {{ report.content.title }}</p>
+            <p><strong>Reportado por:</strong> {{ report.name }} ({{ report.email }})</p>
+            <p><strong>Motivo:</strong> {{ report.get_reason_display }}</p>
+            <p><strong>Descripción:</strong> {{ report.description }}</p>
+            <p><strong>Fecha de creación:</strong> {{ report.created_at }}</p>
+        </div>
+        <div class="card-footer text-right">
+            <a href="{% url 'admin:content_content_change' report.content.id %}" class="btn btn-primary">
+                Volver al contenido
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

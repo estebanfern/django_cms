@@ -8,7 +8,7 @@ from .forms import ReportForm
 
 import notification.service
 from category.models import Category
-from .models import Content
+from .models import Content, Report
 import json
 from django.contrib.auth.decorators import login_required
 from django.views.generic import CreateView, UpdateView, View
@@ -640,4 +640,16 @@ def dislike_content(request, content_id):
         'message': message,
         'likes_count': content.likes.count(),  # Retorna el conteo actualizado de likes
         'dislikes_count': content.dislikes.count()  # Retorna el conteo actualizado de dislikes
+    })
+
+def report_detail(request, report_id):
+    # Obtener el reporte por su ID
+    report = get_object_or_404(Report, pk=report_id)
+    opts = report._meta  # Obtener los meta datos del modelo asociado
+
+    # Renderizar el reporte en una plantilla
+    #return render(request, 'admin/content/content/report_detail.html', {'report': report})
+    return render(request, 'admin/content/content/report_detail.html', {
+        'report': report,
+        'opts': opts,
     })
