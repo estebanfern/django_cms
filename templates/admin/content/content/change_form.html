@@ -1,5 +1,10 @@
 {% extends "admin/change_form.html" %}
-
+{% block object-tools %}
+    <div class="object-tools">
+        {{ block.super }}
+        <a href="{{ view_content_url }}" class="btn btn-success form-control secondary" style="margin-top: 10px; ">Ver detalles del contenido</a>
+    </div>
+{% endblock %}
 {% block content  %}
     {{ block.super }}
 

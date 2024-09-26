@@ -1,4 +1,5 @@
 from django.contrib import admin, messages
+from django.http import HttpResponse
 from .models import Content, Report
 from django.urls import reverse
 
@@ -48,21 +49,25 @@ class ContentAdmin(admin.ModelAdmin):
     # Boton de Cancelar al modificar
     def change_view(self, request, object_id, form_url='', extra_context=None):
         """
-        Modifica la vista de cambio en el panel de administración para agregar un botón de cancelar.
-
-        Esta función personaliza la vista de modificación de un objeto en el panel de administración,
-        añadiendo un botón de cancelar que redirige a la lista de objetos del mismo tipo.
+        Personaliza la vista de modificación de un objeto en el panel de administración, agregando un botón de cancelar y mostrando reportes relacionados con el contenido.
 
         Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            object_id (str): ID del objeto que se va a modificar.
-            form_url (str, opcional): URL del formulario, si existe. Por defecto es una cadena vacía.
-            extra_context (dict, opcional): Contexto adicional para la plantilla. Por defecto es None.
+            request (HttpRequest): Objeto de solicitud HTTP realizado por el usuario.
+            object_id (str): ID del objeto que se está modificando.
+            form_url (str, opcional): URL del formulario de modificación, por defecto es una cadena vacía.
+            extra_context (dict, opcional): Contexto adicional pasado a la plantilla, por defecto es None.
+
+        Comportamiento:
+            - Obtiene el contenido que se está editando y los reportes asociados a este contenido.
+            - Añade al contexto la URL de cancelación para redirigir a la lista de objetos del mismo tipo.
+            - Añade los reportes relacionados al contexto para mostrarlos en la vista.
+            - Añade la URL del botón "Ver contenido" para visualizar el contenido en una nueva vista.
+            - Llama a la vista original con el contexto actualizado.
 
         Retorna:
-            HttpResponse: La respuesta HTTP renderizada para la vista de cambio del objeto,
-            incluyendo el contexto adicional con la URL de cancelación.
+            HttpResponse: La respuesta renderizada para la vista de cambio del objeto, con el contexto que incluye reportes relacionados y URLs adicionales.
         """
+
         extra_context = extra_context or {}
         
         # Obtener el contenido que se está editando
@@ -77,6 +82,10 @@ class ContentAdmin(admin.ModelAdmin):
 
         # Pasar los reportes relacionados al contexto
         extra_context['related_reports'] = related_reports
+
+        # Agregar la URL del botón "Ver contenido"
+        view_content_url = reverse('content:view_content_detail', args=[content.pk])  # Usa 'content:view_content_admin'
+        extra_context['view_content_url'] = view_content_url
 
         # Llamar a la vista original con el contexto adicional
         return super().change_view(request, object_id, form_url, extra_context=extra_context)
@@ -226,8 +235,8 @@ class ContentAdmin(admin.ModelAdmin):
 # Registrar el modelo Content con la clase ContentAdmin
 admin.site.register(Content, ContentAdmin)
 
-Content._meta.verbose_name = ("Contenido")  # Singular: "Categoría"
-Content._meta.verbose_name_plural = ("Contenidos")  # Plural: "Categorías"
+Content._meta.verbose_name = ("Contenido") 
+Content._meta.verbose_name_plural = ("Contenidos") 
 
 Report._meta.verbose_name = ("Reporte") 
-Report._meta.verbose_name_plural = ("Reporte") 
+Report._meta.verbose_name_plural = ("Reportes") 

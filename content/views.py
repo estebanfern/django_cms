@@ -1,6 +1,6 @@
 from django.utils import timezone
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, Http404
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from rating.models import Rating
 from . import service
@@ -643,13 +643,46 @@ def dislike_content(request, content_id):
     })
 
 def report_detail(request, report_id):
-    # Obtener el reporte por su ID
-    report = get_object_or_404(Report, pk=report_id)
-    opts = report._meta  # Obtener los meta datos del modelo asociado
+    """
+    Muestra los detalles de un reporte en una vista personalizada.
 
-    # Renderizar el reporte en una plantilla
-    #return render(request, 'admin/content/content/report_detail.html', {'report': report})
+    Parámetros:
+        request (HttpRequest): Objeto de solicitud HTTP.
+        report_id (int): ID del reporte cuyos detalles se van a visualizar.
+
+    Comportamiento:
+        - Obtiene el reporte utilizando el ID proporcionado o devuelve un error 404 si no existe.
+        - Obtiene las opciones de metadatos del modelo `Report` para usarlas en la plantilla.
+        - Renderiza la plantilla `report_detail.html` con el reporte y sus metadatos.
+
+    Retorna:
+        HttpResponse: La respuesta renderizada con los detalles del reporte.
+    """
+
+    report = get_object_or_404(Report, pk=report_id)
+    opts = report._meta  
     return render(request, 'admin/content/content/report_detail.html', {
         'report': report,
         'opts': opts,
     })
+
+def view_content_detail(request, content_id):
+    """
+    Muestra los detalles de un contenido en una vista personalizada.
+
+    Parámetros:
+        request (HttpRequest): Objeto de solicitud HTTP.
+        content_id (int): ID del contenido cuyos detalles se van a visualizar.
+
+    Comportamiento:
+        - Obtiene el contenido utilizando el ID proporcionado o devuelve un error 404 si no existe.
+        - Obtiene las opciones de metadatos del modelo `Content` para usarlas en la plantilla.
+        - Renderiza la plantilla `content_detail.html` con el contenido y sus metadatos.
+
+    Retorna:
+        HttpResponse: La respuesta renderizada con los detalles del contenido.
+    """
+
+    content = get_object_or_404(Content, pk=content_id)
+    opts = content._meta
+    return render(request, 'admin/content/content/content_detail.html', {'content': content, 'opts': opts})

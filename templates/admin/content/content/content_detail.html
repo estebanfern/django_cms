@@ -1,0 +1,24 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <h4 class="mt-4 mb-4">Detalles del Contenido</h4>
+    <div class="card">
+        <div class="card-body">
+            <p><strong>Título:</strong> {{ content.title }}</p>
+            <p><strong>Autor:</strong> {{ content.autor }}</p>
+            <p><strong>Categoría:</strong> {{ content.category }}</p>
+            <p><strong>Contenido:</strong></p>
+            <div class="content-preview">
+                {{ content.content|safe }}
+            </div>
+        </div>
+        <div class="card-footer text-right">
+            <a href="{% url 'admin:content_content_change' content.id %}" class="btn btn-primary">
+                Volver al contenido
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
