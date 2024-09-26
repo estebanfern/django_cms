@@ -4,6 +4,7 @@ from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from category.models import Category
 from content.models import Content
+from suscription.models import Suscription
 
 
 # Create your views here.
@@ -28,12 +29,21 @@ def home_view(request):
     cat_query = request.GET.get('cat')
     category = None
     query = request.GET.get('query')
+    favs = request.GET.get('favs')
     # Filtra los contenidos activos y publicados, y los ordena por fecha de publicación
     contents = Content.objects.filter(
         is_active=True,
         state=Content.StateChoices.publish,
         date_published__lt=timezone.now()
     ).select_related('category', 'autor').order_by('-date_published')
+
+    if request.user.is_authenticated:
+        suscribed_categories = Suscription.objects.filter(user=request.user).values_list('category', flat=True)
+    else:
+        suscribed_categories = []
+
+    if favs:
+        contents = contents.filter(category_id__in=suscribed_categories)
 
     # Si se busco una categoria, verificar si el usuario está logueado en caso de que no sea categoria publica
     # si no está loguead, redirigirle al login con un mensaje
