@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'notification',
     'rating',
     'django_celery_beat',
+    'suscription',
 ]
 
 MIDDLEWARE = [
@@ -78,6 +79,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'category.context_processors.categories',
+                'suscription.context_processors.suscriptions',
             ],
         },
     },
