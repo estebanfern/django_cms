@@ -84,7 +84,7 @@ class ContentAdmin(admin.ModelAdmin):
         extra_context['related_reports'] = related_reports
 
         # Agregar la URL del botón "Ver contenido"
-        view_content_url = reverse('content:view_content_detail', args=[content.pk])  # Usa 'content:view_content_admin'
+        view_content_url = reverse('content:view_content_detail', args=[content.pk])  
         extra_context['view_content_url'] = view_content_url
 
         # Llamar a la vista original con el contexto adicional
