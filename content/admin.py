@@ -1,7 +1,10 @@
+from pickle import FALSE
+
 from django.contrib import admin, messages
 from django.http import HttpResponse
 from .models import Content, Report
 from django.urls import reverse
+
 
 class ContentAdmin(admin.ModelAdmin):
     """
@@ -69,22 +72,24 @@ class ContentAdmin(admin.ModelAdmin):
         """
 
         extra_context = extra_context or {}
-        
+
         # Obtener el contenido que se está editando
         content = self.get_object(request, object_id)
-        
-        # Obtener los reportes relacionados con ese contenido
-        related_reports = Report.objects.filter(content=content)
+
+        if request.user.has_perm('app.view_reports'):
+            # Obtener los reportes relacionados con ese contenido
+            related_reports = Report.objects.filter(content=content)
+            # Pasar los reportes relacionados al contexto
+            extra_context['related_reports'] = related_reports
+        else:
+            extra_context['related_reports'] = 'no_permission'
 
         # Pasar la URL de cancelar al contexto
         cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
         extra_context['cancel_url'] = cancel_url
 
-        # Pasar los reportes relacionados al contexto
-        extra_context['related_reports'] = related_reports
-
         # Agregar la URL del botón "Ver contenido"
-        view_content_url = reverse('content:view_content_detail', args=[content.pk])  
+        view_content_url = reverse('content:view_content_detail', args=[content.pk])
         extra_context['view_content_url'] = view_content_url
 
         # Llamar a la vista original con el contexto adicional
@@ -213,7 +218,7 @@ class ContentAdmin(admin.ModelAdmin):
         """
         # Permite la edición solo si el usuario tiene el permiso 'edit_is_active'
         if obj:
-            return request.user.has_perm('app.edit_is_active')
+            return request.user.has_perm('app.block_content')
         return False
 
     def has_module_permission(self, request):
@@ -235,8 +240,8 @@ class ContentAdmin(admin.ModelAdmin):
 # Registrar el modelo Content con la clase ContentAdmin
 admin.site.register(Content, ContentAdmin)
 
-Content._meta.verbose_name = ("Contenido") 
-Content._meta.verbose_name_plural = ("Contenidos") 
+Content._meta.verbose_name = ("Contenido")
+Content._meta.verbose_name_plural = ("Contenidos")
 
-Report._meta.verbose_name = ("Reporte") 
+Report._meta.verbose_name = ("Reporte")
 Report._meta.verbose_name_plural = ("Reportes") 
