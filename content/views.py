@@ -1,11 +1,12 @@
+from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, Http404
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from rating.models import Rating
 from . import service
 from .forms import ReportForm
-
+from django.contrib.admin import site as admin_site
 import notification.service
 from category.models import Category
 from .models import Content, Report
@@ -660,11 +661,13 @@ def report_detail(request, report_id):
     """
 
     report = get_object_or_404(Report, pk=report_id)
-    opts = report._meta  
-    return render(request, 'admin/content/content/report_detail.html', {
-        'report': report,
-        'opts': opts,
-    })
+    opts = report._meta
+    context = dict(
+        admin_site.each_context(request),  # Contexto del admin
+        report=report,
+        opts=opts,
+    )
+    return TemplateResponse(request, 'admin/content/content/report_detail.html', context)
 
 def view_content_detail(request, content_id):
     """
@@ -685,4 +688,10 @@ def view_content_detail(request, content_id):
 
     content = get_object_or_404(Content, pk=content_id)
     opts = content._meta
-    return render(request, 'admin/content/content/content_detail.html', {'content': content, 'opts': opts})
+    context = dict(
+        admin_site.each_context(request),  # Contexto del admin
+        content=content,
+        opts=opts,
+    )
+    return TemplateResponse(request, 'admin/content/content/content_detail.html', context)
+
