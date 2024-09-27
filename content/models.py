@@ -199,7 +199,7 @@ class Report(models.Model):
     name = models.CharField(max_length=255, verbose_name=('Nombre'))
     reason = models.CharField(max_length=50, choices=REASON_CHOICES,verbose_name=('Motivo'))
     description = models.TextField(verbose_name=('Descripción'))
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=('Fecha de creación'))
 
     def __str__(self):
-        return f"Reporte de {self.nombre if self.nombre else self.reported_by} sobre {self.content.title}"
+        return f"Reporte de {self.email if self.email else self.reported_by} sobre el contenido {self.content.title}"
