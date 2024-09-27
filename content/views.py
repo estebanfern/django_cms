@@ -4,6 +4,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from rating.models import Rating
+from notification.tasks import notify_new_content_suscription
 from . import service
 from .forms import ReportForm
 from django.contrib.admin import site as admin_site
@@ -156,6 +157,12 @@ def update_content_state(request, content_id):
     content.state = new_state
     content.save()
     update_change_reason(content, reason)
+
+    if new_state == 'publish':
+        if content.date_published <= timezone.now():
+            notify_new_content_suscription.delay(content_id) # Notificar a los suscriptores inmediatamente
+        else:
+            notify_new_content_suscription.apply_async((content_id,), eta=content.date_published) # Programar la notificación para la fecha de publicación
 
     notification.service.changeState([content.autor.email], content, oldState)
     return JsonResponse({'status': 'success'})
