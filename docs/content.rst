@@ -1,13 +1,6 @@
 content package
 ===============
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-
 Submodules
 ----------
 
