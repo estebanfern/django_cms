@@ -28,6 +28,13 @@
             <p><strong>Título:</strong> {{ content.title }}</p>
             <p><strong>Autor:</strong> {{ content.autor }}</p>
             <p><strong>Categoría:</strong> {{ content.category }}</p>
+            <p><strong>Etiquetas:</strong>
+                {% if content.tags.exists %}
+                    {{ content.tags.all|join:", " }}
+                {% else %}
+                    No hay etiquetas
+                {% endif %}
+            </p>
             <p><strong>Contenido:</strong></p>
             <div class="content-preview">
                 {{ content.content|safe }}

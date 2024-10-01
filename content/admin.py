@@ -39,13 +39,18 @@ class ContentAdmin(admin.ModelAdmin):
     search_fields = ('title', 'summary', 'autor__name', 'category__name')
 
     # Campos a mostrar en el formulario de creación y edición
-    fields = ('title', 'summary', 'category', 'autor', 'state', 'is_active', 'date_create', 'date_published' ,'date_expire')
+    fields = ('title', 'summary', 'category', 'autor', 'state', 'is_active', 'date_create', 'date_published' ,'date_expire','display_tags')
 
     # Hacer todos los campos de solo lectura, excepto 'is_active'
-    readonly_fields = ('title', 'summary', 'category', 'autor', 'state', 'date_create', 'date_expire', 'date_published')
+    readonly_fields = ('title', 'summary', 'category', 'autor', 'state', 'date_create', 'date_expire', 'date_published', 'display_tags')
 
     # Definir acciones personalizadas
     actions = ['activar_contenidos', 'desactivar_contenidos']
+
+    def display_tags(self, obj):
+        return ", ".join([tag.name for tag in obj.tags.all()])
+
+    display_tags.short_description = 'Etiquetas'
 
     def get_urls(self):
         urls = super().get_urls()
