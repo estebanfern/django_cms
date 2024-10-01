@@ -12,6 +12,21 @@ logger = logging.getLogger(__name__) # __name__ será 'notifications'
 
 @shared_task()
 def send_notification_task(my_subject, recipient_list ,context, template):
+    """
+    Envía una notificación por correo electrónico de forma asíncrona.
+
+    :param my_subject: Asunto del correo electrónico.
+    :type my_subject: str
+    :param recipient_list: Lista de destinatarios del correo.
+    :type recipient_list: list
+    :param context: Contexto para renderizar el template del correo.
+    :type context: dict
+    :param template: Ruta del template HTML que será utilizado para el correo.
+    :type template: str
+
+    La función genera un mensaje en formato HTML y texto plano, y envía el correo a los destinatarios.
+    Si ocurre un error durante el envío, se registra en el logger.
+    """
 
     html_message = render_to_string(template, context=context)
     plain_message = strip_tags(html_message)
@@ -33,6 +48,16 @@ def send_notification_task(my_subject, recipient_list ,context, template):
 
 @shared_task()
 def notify_new_content_suscription(content_id):
+    """
+    Notifica a los usuarios suscritos sobre nuevo contenido en una categoría de su interés.
+
+    :param content_id: ID del contenido que ha sido publicado.
+    :type content_id: int
+
+    La función busca todas las suscripciones activas a la categoría del contenido recién publicado
+    y envía una notificación a los usuarios suscritos.
+    """
+
     content = Content.objects.get(id=content_id)
     category_id = content.category
     suscriptions = Suscription.objects.filter(

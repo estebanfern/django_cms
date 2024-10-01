@@ -29,7 +29,7 @@ class Category(models.Model):
         db_table (str): Nombre de la tabla en la base de datos.
 
     Métodos:
-        __str__
+        __str__: Retorna una representación en cadena del objeto Category.
     """
     name = models.CharField(max_length=255, verbose_name=('Nombre'))
     description = models.TextField(max_length=255, verbose_name=('Descripción'))

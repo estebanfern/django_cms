@@ -78,9 +78,9 @@ class ContentForm(forms.ModelForm):
             *args: Argumentos posicionales.
             **kwargs: Argumentos nombrados.
 
-        Retorna:
-            None
+        :return: None
         """
+
         super(ContentForm, self).__init__(*args, **kwargs)
             # Verifica si el formulario está en modo de edición o creación
         if self.instance.pk:
@@ -143,7 +143,6 @@ class ReportForm(forms.ModelForm):
                         Además, oculta los campos de nombre y email para usuarios autenticados.
     """
 
-
     class Meta:
         model = Report
         fields = ['name', 'email', 'reason', 'description']
@@ -158,6 +157,18 @@ class ReportForm(forms.ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
+        """
+        Inicializa el formulario, completando los campos de nombre y email si el usuario está autenticado.
+
+        Si el usuario no está autenticado, los campos de nombre y correo son obligatorios. Además, se ocultan los campos de nombre y email para usuarios autenticados.
+
+        Parámetros:
+            *args: Argumentos posicionales.
+            **kwargs: Argumentos nombrados, incluyendo la opción de pasar un usuario autenticado.
+
+        :return: None
+        """
+
         user = kwargs.pop('user', None)  
         super(ReportForm, self).__init__(*args, **kwargs)
 

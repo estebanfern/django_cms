@@ -6,25 +6,24 @@ class ContentAdmin(admin.ModelAdmin):
     """
     Configuración personalizada para la administración del modelo Content en el panel de administración de Django.
 
-    Define cómo se muestran y manejan los contenidos en el panel de administración, incluyendo filtros, campos de búsqueda,
-    acciones personalizadas y permisos de usuario.
+    Define cómo se muestran y manejan los contenidos en el panel de administración, incluyendo filtros, campos de búsqueda, acciones personalizadas y permisos de usuario.
 
     Atributos:
-        list_display (tuple): Campos que se mostrarán en la lista de contenidos en el panel de administración.
-        list_filter (tuple): Filtros disponibles para filtrar los contenidos en la lista.
-        search_fields (tuple): Campos por los cuales se puede realizar búsquedas en la lista de contenidos.
-        fields (tuple): Campos que se mostrarán en el formulario de creación y edición de contenidos.
-        readonly_fields (tuple): Campos que serán de solo lectura en el formulario de edición, exceptuando 'is_active'.
-        actions (list): Lista de acciones personalizadas disponibles para los contenidos.
+        - list_display (tuple): Campos que se mostrarán en la lista de contenidos en el panel de administración.
+        - list_filter (tuple): Filtros disponibles para filtrar los contenidos en la lista.
+        - search_fields (tuple): Campos por los cuales se puede realizar búsquedas en la lista de contenidos.
+        - fields (tuple): Campos que se mostrarán en el formulario de creación y edición de contenidos.
+        - readonly_fields (tuple): Campos que serán de solo lectura en el formulario de edición, exceptuando 'is_active'.
+        - actions (list): Lista de acciones personalizadas disponibles para los contenidos.
 
     Métodos:
-        activar_contenidos: Acción personalizada para activar los contenidos seleccionados, verificando permisos específicos.
-        desactivar_contenidos: Acción personalizada para desactivar los contenidos seleccionados, verificando permisos específicos.
-        has_add_permission: Desactiva la capacidad de agregar nuevos contenidos desde el panel de administración.
-        has_delete_permission: Desactiva la capacidad de eliminar contenidos desde el panel de administración.
-        has_view_permission: Permite la visualización de contenidos solo si el usuario tiene el permiso 'view_content'.
-        has_change_permission: Permite la edición de contenidos solo si el usuario tiene el permiso 'edit_is_active'.
-        has_module_permission: Permite el acceso al módulo de contenidos si el usuario tiene el permiso 'view_content'.
+        - activar_contenidos: Acción personalizada para activar los contenidos seleccionados, verificando permisos específicos.
+        - desactivar_contenidos: Acción personalizada para desactivar los contenidos seleccionados, verificando permisos específicos.
+        - has_add_permission: Desactiva la capacidad de agregar nuevos contenidos desde el panel de administración.
+        - has_delete_permission: Desactiva la capacidad de eliminar contenidos desde el panel de administración.
+        - has_view_permission: Permite la visualización de contenidos solo si el usuario tiene el permiso 'view_content'.
+        - has_change_permission: Permite la edición de contenidos solo si el usuario tiene el permiso 'edit_is_active'.
+        - has_module_permission: Permite el acceso al módulo de contenidos si el usuario tiene el permiso 'view_content'.
     """
 
     # Mostrar estos campos en la lista de contenidos
@@ -50,19 +49,21 @@ class ContentAdmin(admin.ModelAdmin):
         """
         Modifica la vista de cambio en el panel de administración para agregar un botón de cancelar.
 
-        Esta función personaliza la vista de modificación de un objeto en el panel de administración,
-        añadiendo un botón de cancelar que redirige a la lista de objetos del mismo tipo.
+        Esta función personaliza la vista de modificación de un objeto en el panel de administración, añadiendo un botón de cancelar que redirige a la lista de objetos del mismo tipo.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            object_id (str): ID del objeto que se va a modificar.
-            form_url (str, opcional): URL del formulario, si existe. Por defecto es una cadena vacía.
-            extra_context (dict, opcional): Contexto adicional para la plantilla. Por defecto es None.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param object_id: ID del objeto que se va a modificar.
+        :type object_id: str
+        :param form_url: URL del formulario, si existe. Por defecto es una cadena vacía.
+        :type form_url: str, opcional
+        :param extra_context: Contexto adicional para la plantilla. Por defecto es None.
+        :type extra_context: dict, opcional
 
-        Retorna:
-            HttpResponse: La respuesta HTTP renderizada para la vista de cambio del objeto,
-            incluyendo el contexto adicional con la URL de cancelación.
+        :return: La respuesta HTTP renderizada para la vista de cambio del objeto, incluyendo el contexto adicional con la URL de cancelación.
+        :rtype: HttpResponse
         """
+
         extra_context = extra_context or {}
         cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
         extra_context['cancel_url'] = cancel_url
@@ -77,15 +78,17 @@ class ContentAdmin(admin.ModelAdmin):
         Verifica si el usuario tiene el permiso 'edit_is_active' antes de activar los contenidos.
         Si se activan con éxito, muestra un mensaje de éxito con los títulos de los contenidos activados.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            queryset (QuerySet): QuerySet que contiene los contenidos seleccionados para la acción.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param queryset: QuerySet que contiene los contenidos seleccionados para la acción.
+        :type queryset: QuerySet
 
         Acciones:
             - Verifica si el usuario tiene el permiso requerido.
             - Actualiza el campo `is_active` de los contenidos seleccionados a True.
             - Muestra un mensaje de éxito si la activación es exitosa.
         """
+
         # Verificar el permiso 'edit_is_active'
         if not request.user.has_perm('app.edit_is_active'):
             self.message_user(request, "No tienes permiso para activar contenidos.", level=messages.ERROR)
@@ -104,15 +107,17 @@ class ContentAdmin(admin.ModelAdmin):
         Verifica si el usuario tiene el permiso 'edit_is_active' antes de desactivar los contenidos.
         Si se desactivan con éxito, muestra un mensaje de éxito con los títulos de los contenidos desactivados.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            queryset (QuerySet): QuerySet que contiene los contenidos seleccionados para la acción.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param queryset: QuerySet que contiene los contenidos seleccionados para la acción.
+        :type queryset: QuerySet
 
         Acciones:
             - Verifica si el usuario tiene el permiso requerido.
             - Actualiza el campo `is_active` de los contenidos seleccionados a False.
             - Muestra un mensaje de éxito si la desactivación es exitosa.
         """
+
 
         # Verificar el permiso 'edit_is_active'
         if not request.user.has_perm('app.edit_is_active'):
@@ -130,12 +135,13 @@ class ContentAdmin(admin.ModelAdmin):
         Esta función siempre devuelve False, impidiendo que los usuarios puedan agregar
         nuevos contenidos directamente desde el panel de administración.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
 
-        Retorna:
-            bool: False, indicando que no se permite la adición de nuevos contenidos.
+        :return: False, indicando que no se permite la adición de nuevos contenidos.
+        :rtype: bool
         """
+
         # No permitir agregar nuevos contenidos desde el admin
         return False
 
@@ -146,13 +152,15 @@ class ContentAdmin(admin.ModelAdmin):
         Esta función siempre devuelve False, impidiendo que los usuarios puedan eliminar
         contenidos directamente desde el panel de administración.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            obj (Model, opcional): Objeto del modelo específico para verificar permisos (opcional).
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param obj: Objeto del modelo específico para verificar permisos (opcional).
+        :type obj: Model, opcional
 
-        Retorna:
-            bool: False, indicando que no se permite la eliminación de contenidos.
+        :return: False, indicando que no se permite la eliminación de contenidos.
+        :rtype: bool
         """
+
         # No permitir eliminar contenidos desde el admin
         return False
 
@@ -164,13 +172,16 @@ class ContentAdmin(admin.ModelAdmin):
         Esta función asegura que solo los usuarios con el permiso adecuado puedan acceder
         a la lista de contenidos y ver detalles.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            obj (Model, opcional): Objeto del modelo específico para verificar permisos (opcional).
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param obj: Objeto del modelo específico para verificar permisos (opcional).
+        :type obj: Model, opcional
 
-        Retorna:
-            bool: True si el usuario tiene el permiso 'view_content', de lo contrario False.
+        :return: True si el usuario tiene el permiso 'view_content', de lo contrario False.
+        :rtype: bool
         """
+
+
         # Permite la visualización solo si el usuario tiene el permiso 'view_content'
         return request.user.has_perm('app.view_content')
 
@@ -182,13 +193,15 @@ class ContentAdmin(admin.ModelAdmin):
         Esto asegura que solo los usuarios con permisos específicos puedan cambiar el estado
         de activación de los contenidos, sin modificar otros campos de solo lectura.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            obj (Model, opcional): Objeto del modelo específico para verificar permisos (opcional).
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param obj: Objeto del modelo específico para verificar permisos (opcional).
+        :type obj: Model, opcional
 
-        Retorna:
-            bool: True si el usuario tiene el permiso 'edit_is_active', de lo contrario False.
+        :return: True si el usuario tiene el permiso 'edit_is_active', de lo contrario False.
+        :rtype: bool
         """
+
         # Permite la edición solo si el usuario tiene el permiso 'edit_is_active'
         if obj:
             return request.user.has_perm('app.edit_is_active')
@@ -202,12 +215,13 @@ class ContentAdmin(admin.ModelAdmin):
         Este permiso general asegura que solo los usuarios autorizados puedan ver y navegar por el módulo
         de contenidos en el panel de administración.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
 
-        Retorna:
-            bool: True si el usuario tiene el permiso 'view_content', de lo contrario False.
+        :return: True si el usuario tiene el permiso 'view_content', de lo contrario False.
+        :rtype: bool
         """
+
         return request.user.has_perm('app.view_content')
 
 # Registrar el modelo Content con la clase ContentAdmin

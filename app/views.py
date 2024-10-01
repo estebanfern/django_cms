@@ -13,19 +13,21 @@ def home_view(request):
     """
     Vista principal para mostrar contenidos publicados y activos.
 
-    Parámetros:
-        request (HttpRequest): La solicitud HTTP recibida.
+    :param request: La solicitud HTTP recibida.
+    :type request: HttpRequest
 
     Lógica:
         - Obtiene el filtro de categoría y de búsqueda desde los parámetros de la URL.
         - Filtra los contenidos activos y publicados, ordenándolos por fecha de publicación.
         - Si se especifica una categoría, filtra los contenidos por esa categoría.
         - Si se proporciona una consulta de búsqueda, filtra los contenidos por título o por nombre del autor.
-        - Pagina los resultados para mostrar un máximo de 10 contenidos por página.
+        - Si se selecciona la opción de favoritos, muestra solo los contenidos de las categorías a las que el usuario está suscrito.
+        - Configura la paginación para mostrar un máximo de 10 contenidos por página.
 
-    Retorna:
-        HttpResponse: Renderiza la plantilla 'inicio.html' con los contenidos filtrados y paginados.
+    :return: Renderiza la plantilla 'inicio.html' con los contenidos filtrados y paginados.
+    :rtype: HttpResponse
     """
+
     cat_query = request.GET.get('cat')
     category = None
     query = request.GET.get('query')

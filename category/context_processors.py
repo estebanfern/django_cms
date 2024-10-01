@@ -5,19 +5,20 @@ def categories(request):
     """
     Función para obtener y clasificar las categorías de contenido según su tipo.
 
-    Parámetros:
-        request (HttpRequest): La solicitud HTTP recibida.
+    :param request: La solicitud HTTP recibida.
+    :type request: HttpRequest
 
-    - Filtra y clasifica las categorías en tres tipos:
-        - 'Publico': Categorías visibles para todos los usuarios.
-        - 'Suscriptor': Categorías accesibles solo para usuarios suscriptores.
-        - 'Pago': Categorías accesibles solo mediante pago.
+    Lógica:
+        - Filtra y clasifica las categorías en tres tipos:
+            - 'Publico': Categorías visibles para todos los usuarios.
+            - 'Suscriptor': Categorías accesibles solo para usuarios suscriptores.
+            - 'Pago': Categorías accesibles solo mediante pago.
 
-    Retorna:
-        dict: Un diccionario con las categorías clasificadas en:
-            - 'categories_publicas': Categorías públicas.
-            - 'categories_suscriptores': Categorías para suscriptores.
-            - 'categories_pago': Categorías de pago.
+    :return: Un diccionario con las categorías clasificadas en:
+        - 'categories_publicas': Categorías públicas.
+        - 'categories_suscriptores': Categorías para suscriptores.
+        - 'categories_pago': Categorías de pago.
+    :rtype: dict
     """
 
     # Obtiene el modelo 'Category' desde el módulo 'category' usando el método 'get_model'

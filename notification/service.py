@@ -2,6 +2,19 @@ from notification.tasks import send_notification_task
 
 
 def changeState (recipient_list, content, oldState):
+    """
+    Cambia el estado de un contenido y notifica a los destinatarios.
+
+    :param recipient_list: Lista de destinatarios a los que se les enviará la notificación.
+    :type recipient_list: list
+    :param content: Objeto de contenido cuyo estado ha cambiado.
+    :type content: Content
+    :param oldState: Estado anterior del contenido.
+    :type oldState: str
+
+    La función construye un mensaje basado en el estado anterior y el nuevo estado del contenido
+    y envía una notificación por correo electrónico a la lista de destinatarios.
+    """
 
     template = "email/notification.html"
     title = content.title
@@ -28,6 +41,20 @@ def changeState (recipient_list, content, oldState):
 
 
 def changeRole(user, groups, added):
+    """
+    Notifica a un usuario sobre cambios en sus roles.
+
+    :param user: Usuario al que se le han añadido o removido roles.
+    :type user: User
+    :param groups: Lista de grupos (roles) que se le han añadido o removido al usuario.
+    :type groups: list
+    :param added: Indica si los roles fueron añadidos (True) o removidos (False).
+    :type added: bool
+
+    La función envía una notificación por correo al usuario informándole sobre los cambios
+    en sus roles dentro de la aplicación.
+    """
+
     template = "email/notification.html"
 
     # Crear una lista de nombres de grupos
@@ -48,6 +75,16 @@ def changeRole(user, groups, added):
     send_notification_task.delay(subject, [user.email], context, template)
 
 def welcomeUser(user):
+    """
+    Envía un correo de bienvenida a un nuevo usuario.
+
+    :param user: Usuario recién registrado en la aplicación.
+    :type user: User
+
+    La función envía un correo de bienvenida cuando un usuario se registra por primera vez
+    en la aplicación.
+    """
+
     template = "email/notification.html"
     subject = "¡Bienvenido a nuestra aplicación!"
 
@@ -61,6 +98,18 @@ def welcomeUser(user):
 
 
 def expire_content(autor, content):
+    """
+    Notifica al autor cuando su contenido ha expirado.
+
+    :param autor: Autor del contenido.
+    :type autor: User
+    :param content: Contenido que ha expirado.
+    :type content: Content
+
+    La función envía una notificación al autor cuando el contenido creado por él ha llegado
+    a su fecha de expiración.
+    """
+
     template = "email/notification.html"
     subject = "Contenido vencido"
     message = f"Tu contenido {content.title} ha expirado"
