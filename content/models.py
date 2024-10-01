@@ -1,4 +1,3 @@
-from email.policy import default
 from ckeditor_uploader.fields import RichTextUploadingField
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -8,7 +7,6 @@ from category.models import Category
 from taggit.managers import TaggableManager
 from django.contrib.auth import get_user_model
 from django.db.models import Avg
-from ckeditor.fields import RichTextField
 
 class Content (models.Model):
     """
@@ -59,10 +57,12 @@ class Content (models.Model):
     date_published = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de publicación')
     content = RichTextUploadingField(verbose_name='Contenido')  # Campo de texto enriquecido con CKEditor 5
     tags = TaggableManager()
-    history = HistoricalRecords()
+    history = HistoricalRecords(excluded_fields=['rating_avg'])
     likes = models.ManyToManyField(get_user_model(), related_name='liked_content', blank=True)
     dislikes = models.ManyToManyField(get_user_model(), related_name='disliked_content', blank=True)
     rating_avg = models.FloatField(default = 0.0, verbose_name="Promedio de calificacion")
+    # likes_count = models.IntegerField(default=0, verbose_name="Cantidad de likes")
+    # dislikes_count = models.IntegerField(default=0, verbose_name="Cantidad de dislikes")
 
     class StateChoices(models.TextChoices):
         """
