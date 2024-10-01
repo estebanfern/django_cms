@@ -51,7 +51,7 @@ def update_rating_avg(content_id):
     content = Content.objects.get(id=content_id)
     avg_rating = content.rating_set.aggregate(Avg('rating'))['rating__avg']
     content.rating_avg = avg_rating or 0.0
-    content.save()
+    content.save_without_historical_record()
 
 @shared_task()
 def update_reactions(content_id):
@@ -74,4 +74,4 @@ def update_reactions(content_id):
     content = Content.objects.get(id=content_id)
     content.likes_count = content.likes.count() or 0
     content.dislikes_count = content.dislikes.count() or 0
-    content.save()
+    content.save_without_historical_record()
