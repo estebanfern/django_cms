@@ -73,31 +73,31 @@
               {% endfor %}
             </div>
             <div class="col-12 text-center mt-4">
-              {% if user_has_liked %}
-                <button id="like-btn" class="btn btn-outline-primary" data-content-id="{{ content.id }}">
+              {% if reaction_status == 'liked' %}
+                <button id="like-btn" class="btn btn-outline-primary" data-content-id="{{ content.id }}" count="{{ content.likes_count }}">
                   <i class="bi bi-hand-thumbs-up-fill"></i>
                   Me gusta
-                  ({{ content.likes.count }})
+                  ({{ content.likes_count }})
                 </button>
               {% else %}
-                <button id="like-btn" class="btn btn-outline-secondary" data-content-id="{{ content.id }}">
+                <button id="like-btn" class="btn btn-outline-secondary" data-content-id="{{ content.id }}" count="{{ content.likes_count }}">
                   <i class="bi bi-hand-thumbs-up"></i>
                   Me gusta
-                  ({{ content.likes.count }})
+                  ({{ content.likes_count }})
                 </button>
               {% endif %}
-
-              {% if user_has_disliked %}
-                <button id="dislike-btn" class="btn btn-outline-danger" data-content-id="{{ content.id }}">
+                
+              {% if reaction_status == 'disliked' %}
+                <button id="dislike-btn" class="btn btn-outline-danger" data-content-id="{{ content.id }}" count="{{ content.dislikes_count }}">
                   <i class="bi bi-hand-thumbs-down-fill"></i>
                   No me gusta
-                  ({{ content.dislikes.count }})
+                  ({{ content.dislikes_count }})
                 </button>
               {% else %}
-                <button id="dislike-btn" class="btn btn-outline-secondary" data-content-id="{{ content.id }}">
+                <button id="dislike-btn" class="btn btn-outline-secondary" data-content-id="{{ content.id }}" count="{{ content.dislikes_count }}">
                   <i class="bi bi-hand-thumbs-down"></i>
                   No me gusta
-                  ({{ content.dislikes.count }})
+                  ({{ content.dislikes_count }})
                 </button>
               {% endif %}
             </div>
@@ -292,6 +292,20 @@
 
 <!-- Reacciones -->
 <script>
+
+  let STATUS = '{{ reaction_status|default:"none" |lower }}';
+
+  function updateCount(btn, sign) {
+    let count = parseInt(btn.attr('count'));
+    if (sign === '+') {
+      count += 1;
+    } else if (sign === '-') {
+      count -= 1;
+    }
+    btn.attr('count', count);
+    return count;
+  }
+
   $(document).ready(function() {
     // Evento para el botón de Me gusta
     let likeBtn = $('#like-btn')
@@ -301,27 +315,24 @@
       like: {
         active: {
           class: 'btn btn-outline-primary',
-          body: (count) => `<i class="bi bi-hand-thumbs-up-fill"></i> Me gusta ( ${count} )`
+          body: (count) => `<i class="bi bi-hand-thumbs-up-fill"></i> Me gusta (${count})`
         },
         inactive: {
           class: 'btn btn-outline-secondary',
-          body: (count) => `<i class="bi bi-hand-thumbs-up"></i> Me gusta ( ${count} )`
+          body: (count) => `<i class="bi bi-hand-thumbs-up"></i> Me gusta (${count})`
         },
       },
       dislike: {
         active: {
           class: 'btn btn-outline-danger',
-          body: (count) => `<i class="bi bi-hand-thumbs-down-fill"></i> No me gusta ( ${count} )`
+          body: (count) => `<i class="bi bi-hand-thumbs-down-fill"></i> No me gusta (${count})`
         },
         inactive: {
           class: 'btn btn-outline-secondary',
-          body: (count) => `<i class="bi bi-hand-thumbs-down"></i> No me gusta ( ${count} )`
+          body: (count) => `<i class="bi bi-hand-thumbs-down"></i> No me gusta (${count})`
         },
       }
     }
-      
-    // Verificación de autenticación
-    let isAuthenticated = {{ is_authenticated|default:"false" |lower }};
       
     likeBtn.on('click', function() {
         
@@ -333,14 +344,21 @@
           'X-CSRFToken': '{{ csrf_token }}'  // Agrega el token CSRF para seguridad
         },
         success: function(response) {
-          if (response.message === 'Me gusta agregado') {
-            likeBtn.html(BTN_CONST.like.active.body(response.likes_count));
+          if (response.result === 'created') {
+            likeBtn.html(BTN_CONST.like.active.body(updateCount(likeBtn, '+')));
             likeBtn.attr('class', BTN_CONST.like.active.class)
-            dislikeBtn.html(BTN_CONST.dislike.inactive.body(response.dislikes_count));
+            if (STATUS === 'disliked') {
+              dislikeBtn.html(BTN_CONST.dislike.inactive.body(updateCount(dislikeBtn, '-')));
+            } else {
+              dislikeBtn.html(BTN_CONST.dislike.inactive.body(updateCount(dislikeBtn)));
+            }
+            dislikeBtn.attr('class', BTN_CONST.dislike.inactive.class)
             dislikeBtn.attr('class', BTN_CONST.dislike.inactive.class) 
+            STATUS = 'liked';
           } else {
-            likeBtn.html(BTN_CONST.like.inactive.body(response.likes_count));
+            likeBtn.html(BTN_CONST.like.inactive.body(updateCount(likeBtn, '-')));
             likeBtn.attr('class', BTN_CONST.like.inactive.class)
+            STATUS = 'none';
           }
         },
         error: function(xhr, status, error) {
@@ -366,14 +384,20 @@
           'X-CSRFToken': '{{ csrf_token }}'  // Agrega el token CSRF para seguridad
         },
         success: function(response) {
-          if (response.message === 'No me gusta agregado') {
-            likeBtn.html(BTN_CONST.like.inactive.body(response.likes_count));
-            likeBtn.attr('class', BTN_CONST.like.inactive.class)
-            dislikeBtn.html(BTN_CONST.dislike.active.body(response.dislikes_count));
+          if (response.result === 'created') {
+            dislikeBtn.html(BTN_CONST.dislike.active.body(updateCount(dislikeBtn, '+')));
             dislikeBtn.attr('class', BTN_CONST.dislike.active.class)
+            if (STATUS === 'liked') {
+              likeBtn.html(BTN_CONST.like.inactive.body(updateCount(likeBtn, '-')));
+            } else {
+              likeBtn.html(BTN_CONST.like.inactive.body(updateCount(likeBtn)));
+            }
+            likeBtn.attr('class', BTN_CONST.like.inactive.class)
+            STATUS = 'disliked';
           } else {
-            dislikeBtn.html(BTN_CONST.dislike.inactive.body(response.dislikes_count));
+            dislikeBtn.html(BTN_CONST.dislike.inactive.body(updateCount(dislikeBtn, '-')));
             dislikeBtn.attr('class', BTN_CONST.dislike.inactive.class)
+            STATUS = 'none';
           }
         },
         error: function(xhr, status, error) {
@@ -389,7 +413,8 @@
     });
   });
 </script>
-    
+
+<!-- Rating -->    
 <script>
   $(document).ready(function() {
     // Manejar el clic en las estrellas
@@ -434,7 +459,7 @@
     });
 
     // Asegurar que las estrellas se muestren correctamente al cargar la página
-    var userRating = parseInt({{ user_rating|default:0 }});  // Valor de la calificación actual del usuario
+    var userRating = parseInt('{{ user_rating|default:0 }}');  // Valor de la calificación actual del usuario
     $('.star-btn').each(function(index) {
       if (index < userRating) {
         $(this).removeClass('bi-star').addClass('bi-star-fill');
@@ -442,6 +467,7 @@
         $(this).removeClass('bi-star-fill').addClass('bi-star');
       }
     });
+
   });
 </script>
 

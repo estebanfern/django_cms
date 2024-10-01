@@ -1,0 +1,12 @@
+{% extends "admin/change_form.html" %}
+{% block object-tools %}
+    {% if permContent != False%}
+        <div class="object-tools">
+            {{ block.super }}
+            <a href="{{ view_content_url }}" class="btn btn-success form-control secondary">Ver contenido</a>
+        </div>
+    {% endif %}
+{% endblock %}
+{% block content  %}
+    {{ block.super }}
+{% endblock %}

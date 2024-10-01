@@ -36,6 +36,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from category.views import categories_by_type
 from rating import views as rating_views
+from suscription.views import suscribe_category, unsuscribe_category
 
 
 urlpatterns = [
@@ -79,6 +80,10 @@ urlpatterns = [
 
     # Category
     path('category/<str:type>/', categories_by_type, name='categories_by_type'),
+    # Category suscription
+    path('category/<int:category_id>/suscribe/', suscribe_category, name='suscribe_category'),
+    path('category/<int:category_id>/unsuscribe/', unsuscribe_category, name='suscribe_category'),
+
 
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

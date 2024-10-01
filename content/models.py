@@ -1,5 +1,3 @@
-from email.policy import default
-
 from ckeditor_uploader.fields import RichTextUploadingField
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -9,7 +7,6 @@ from category.models import Category
 from taggit.managers import TaggableManager
 from django.contrib.auth import get_user_model
 from django.db.models import Avg
-from ckeditor.fields import RichTextField
 
 class Content (models.Model):
     """
@@ -35,32 +32,37 @@ class Content (models.Model):
             - revision: Contenido en revisión.
             - to_publish: Contenido a publicar.
             - publish: Contenido publicado.
-            - rejected: Contenido rechazado.
+            - inactive: Contenido inactivo.
 
     Métodos:
         clean: Valida que el estado del contenido sea uno de los definidos en StateChoices.
         save: Sobrescribe el método de guardado para llamar a la validación personalizada antes de guardar.
         __str__: Retorna una representación en cadena del objeto, mostrando su título y estado.
+        update_rating_avg: Actualiza el promedio de calificación del contenido.
+        get_state_name: Devuelve el nombre descriptivo del estado en español.
 
     Meta:
         verbose_name (str): Nombre singular del modelo para mostrar en el panel de administración.
         verbose_name_plural (str): Nombre plural del modelo para mostrar en el panel de administración.
         db_table (str): Nombre de la tabla en la base de datos.
     """
-    title = models.CharField(max_length=255, verbose_name=('Título'))
-    summary = models.TextField(max_length=255, verbose_name=('Resumen'))
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name=('Categoría'))
-    autor = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name=('Autor'))
+
+    title = models.CharField(max_length=255, verbose_name='Título')
+    summary = models.TextField(max_length=255, verbose_name='Resumen')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name='Categoría')
+    autor = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name='Autor')
     is_active = models.BooleanField(default=True, verbose_name='Activo')
-    date_create= models.DateTimeField(auto_now_add=True, verbose_name=('Fecha de creacion'))
-    date_expire = models.DateTimeField(null=True, blank=True,verbose_name=('Fecha de expiración'))
+    date_create= models.DateTimeField(auto_now_add=True, verbose_name='Fecha de creación')
+    date_expire = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de expiración')
     date_published = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de publicación')
     content = RichTextUploadingField(verbose_name='Contenido')  # Campo de texto enriquecido con CKEditor 5
     tags = TaggableManager()
-    history = HistoricalRecords()
+    history = HistoricalRecords(excluded_fields=['rating_avg', 'likes_count', 'dislikes_count'])
     likes = models.ManyToManyField(get_user_model(), related_name='liked_content', blank=True)
     dislikes = models.ManyToManyField(get_user_model(), related_name='disliked_content', blank=True)
-    rating_avg = models.FloatField(default = 0.0, verbose_name="Promedio de calificacion")
+    rating_avg = models.FloatField(default = 0.0, verbose_name="Promedio de calificación")
+    likes_count = models.IntegerField(default=0, verbose_name="Cantidad de likes")
+    dislikes_count = models.IntegerField(default=0, verbose_name="Cantidad de dislikes")
 
     class StateChoices(models.TextChoices):
         """
@@ -100,8 +102,7 @@ class Content (models.Model):
         Este método personaliza la validación del modelo para asegurarse de que el valor del campo `state`
         sea uno de los estados permitidos por la enumeración StateChoices.
 
-        Lanza:
-            ValidationError: Si el estado del contenido no es válido según las opciones definidas en StateChoices.
+        :raises ValidationError: Si el estado del contenido no es válido según las opciones definidas en StateChoices.
         """
         # Validar que el estado sea uno de los definidos en StateChoices
         if self.state not in dict(Content.StateChoices.choices):
@@ -113,9 +114,8 @@ class Content (models.Model):
         Este método llama a `clean()` para ejecutar validaciones personalizadas antes de guardar la instancia
         del contenido en la base de datos, asegurando que los datos sean consistentes y válidos.
 
-        Parámetros:
-            args: Argumentos posicionales adicionales.
-            kwargs: Argumentos de palabra clave adicionales.
+        :param args: Argumentos posicionales adicionales.
+        :param kwargs: Argumentos de palabra clave adicionales.
         """
         self.clean()  # Llama a la validación personalizada
         super().save(*args, **kwargs)
@@ -133,27 +133,35 @@ class Content (models.Model):
         Esta función devuelve el título del contenido junto con su estado legible,
         utilizando la descripción de la elección correspondiente.
 
-        Retorna:
-            str: Una cadena con el formato "título (estado)", donde 'título' es el título del contenido y
-            'estado' es la descripción del estado del contenido.
+        :return: Una cadena con el formato "título (estado)", donde 'título' es el título del contenido y
+        'estado' es la descripción del estado del contenido.
+        :rtype: str
         """
-        return f"{self.title} ({self.get_state_display()})"
+        return f"{self.title}"
 
 
     def update_rating_avg(self):
+        """
+        Actualiza el promedio de calificación del contenido.
+
+        Este método recalcula el promedio de todas las calificaciones asociadas al contenido y actualiza
+        el campo `rating_avg` en la base de datos.
+        """
+
         avg_rating = self.rating_set.aggregate(Avg('rating'))['rating__avg']
         self.rating_avg = avg_rating or 0.0
         self.save()
 
     def get_state_name(self, state):
         """
-        Devuelve el nombre descriptivo del estado de un contenido en español, si no coincide con niguna opcion, devuelve Desconocido.
+        Devuelve el nombre descriptivo del estado de un contenido en español.
 
-        Parámetros:
-            state (str): El estado del contenido representado por las opciones de `Content.StateChoices`.
+        Si el estado no coincide con ninguna opción, devuelve "Desconocido".
 
-        Retorna:
-            str: El nombre descriptivo del estado del contenido en español.
+        :param state: El estado del contenido representado por las opciones de `Content.StateChoices`.
+        :type state: str
+        :return: El nombre descriptivo del estado del contenido en español.
+        :rtype: str
         """
         if state == Content.StateChoices.draft:
             return "Borrador"
@@ -179,7 +187,7 @@ class Report(models.Model):
         email (EmailField): Correo electrónico de quien realiza el reporte.
         name (CharField): Nombre de quien realiza el reporte.
         reason (CharField): Motivo del reporte, elegido entre varias opciones predeterminadas.
-        description (TextField): Descripción adicional opcional del motivo del reporte.
+        description (TextField): Descripción del motivo del reporte.
         created_at (DateTimeField): Fecha y hora en la que se creó el reporte.
 
     Métodos:
@@ -190,6 +198,7 @@ class Report(models.Model):
         ('spam', 'Spam'),
         ('inappropriate', 'Contenido inapropiado'),
         ('abuse', 'Abuso o acoso'),
+        ('other', 'Otro'),
     ]
 
     content = models.ForeignKey(Content, on_delete=models.CASCADE,verbose_name=('Contenido'))
@@ -197,8 +206,8 @@ class Report(models.Model):
     email = models.EmailField(verbose_name=('Correo Electrónico'))
     name = models.CharField(max_length=255, verbose_name=('Nombre'))
     reason = models.CharField(max_length=50, choices=REASON_CHOICES,verbose_name=('Motivo'))
-    description = models.TextField(blank=True, null=True,verbose_name=('Descripción'))
-    created_at = models.DateTimeField(auto_now_add=True)
+    description = models.TextField(verbose_name=('Descripción'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=('Fecha de creación'))
 
     def __str__(self):
-        return f"Reporte de {self.nombre if self.nombre else self.reported_by} sobre {self.content.title}"
+        return f"Reporte de {self.email if self.email else self.reported_by} sobre {self.content.title}"
