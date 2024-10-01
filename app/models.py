@@ -139,6 +139,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             ("report_post","Reportar contenidos"),
             ("view_content", "Ver contenidos"),
             ("edit_is_active", "Editar estado de contenidos"),
+            ("block_content", "Bloquear contenidos"),
 
             # Permisos para roles
             ("create_roles", "Crear roles"),
@@ -165,6 +166,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             ("activate_category", "Activar categorías"),
             ("deactivate_category", "Desactivar categorías"),
 
+            # Permisos para reportes
+            ("view_reports", "Ver reportes"),
         ]
 
     @property
