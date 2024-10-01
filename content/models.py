@@ -137,7 +137,7 @@ class Content (models.Model):
             str: Una cadena con el formato "título (estado)", donde 'título' es el título del contenido y
             'estado' es la descripción del estado del contenido.
         """
-        return f"{self.title} ({self.get_state_display()})"
+        return f"{self.title}"
 
 
     def update_rating_avg(self):
