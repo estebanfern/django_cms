@@ -1,4 +1,6 @@
 from django.contrib import admin, messages
+from django.utils.html import format_html
+
 from .models import Content, Report
 from django.urls import reverse, path
 from .views import view_content_detail, report_detail
@@ -247,6 +249,67 @@ class ContentAdmin(admin.ModelAdmin):
             bool: True si el usuario tiene el permiso 'view_content', de lo contrario False.
         """
         return request.user.has_perm('app.view_content')
+
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ('created_at', 'reason', 'name', 'email', 'content', 'view_report_link')
+    search_fields = ('content__title', 'name', 'email', 'reason')
+    list_display_links = None
+
+    fields = ('content', 'get_reported_by_info', 'reason', 'description', 'created_at')
+    readonly_fields = ('content', 'reported_by', 'email', 'name', 'reason', 'description', 'created_at')
+
+    def get_reported_by_info(self, obj):
+        return f'{obj.name} ({obj.email})'
+
+    get_reported_by_info.short_description = 'Realizado por'
+
+    def view_report_link(self, obj):
+        url = reverse('admin:content_report_change', args=[obj.pk])
+        return format_html('<a href="{}">Ver reporte</a>', url)
+
+    view_report_link.short_description = 'Accion'
+    view_report_link.admin_order_field = 'id'
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+
+        extra_context = extra_context or {}
+
+        # Obtener el contenido que se está editando
+        report = self.get_object(request, object_id)
+        content = report.content
+
+        # Agregar la URL del botón "Ver contenido"
+        view_content_url = reverse('admin:content_content_change', args=[content.pk])
+        extra_context['view_content_url'] = view_content_url
+
+        permContent = request.user.has_perm('app.view_content')
+        extra_context['permContent'] = permContent
+
+        # Pasar la URL de cancelar al contexto
+        cancel_url = None
+        extra_context['cancel_url'] = cancel_url
+
+        # Llamar a la vista original con el contexto adicional
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.has_perm('app.view_reports')
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_module_permission(self, request):
+        return request.user.has_perm('app.view_reports')
+
+
+# Registra el modelo Report en el admin
+admin.site.register(Report, ReportAdmin)
 
 # Registrar el modelo Content con la clase ContentAdmin
 admin.site.register(Content, ContentAdmin)

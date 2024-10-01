@@ -1,7 +1,9 @@
 {% extends "admin/change_form.html" %}
 
 {% block object-tools %}
-    <div class="object-tools">
-        <a href="{{ cancel_url }}" class="btn btn-success form-control cancel">Cancelar</a>
-    </div>
+    {% if cancel_url != None %}
+        <div class="object-tools">
+            <a href="{{ cancel_url }}" class="btn btn-success form-control cancel">Cancelar</a>
+        </div>
+    {% endif %}
 {% endblock %}
