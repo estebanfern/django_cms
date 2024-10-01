@@ -9,6 +9,22 @@ from django.contrib.auth.decorators import login_required
 
 @require_POST
 def suscribe_category(request, category_id):
+    """
+    Permite a un usuario autenticado suscribirse a una categoría.
+
+    Este endpoint recibe una solicitud POST para que el usuario se suscriba a una categoría. Si el usuario ya está suscrito, se devuelve un error. Para categorías pagas, se debe implementar una pasarela de pagos.
+
+    :param request: El objeto de solicitud HTTP.
+    :type request: HttpRequest
+    :param category_id: El ID de la categoría a la que el usuario desea suscribirse.
+    :type category_id: int
+
+    :return: Devuelve una respuesta JSON indicando el estado de la suscripción.
+    :rtype: JsonResponse
+
+    Si el usuario no está autenticado, se devuelve un error 403.
+    Si el usuario ya está suscrito a la categoría, se devuelve un error 400.
+    """
 
     if not request.user.is_authenticated:
         return JsonResponse({'status': 'error', 'message': 'Para poder suscribirte a categorias debes estar registrado'}, status=403)
@@ -35,7 +51,22 @@ def suscribe_category(request, category_id):
 @require_POST
 @login_required
 def unsuscribe_category(request, category_id):
-    
+    """
+    Permite a un usuario autenticado desuscribirse de una categoría.
+
+    Este endpoint recibe una solicitud POST para que el usuario se desuscriba de una categoría a la que está suscrito. Si la suscripción no existe, se devuelve un error.
+
+    :param request: El objeto de solicitud HTTP.
+    :type request: HttpRequest
+    :param category_id: El ID de la categoría de la cual el usuario desea desuscribirse.
+    :type category_id: int
+
+    :return: Devuelve una respuesta JSON indicando el estado de la operación de desuscripción.
+    :rtype: JsonResponse
+
+    Si el usuario no está suscrito a la categoría, se devuelve un error 400.
+    """
+
     category = get_object_or_404(Category, id=category_id)
     user = request.user
 

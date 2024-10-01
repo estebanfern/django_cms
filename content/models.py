@@ -32,18 +32,21 @@ class Content (models.Model):
             - revision: Contenido en revisión.
             - to_publish: Contenido a publicar.
             - publish: Contenido publicado.
-            - rejected: Contenido rechazado.
+            - inactive: Contenido inactivo.
 
     Métodos:
         clean: Valida que el estado del contenido sea uno de los definidos en StateChoices.
         save: Sobrescribe el método de guardado para llamar a la validación personalizada antes de guardar.
         __str__: Retorna una representación en cadena del objeto, mostrando su título y estado.
+        update_rating_avg: Actualiza el promedio de calificación del contenido.
+        get_state_name: Devuelve el nombre descriptivo del estado en español.
 
     Meta:
         verbose_name (str): Nombre singular del modelo para mostrar en el panel de administración.
         verbose_name_plural (str): Nombre plural del modelo para mostrar en el panel de administración.
         db_table (str): Nombre de la tabla en la base de datos.
     """
+
     title = models.CharField(max_length=255, verbose_name=('Título'))
     summary = models.TextField(max_length=255, verbose_name=('Resumen'))
     category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name=('Categoría'))
@@ -99,9 +102,9 @@ class Content (models.Model):
         Este método personaliza la validación del modelo para asegurarse de que el valor del campo `state`
         sea uno de los estados permitidos por la enumeración StateChoices.
 
-        Lanza:
-            ValidationError: Si el estado del contenido no es válido según las opciones definidas en StateChoices.
+        :raises ValidationError: Si el estado del contenido no es válido según las opciones definidas en StateChoices.
         """
+
         # Validar que el estado sea uno de los definidos en StateChoices
         if self.state not in dict(Content.StateChoices.choices):
             raise ValidationError(f"Estado '{self.state}' no es válido.")
@@ -109,13 +112,14 @@ class Content (models.Model):
     def save(self, *args, **kwargs):
         """
         Sobrescribe el método save para incluir validaciones personalizadas antes de guardar el contenido.
+
         Este método llama a `clean()` para ejecutar validaciones personalizadas antes de guardar la instancia
         del contenido en la base de datos, asegurando que los datos sean consistentes y válidos.
 
-        Parámetros:
-            args: Argumentos posicionales adicionales.
-            kwargs: Argumentos de palabra clave adicionales.
+        :param args: Argumentos posicionales adicionales.
+        :param kwargs: Argumentos de palabra clave adicionales.
         """
+
         self.clean()  # Llama a la validación personalizada
         super().save(*args, **kwargs)
 
@@ -132,28 +136,38 @@ class Content (models.Model):
         Esta función devuelve el título del contenido junto con su estado legible,
         utilizando la descripción de la elección correspondiente.
 
-        Retorna:
-            str: Una cadena con el formato "título (estado)", donde 'título' es el título del contenido y
-            'estado' es la descripción del estado del contenido.
+        :return: Una cadena con el formato "título (estado)", donde 'título' es el título del contenido y
+        'estado' es la descripción del estado del contenido.
+        :rtype: str
         """
+
         return f"{self.title} ({self.get_state_display()})"
 
 
     def update_rating_avg(self):
+        """
+        Actualiza el promedio de calificación del contenido.
+
+        Este método recalcula el promedio de todas las calificaciones asociadas al contenido y actualiza
+        el campo `rating_avg` en la base de datos.
+        """
+
         avg_rating = self.rating_set.aggregate(Avg('rating'))['rating__avg']
         self.rating_avg = avg_rating or 0.0
         self.save()
 
     def get_state_name(self, state):
         """
-        Devuelve el nombre descriptivo del estado de un contenido en español, si no coincide con niguna opcion, devuelve Desconocido.
+        Devuelve el nombre descriptivo del estado de un contenido en español.
 
-        Parámetros:
-            state (str): El estado del contenido representado por las opciones de `Content.StateChoices`.
+        Si el estado no coincide con ninguna opción, devuelve "Desconocido".
 
-        Retorna:
-            str: El nombre descriptivo del estado del contenido en español.
+        :param state: El estado del contenido representado por las opciones de `Content.StateChoices`.
+        :type state: str
+        :return: El nombre descriptivo del estado del contenido en español.
+        :rtype: str
         """
+
         if state == Content.StateChoices.draft:
             return "Borrador"
         elif state == Content.StateChoices.publish:

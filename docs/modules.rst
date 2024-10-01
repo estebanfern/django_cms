@@ -9,4 +9,7 @@ django_cms
    cms
    content
    manage
+   notification
+   rating
+   suscription
    gunicorn

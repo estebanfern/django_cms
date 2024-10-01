@@ -61,11 +61,10 @@ class CustomUserCreationForm(UserCreationForm):
         """
         Guarda el usuario creado con los datos ingresados en el formulario.
 
-        Parámetros:
-            commit (bool): Define si se guarda el usuario inmediatamente en la base de datos.
-
-        Retorna:
-            user (CustomUser): El objeto de usuario creado.
+        :param commit: Define si se guarda el usuario inmediatamente en la base de datos.
+        :type commit: bool
+        :return: El objeto de usuario creado.
+        :rtype: CustomUser
         """
 
         user = CustomUser.objects.create_user(
@@ -107,8 +106,9 @@ class CustomAuthenticationForm(AuthenticationForm):
         Acciones:
             - Verifica si el campo de correo electrónico está vacío.
 
-        Lanza:
-            ValidationError: Si el correo electrónico no es proporcionado.
+        :raises ValidationError: Si el correo electrónico no es proporcionado.
+        :return: El correo electrónico validado.
+        :rtype: str
         """
 
         username = self.cleaned_data.get('username')
@@ -124,11 +124,9 @@ class CustomAuthenticationForm(AuthenticationForm):
             - Autentica al usuario con las credenciales proporcionadas.
             - Verifica si la cuenta del usuario está activa.
 
-        Lanza:
-            ValidationError: Si las credenciales no son correctas o si la cuenta está desactivada.
-
-        Retorna:
-            dict: Los datos limpios del formulario.
+        :raises ValidationError: Si las credenciales no son correctas o si la cuenta está desactivada.
+        :return: Los datos limpios del formulario.
+        :rtype: dict
         """
 
         cleaned_data = super().clean()
@@ -173,13 +171,10 @@ class ProfileUpdateForm(forms.ModelForm):
 
     def clean_photo(self):
         """
-        Valida que el archivo subido para la foto tenga una extensión valida.
+        Valida que el archivo subido para la foto tenga una extensión válida.
 
-        Lanza:
-            ValidationError: Si el archivo no tiene una extensión valida.
-
-        Retorna:
-            El archivo validado.
+        :raises ValidationError: Si el archivo no tiene una extensión válida.
+        :return: El archivo validado.
         """
         photo = self.cleaned_data.get('photo')
         if photo:
@@ -197,11 +192,10 @@ class ProfileUpdateForm(forms.ModelForm):
             - Actualiza solo los campos que no están vacíos o nulos.
             - Guarda el usuario si `commit` es True.
 
-        Parámetros:
-            commit (bool): Define si se guarda el usuario inmediatamente en la base de datos.
-
-        Retorna:
-            user (CustomUser): El objeto de usuario actualizado.
+        :param commit: Define si se guarda el usuario inmediatamente en la base de datos.
+        :type commit: bool
+        :return: El objeto de usuario actualizado.
+        :rtype: CustomUser
         """
 
         user = super(ProfileUpdateForm, self).save(commit=False)
@@ -248,8 +242,8 @@ class ChangePasswordForm(forms.Form):
         """
         Inicializa el formulario con el usuario actual.
 
-        Parámetros:
-            user (CustomUser): El usuario que está cambiando la contraseña.
+        :param user: El usuario que está cambiando la contraseña.
+        :type user: CustomUser
         """
 
         self.user = user
@@ -259,11 +253,9 @@ class ChangePasswordForm(forms.Form):
         """
         Valida que la contraseña actual proporcionada sea correcta.
 
-        Lanza:
-            ValidationError: Si la contraseña actual es incorrecta.
-
-        Retorna:
-            str: La contraseña actual validada.
+        :raises ValidationError: Si la contraseña actual es incorrecta.
+        :return: La contraseña actual validada.
+        :rtype: str
         """
 
         current_password = self.cleaned_data.get('current_password')
@@ -275,11 +267,9 @@ class ChangePasswordForm(forms.Form):
         """
         Valida la nueva contraseña con las políticas de validación de Django.
 
-        Lanza:
-            ValidationError: Si la nueva contraseña no cumple con las políticas de validación.
-
-        Retorna:
-            str: La nueva contraseña validada.
+        :raises ValidationError: Si la nueva contraseña no cumple con las políticas de validación.
+        :return: La nueva contraseña validada.
+        :rtype: str
         """
 
         new_password = self.cleaned_data.get('new_password')
@@ -297,11 +287,9 @@ class ChangePasswordForm(forms.Form):
             - Verifica que las nuevas contraseñas coincidan.
             - Verifica que la nueva contraseña no sea igual a la actual.
 
-        Lanza:
-            ValidationError: Si las nuevas contraseñas no coinciden o si es igual a la actual.
-
-        Retorna:
-            dict: Los datos limpios del formulario.
+        :raises ValidationError: Si las nuevas contraseñas no coinciden o si es igual a la actual.
+        :return: Los datos limpios del formulario.
+        :rtype: dict
         """
 
         cleaned_data = super().clean()
@@ -325,11 +313,10 @@ class ChangePasswordForm(forms.Form):
             - Establece la nueva contraseña en el usuario.
             - Guarda el usuario si `commit` es True.
 
-        Parámetros:
-            commit (bool): Define si se guarda el usuario inmediatamente en la base de datos.
-
-        Retorna:
-            user (CustomUser): El usuario con la nueva contraseña.
+        :param commit: Define si se guarda el usuario inmediatamente en la base de datos.
+        :type commit: bool
+        :return: El usuario con la nueva contraseña.
+        :rtype: CustomUser
         """
 
         new_password = self.cleaned_data['new_password']
@@ -389,11 +376,9 @@ class PasswordResetForm(forms.Form):
         """
         Valida que el correo electrónico proporcionado esté asociado a un usuario existente.
 
-        Lanza:
-            ValidationError: Si no se encuentra un usuario con el correo electrónico proporcionado.
-
-        Retorna:
-            str: El correo electrónico validado.
+        :raises ValidationError: Si no se encuentra un usuario con el correo electrónico proporcionado.
+        :return: El correo electrónico validado.
+        :rtype: str
         """
 
         email = self.cleaned_data.get('email')
@@ -440,11 +425,9 @@ class SetPasswordForm(forms.Form):
         """
         Valida la nueva contraseña con las políticas de validación de Django.
 
-        Lanza:
-            ValidationError: Si la nueva contraseña no cumple con las políticas de validación.
-
-        Retorna:
-            str: La nueva contraseña validada.
+        :raises ValidationError: Si la nueva contraseña no cumple con las políticas de validación.
+        :return: La nueva contraseña validada.
+        :rtype: str
         """
 
         new_password = self.cleaned_data.get('new_password')
@@ -458,11 +441,9 @@ class SetPasswordForm(forms.Form):
         """
         Valida que las nuevas contraseñas coincidan.
 
-        Lanza:
-            ValidationError: Si las contraseñas no coinciden.
-
-        Retorna:
-            dict: Los datos limpios del formulario.
+        :raises ValidationError: Si las contraseñas no coinciden.
+        :return: Los datos limpios del formulario.
+        :rtype: dict
         """
 
         cleaned_data = super().clean()
