@@ -1,9 +1,7 @@
-from pickle import FALSE
-
 from django.contrib import admin, messages
-from django.http import HttpResponse
 from .models import Content, Report
-from django.urls import reverse
+from django.urls import reverse, path
+from .views import view_content_detail, report_detail
 
 
 class ContentAdmin(admin.ModelAdmin):
@@ -41,13 +39,21 @@ class ContentAdmin(admin.ModelAdmin):
     search_fields = ('title', 'summary', 'autor__name', 'category__name')
 
     # Campos a mostrar en el formulario de creación y edición
-    fields = ('title', 'summary', 'category', 'autor', 'state', 'is_active', 'date_create', 'date_expire')
+    fields = ('title', 'summary', 'category', 'autor', 'state', 'is_active', 'date_create', 'date_published' ,'date_expire')
 
     # Hacer todos los campos de solo lectura, excepto 'is_active'
-    readonly_fields = ('title', 'summary', 'category', 'autor', 'state', 'date_create', 'date_expire')
+    readonly_fields = ('title', 'summary', 'category', 'autor', 'state', 'date_create', 'date_expire', 'date_published')
 
     # Definir acciones personalizadas
     actions = ['activar_contenidos', 'desactivar_contenidos']
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('<int:report_id>/report/', report_detail, name='content-report'),
+            path('<int:content_id>/view/', view_content_detail, name='content-view-detail'),
+        ]
+        return custom_urls + urls
 
     # Boton de Cancelar al modificar
     def change_view(self, request, object_id, form_url='', extra_context=None):
@@ -89,7 +95,7 @@ class ContentAdmin(admin.ModelAdmin):
         extra_context['cancel_url'] = cancel_url
 
         # Agregar la URL del botón "Ver contenido"
-        view_content_url = reverse('content:view_content_detail', args=[content.pk])
+        view_content_url = reverse('admin:content-view-detail', args=[content.pk])
         extra_context['view_content_url'] = view_content_url
 
         # Llamar a la vista original con el contexto adicional

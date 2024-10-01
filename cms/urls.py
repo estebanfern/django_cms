@@ -30,7 +30,7 @@ from django.urls import include, path
 from app.auth.views import register_view, login_view, logout_view, reset_password_view, password_reset_confirm_view
 from app.profile.views import other_profile_view, profile_view, change_password
 from app.views import *
-from content.views import ContentCreateView, ContentUpdateView, view_content, report_detail
+from content.views import ContentCreateView, ContentUpdateView, view_content
 from ckeditor_uploader import views
 from django.conf import settings
 from django.conf.urls.static import static
@@ -68,7 +68,6 @@ urlpatterns = [
     path('api/update-content-state/<int:content_id>/', update_content_state, name='update_content_state'),
     path('content/<int:pk>/edit/', ContentUpdateView.as_view(), name='edit_content'),
     path('report/<int:content_id>/', report_post, name='report_post'),  # Ruta para reportar
-    path('content/', include(('content.urls', 'content'), namespace='content')),
     path('api/validate-permission-kanban/', validate_permission_kanban_api, name='validate_permission_kanban_api'),
 
     # Content - Reactions

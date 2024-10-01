@@ -13,13 +13,14 @@ from category.models import Category
 from .models import Content, Report
 import json
 from django.contrib.auth.decorators import login_required
-from django.views.generic import CreateView, UpdateView, View
+from django.views.generic import CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from .forms import ContentForm
 from django.core.exceptions import PermissionDenied
 from simple_history.utils import update_change_reason
 from django.contrib import messages
 from django.urls import reverse
+
 
 from .service import validate_permission_kanban
 
@@ -666,15 +667,22 @@ def report_detail(request, report_id):
     Retorna:
         HttpResponse: La respuesta renderizada con los detalles del reporte.
     """
+    user = request.user
+    if not (
+        user.has_perm('app.view_reports')
+    ):
+        raise PermissionDenied
 
     report = get_object_or_404(Report, pk=report_id)
-    opts = report._meta
+    content = report.content
+    opts = content._meta
     context = dict(
         admin_site.each_context(request),  # Contexto del admin
         report=report,
+        content=content,
         opts=opts,
     )
-    return TemplateResponse(request, 'admin/content/content/report_detail.html', context)
+    return TemplateResponse(request, 'admin/content/report/report_detail.html', context)
 
 def view_content_detail(request, content_id):
     """
@@ -692,6 +700,11 @@ def view_content_detail(request, content_id):
     Retorna:
         HttpResponse: La respuesta renderizada con los detalles del contenido.
     """
+    user = request.user
+    if not (
+        user.has_perm('app.view_content')
+    ):
+        raise PermissionDenied
 
     content = get_object_or_404(Content, pk=content_id)
     opts = content._meta

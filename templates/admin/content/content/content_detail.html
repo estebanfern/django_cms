@@ -1,8 +1,23 @@
-{% extends "admin/change_form.html" %}
-{% load static %}
+{% extends 'admin/base_site.html' %}
+{% load i18n admin_urls %}
+
+{% block content_title %}
+    {{ opts.verbose_name_plural }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin:index' %}">Inicio</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a></li>
+        <li class="breadcrumb-item">
+            <a href="{% url opts|admin_urlname:'changelist' %}" class="active">{{ opts.verbose_name_plural|capfirst }}</a>
+        </li>
+        <li class="breadcrumb-item active">{{ object|default:content }}</li>
+    </ol>
+{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container col-12">
     <h4 class="mt-4 mb-4">Detalles del Contenido</h4>
     <div class="card">
         <div class="card-body">

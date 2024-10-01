@@ -7,9 +7,8 @@
 {% endblock %}
 {% block content  %}
     {{ block.super }}
-
     {% if related_reports != 'no_permission'%}
-        <div style="width: 100%;"><h4>Reportes relacionados</h4>
+        <div style="width: 100%; padding: 16px 15px 0 15px; margin-top: 8px;"><h4>Reportes relacionados</h4>
             {% if related_reports %}
                 <table class="table">
                     <thead>
@@ -29,7 +28,7 @@
                             <td>{{ report.get_reason_display }}</td>
                             <td>{{ report.created_at }}</td>
                             <td>
-                                <a href="{% url 'content:report-detail' report.id %}">
+                                <a href="{% url 'admin:content-report' report.id %}">
                                     Ver reporte
                                 </a>
                             </td>
