@@ -252,7 +252,7 @@
     });
   }
 
-  function changeState(itemId,mappedState,oldStateMapped,evt,autor){
+  function changeState(itemId, mappedState, oldStateMapped, evt, autor){
     // Llamar a la API para validar el cambio de estado
     fetch(`/api/validate-permission-kanban/`, {
       method: 'POST',
@@ -269,7 +269,7 @@
             evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
           });
         } 
-        doChangeState(oldStateMapped,mappedState,evt,itemId,autor);
+        doChangeState(oldStateMapped, mappedState, evt, itemId, autor);
     }).catch(error => {
         console.error('Error en la solicitud fetch:', error);
         modal.error({message:'Error en la comunicación con el servidor.'});
@@ -277,7 +277,7 @@
     });
   }
 
-  function doChangeState(oldStateMapped,mappedState,evt,itemId,autor) {
+  function doChangeState(oldStateMapped, mappedState, evt, itemId, autor) {
     let changeReasonModal = null;
     if (stateFlow[oldStateMapped].prev.includes(mappedState) ) {
       //Regresando de estado
@@ -299,7 +299,7 @@
             callback: function() {
               var changeReasonVal = document.getElementById('change_reason_ipt').value;
               if (changeReasonVal.length > 0) {
-                postState(itemId, mappedState, evt, changeReasonVal,autor);
+                postState(itemId, mappedState, evt, changeReasonVal, autor);
                 return true;
               } else {
                 document.getElementById('change_reason_iptHelp').hidden = false;
@@ -330,7 +330,7 @@
             label: '<span class="fas fa-trash"></span> Confirmar',
             className: 'btn btn-success',
             callback: function() {
-              postState(itemId, mappedState, evt, autor);
+              postState(itemId, mappedState, evt, null, autor);
             }
           },
           cancel: {
