@@ -98,6 +98,19 @@ BEGIN
 		(SELECT id FROM public.auth_group WHERE name = 'Administrador'),
 		(SELECT id FROM public.auth_permission WHERE codename = 'unblock_users')
 	);
+
+    --ver reportes a administrador
+	INSERT INTO public.auth_group_permissions (group_id, permission_id) VALUES (
+		(SELECT id FROM public.auth_group WHERE name = 'Administrador'),
+		(SELECT id FROM public.auth_permission WHERE codename = 'view_reports')
+	);
+
+    --bloquear contenidos a administrador
+	INSERT INTO public.auth_group_permissions (group_id, permission_id) VALUES (
+		(SELECT id FROM public.auth_group WHERE name = 'Administrador'),
+		(SELECT id FROM public.auth_permission WHERE codename = 'block_content')
+	);
+
  -- Obtener el content_type_id del modelo 'CustomUser'
     SELECT id INTO customuser_content_type_id
     FROM public.django_content_type

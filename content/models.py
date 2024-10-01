@@ -104,7 +104,6 @@ class Content (models.Model):
 
         :raises ValidationError: Si el estado del contenido no es válido según las opciones definidas en StateChoices.
         """
-
         # Validar que el estado sea uno de los definidos en StateChoices
         if self.state not in dict(Content.StateChoices.choices):
             raise ValidationError(f"Estado '{self.state}' no es válido.")
@@ -112,14 +111,12 @@ class Content (models.Model):
     def save(self, *args, **kwargs):
         """
         Sobrescribe el método save para incluir validaciones personalizadas antes de guardar el contenido.
-
         Este método llama a `clean()` para ejecutar validaciones personalizadas antes de guardar la instancia
         del contenido en la base de datos, asegurando que los datos sean consistentes y válidos.
 
         :param args: Argumentos posicionales adicionales.
         :param kwargs: Argumentos de palabra clave adicionales.
         """
-
         self.clean()  # Llama a la validación personalizada
         super().save(*args, **kwargs)
 
@@ -140,8 +137,7 @@ class Content (models.Model):
         'estado' es la descripción del estado del contenido.
         :rtype: str
         """
-
-        return f"{self.title} ({self.get_state_display()})"
+        return f"{self.title}"
 
 
     def update_rating_avg(self):
@@ -167,7 +163,6 @@ class Content (models.Model):
         :return: El nombre descriptivo del estado del contenido en español.
         :rtype: str
         """
-
         if state == Content.StateChoices.draft:
             return "Borrador"
         elif state == Content.StateChoices.publish:
@@ -212,7 +207,7 @@ class Report(models.Model):
     name = models.CharField(max_length=255, verbose_name=('Nombre'))
     reason = models.CharField(max_length=50, choices=REASON_CHOICES,verbose_name=('Motivo'))
     description = models.TextField(verbose_name=('Descripción'))
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=('Fecha de creación'))
 
     def __str__(self):
-        return f"Reporte de {self.nombre if self.nombre else self.reported_by} sobre {self.content.title}"
+        return f"Reporte de {self.email if self.email else self.reported_by} sobre {self.content.title}"

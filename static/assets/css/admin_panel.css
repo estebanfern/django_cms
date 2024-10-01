@@ -101,6 +101,16 @@ h6 {
     border-color: #bd2130 !important;
 }
 
+.secondary {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+}
+
+.secondary:hover {
+    background-color: #5a6268 !important;
+    border-color: #545b62 !important;
+}
+
 .btn-sm {
     margin-bottom: 15px !important;
 }

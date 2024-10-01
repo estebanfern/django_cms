@@ -1,3 +1,4 @@
+from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, Http404
@@ -6,19 +7,20 @@ from rating.models import Rating
 from notification.tasks import notify_new_content_suscription
 from . import service
 from .forms import ReportForm
-
+from django.contrib.admin import site as admin_site
 import notification.service
 from category.models import Category
-from .models import Content
+from .models import Content, Report
 import json
 from django.contrib.auth.decorators import login_required
-from django.views.generic import CreateView, UpdateView, View
+from django.views.generic import CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from .forms import ContentForm
 from django.core.exceptions import PermissionDenied
 from simple_history.utils import update_change_reason
 from django.contrib import messages
 from django.urls import reverse
+
 
 from .service import validate_permission_kanban
 from .tasks import update_reactions
@@ -671,3 +673,68 @@ def dislike_content(request, content_id):
         'message': message,
         'result': result,
     })
+
+def report_detail(request, report_id):
+    """
+    Muestra los detalles de un reporte en una vista personalizada.
+
+    Parámetros:
+        request (HttpRequest): Objeto de solicitud HTTP.
+        report_id (int): ID del reporte cuyos detalles se van a visualizar.
+
+    Comportamiento:
+        - Obtiene el reporte utilizando el ID proporcionado o devuelve un error 404 si no existe.
+        - Obtiene las opciones de metadatos del modelo `Report` para usarlas en la plantilla.
+        - Renderiza la plantilla `report_detail.html` con el reporte y sus metadatos.
+
+    Retorna:
+        HttpResponse: La respuesta renderizada con los detalles del reporte.
+    """
+    user = request.user
+    if not (
+        user.has_perm('app.view_reports')
+    ):
+        raise PermissionDenied
+
+    report = get_object_or_404(Report, pk=report_id)
+    content = report.content
+    opts = content._meta
+    context = dict(
+        admin_site.each_context(request),  # Contexto del admin
+        report=report,
+        content=content,
+        opts=opts,
+    )
+    return TemplateResponse(request, 'admin/content/report/report_detail.html', context)
+
+def view_content_detail(request, content_id):
+    """
+    Muestra los detalles de un contenido en una vista personalizada.
+
+    Parámetros:
+        request (HttpRequest): Objeto de solicitud HTTP.
+        content_id (int): ID del contenido cuyos detalles se van a visualizar.
+
+    Comportamiento:
+        - Obtiene el contenido utilizando el ID proporcionado o devuelve un error 404 si no existe.
+        - Obtiene las opciones de metadatos del modelo `Content` para usarlas en la plantilla.
+        - Renderiza la plantilla `content_detail.html` con el contenido y sus metadatos.
+
+    Retorna:
+        HttpResponse: La respuesta renderizada con los detalles del contenido.
+    """
+    user = request.user
+    if not (
+        user.has_perm('app.view_content')
+    ):
+        raise PermissionDenied
+
+    content = get_object_or_404(Content, pk=content_id)
+    opts = content._meta
+    context = dict(
+        admin_site.each_context(request),  # Contexto del admin
+        content=content,
+        opts=opts,
+    )
+    return TemplateResponse(request, 'admin/content/content/content_detail.html', context)
+

@@ -1,0 +1,44 @@
+{% extends "admin/change_form.html" %}
+{% block object-tools %}
+    <div class="object-tools">
+        {{ block.super }}
+        <a href="{{ view_content_url }}" class="btn btn-success form-control secondary" style="margin-top: 10px; ">Ver detalles del contenido</a>
+    </div>
+{% endblock %}
+{% block content  %}
+    {{ block.super }}
+    {% if related_reports != 'no_permission'%}
+        <div style="width: 100%; padding: 16px 15px 0 15px; margin-top: 8px;"><h4>Reportes relacionados</h4>
+            {% if related_reports %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Correo Electrónico</th>
+                            <th>Motivo</th>
+                            <th>Fecha de creación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in related_reports %}
+                        <tr>
+                            <td>{{ report.name }}</td>
+                            <td>{{ report.email }}</td>
+                            <td>{{ report.get_reason_display }}</td>
+                            <td>{{ report.created_at }}</td>
+                            <td>
+                                <a href="{% url 'admin:content-report' report.id %}">
+                                    Ver reporte
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No hay reportes para este contenido.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}
