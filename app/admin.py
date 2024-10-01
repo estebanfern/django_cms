@@ -14,10 +14,9 @@ def bloquear_usuarios(self, request, queryset):
     """
     Bloquea los usuarios seleccionados en el panel de administración.
 
-    Parámetros:
-        self: Referencia al objeto actual.
-        request: Objeto de solicitud HTTP que contiene metadatos sobre la solicitud.
-        queryset: QuerySet que contiene los usuarios seleccionados para la acción.
+    :param self: Referencia al objeto actual.
+    :param request: Objeto de solicitud HTTP que contiene metadatos sobre la solicitud.
+    :param queryset: QuerySet que contiene los usuarios seleccionados para la acción.
 
     Acciones:
         - Itera sobre los usuarios seleccionados y desactiva su cuenta.
@@ -35,12 +34,9 @@ def desbloquear_usuarios(self, request, queryset):
     """
     Desbloquea los usuarios seleccionados en el panel de administración.
 
-    Parameters:
-        self: Referencia al objeto actual.
-
-        request: Objeto de solicitud HTTP que contiene metadatos sobre la solicitud.
-
-        queryset: QuerySet que contiene los usuarios seleccionados para la acción.
+    :param self: Referencia al objeto actual.
+    :param request: Objeto de solicitud HTTP que contiene metadatos sobre la solicitud.
+    :param queryset: QuerySet que contiene los usuarios seleccionados para la acción.
 
     Acciones:
         - Itera sobre los usuarios seleccionados y activa su cuenta.
@@ -88,8 +84,13 @@ class CustomUserAdmin(UserAdmin):
     def save_model(self, request, obj, form, change):
 
         """
-        Sobrescribe el método save_model para manejar la lógica de guardado del grupo
-        y enviar notificaciones cuando se cambian los roles de un usuario.
+        Sobrescribe el método save_model para manejar la lógica de guardado del grupo y enviar notificaciones
+        cuando se cambian los roles de un usuario.
+
+        :param request: Objeto de solicitud HTTP.
+        :param obj: El objeto del usuario que se está guardando.
+        :param form: El formulario que contiene los datos del usuario.
+        :param change: Booleano que indica si el objeto está siendo cambiado.
         """
 
         if not 'groups' in form.changed_data:
@@ -116,18 +117,16 @@ class CustomUserAdmin(UserAdmin):
     # Boton de Cancelar al modificar
     def change_view(self, request, object_id, form_url='', extra_context=None):
         """
-        Modifica la vista de cambio en el panel de administración para agregar un botón de cancelar. En el panel
-        de administración añade un botón de cancelar que redirige a la lista de objetos del mismo tipo.
+        Modifica la vista de cambio en el panel de administración para agregar un botón de cancelar.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            object_id (str): ID del objeto que se va a modificar.
-            form_url (str, opcional): URL del formulario, si existe. Por defecto es una cadena vacía.
-            extra_context (dict, opcional): Contexto adicional para la plantilla. Por defecto es None.
+        En el panel de administración añade un botón de cancelar que redirige a la lista de objetos del mismo tipo.
 
-        Retorna:
-            HttpResponse: La respuesta HTTP renderizada para la vista de cambio del objeto,
-            incluyendo el contexto adicional con la URL de cancelación.
+        :param request: Objeto de solicitud HTTP.
+        :param object_id: ID del objeto que se va a modificar.
+        :param form_url: URL del formulario, si existe. Por defecto es una cadena vacía.
+        :param extra_context: Contexto adicional para la plantilla. Por defecto es None.
+        :return: La respuesta HTTP renderizada para la vista de cambio del objeto, incluyendo el contexto adicional con la URL de cancelación.
+        :rtype: HttpResponse
         """
 
         extra_context = extra_context or {}
@@ -139,11 +138,9 @@ class CustomUserAdmin(UserAdmin):
         """
         Verifica si el usuario actual tiene permisos para acceder al módulo de administración de usuarios.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-
-        Retorna:
-            bool: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :return: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :rtype: bool
         """
 
         return request.user.is_staff and request.user.has_perm('app.view_users')
@@ -152,12 +149,10 @@ class CustomUserAdmin(UserAdmin):
         """
         Verifica si el usuario actual tiene permisos para ver usuarios específicos.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-            obj: Objeto usuario específico (opcional).
-
-        Retorna:
-            bool: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :param obj: Objeto usuario específico (opcional).
+        :return: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :rtype: bool
         """
 
         return request.user.is_staff and request.user.has_perm('app.view_users')
@@ -166,11 +161,9 @@ class CustomUserAdmin(UserAdmin):
         """
         Verifica si el usuario actual tiene permisos para añadir nuevos usuarios.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-
-        Retorna:
-            bool: True si el usuario tiene permisos para añadir usuarios, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :return: True si el usuario tiene permisos para añadir usuarios, de lo contrario False.
+        :rtype: bool
         """
 
         return request.user.is_staff and request.user.has_perm('app.create_users')
@@ -179,12 +172,10 @@ class CustomUserAdmin(UserAdmin):
         """
         Verifica si el usuario actual tiene permisos para cambiar usuarios.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-            obj: Objeto usuario específico (opcional).
-
-        Retorna:
-            bool: True si el usuario tiene permisos para cambiar usuarios, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :param obj: Objeto usuario específico (opcional).
+        :return: True si el usuario tiene permisos para cambiar usuarios, de lo contrario False.
+        :rtype: bool
         """
 
         return request.user.is_staff and request.user.has_perm('app.edit_roles')
@@ -193,12 +184,10 @@ class CustomUserAdmin(UserAdmin):
         """
         Verifica si el usuario actual tiene permisos para eliminar usuarios.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-            obj: Objeto usuario específico (opcional).
-
-        Retorna:
-            bool: True si el usuario tiene permisos para eliminar usuarios, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :param obj: Objeto usuario específico (opcional).
+        :return: True si el usuario tiene permisos para eliminar usuarios, de lo contrario False.
+        :rtype: bool
         """
 
         return request.user.is_staff and request.user.has_perm('app.delete_users')
@@ -208,12 +197,10 @@ class CustomUserAdmin(UserAdmin):
         """
         Restringe la edición a solo los campos 'groups' e 'is_active', dejando los demás como solo lectura.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-            obj: Objeto usuario específico (opcional).
-
-        Retorna:
-            list: Lista de campos de solo lectura.
+        :param request: Objeto de solicitud HTTP.
+        :param obj: Objeto usuario específico (opcional).
+        :return: Lista de campos de solo lectura.
+        :rtype: list
         """
 
         if obj:
@@ -244,19 +231,14 @@ class CustomGroupAdmin(BaseGroupAdmin):
         """
         Modifica la vista de cambio en el panel de administración para agregar un botón de cancelar.
 
-        Esta función personaliza la vista de modificación de un objeto en el panel de administración,
-        añadiendo un botón de cancelar que redirige a la lista de objetos del mismo tipo.
-
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            object_id (str): ID del objeto que se va a modificar.
-            form_url (str, opcional): URL del formulario, si existe. Por defecto es una cadena vacía.
-            extra_context (dict, opcional): Contexto adicional para la plantilla. Por defecto es None.
-
-        Retorna:
-            HttpResponse: La respuesta HTTP renderizada para la vista de cambio del objeto,
-            incluyendo el contexto adicional con la URL de cancelación.
+        :param request: Objeto de solicitud HTTP.
+        :param object_id: ID del objeto que se va a modificar.
+        :param form_url: URL del formulario, si existe. Por defecto es una cadena vacía.
+        :param extra_context: Contexto adicional para la plantilla. Por defecto es None.
+        :return: La respuesta HTTP renderizada para la vista de cambio del objeto, incluyendo el contexto adicional con la URL de cancelación.
+        :rtype: HttpResponse
         """
+
         extra_context = extra_context or {}
         cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
         extra_context['cancel_url'] = cancel_url
@@ -267,18 +249,13 @@ class CustomGroupAdmin(BaseGroupAdmin):
         """
         Modifica la vista de adición en el panel de administración para agregar un botón de cancelar.
 
-        Esta función personaliza la vista de adición de un nuevo objeto en el panel de administración,
-        añadiendo un botón de cancelar que redirige a la lista de objetos del mismo tipo.
-
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            form_url (str, opcional): URL del formulario, si existe. Por defecto es una cadena vacía.
-            extra_context (dict, opcional): Contexto adicional para la plantilla. Por defecto es None.
-
-        Retorna:
-            HttpResponse: La respuesta HTTP renderizada para la vista de adición del objeto,
-            incluyendo el contexto adicional con la URL de cancelación.
+        :param request: Objeto de solicitud HTTP.
+        :param form_url: URL del formulario, si existe. Por defecto es una cadena vacía.
+        :param extra_context: Contexto adicional para la plantilla. Por defecto es None.
+        :return: La respuesta HTTP renderizada para la vista de adición del objeto, incluyendo el contexto adicional con la URL de cancelación.
+        :rtype: HttpResponse
         """
+
         extra_context = extra_context or {}
         cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
         extra_context['cancel_url'] = cancel_url
@@ -288,11 +265,9 @@ class CustomGroupAdmin(BaseGroupAdmin):
         """
         Verifica si el usuario actual tiene permisos para acceder al módulo de administración de grupos.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-
-        Retorna:
-            bool: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :return: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :rtype: bool
         """
 
         return request.user.is_staff and request.user.has_perm('app.view_roles')
@@ -301,12 +276,10 @@ class CustomGroupAdmin(BaseGroupAdmin):
         """
         Verifica si el usuario actual tiene permisos para ver grupos específicos.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-            obj: Objeto grupo específico (opcional).
-
-        Retorna:
-            bool: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :param obj: Objeto grupo específico (opcional).
+        :return: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :rtype: bool
         """
 
         return request.user.is_staff and request.user.has_perm('app.view_roles')
@@ -315,11 +288,9 @@ class CustomGroupAdmin(BaseGroupAdmin):
         """
         Verifica si el usuario actual tiene permisos para añadir nuevos grupos.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-
-        Retorna:
-            bool: True si el usuario tiene permisos para añadir grupos, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :return: True si el usuario tiene permisos para añadir grupos, de lo contrario False.
+        :rtype: bool
         """
 
         return request.user.is_staff and request.user.has_perm('app.create_roles')
@@ -328,12 +299,10 @@ class CustomGroupAdmin(BaseGroupAdmin):
         """
         Verifica si el usuario actual tiene permisos para cambiar grupos.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-            obj: Objeto grupo específico (opcional).
-
-        Retorna:
-            bool: True si el usuario tiene permisos para cambiar grupos, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :param obj: Objeto grupo específico (opcional).
+        :return: True si el usuario tiene permisos para cambiar grupos, de lo contrario False.
+        :rtype: bool
         """
 
         return request.user.is_staff and request.user.has_perm('app.edit_roles')
@@ -342,12 +311,10 @@ class CustomGroupAdmin(BaseGroupAdmin):
         """
         Verifica si el usuario actual tiene permisos para eliminar grupos.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-            obj: Objeto grupo específico (opcional).
-
-        Retorna:
-            bool: True si el usuario tiene permisos para eliminar grupos, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :param obj: Objeto grupo específico (opcional).
+        :return: True si el usuario tiene permisos para eliminar grupos, de lo contrario False.
+        :rtype: bool
         """
 
         return request.user.is_staff and request.user.has_perm('app.delete_roles')

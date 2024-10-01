@@ -19,20 +19,17 @@ class CustomUserManager(BaseUserManager):
         """
         Crea y guarda un usuario con el correo electrónico, nombre y contraseña proporcionados.
 
-        Parámetros:
-            email (str): Correo electrónico del usuario.
-            name (str): Nombre del usuario.
-            password (str, opcional): Contraseña del usuario.
-            \*\*extra_fields: Campos adicionales para el modelo de usuario.
-
-        Acciones:
-            - Normaliza el correo electrónico.
-            - Establece la contraseña y la foto de perfil predeterminada.
-            - Intenta agregar el usuario al grupo 'Suscriptor', creándolo si no existe.
-            - Muestra una advertencia en el registro si el grupo 'Suscriptor' no existe y se crea.
-
-        Retorna:
-            CustomUser: El usuario creado.
+        :param email: Correo electrónico del usuario.
+        :type email: str
+        :param name: Nombre del usuario.
+        :type name: str
+        :param password: Contraseña del usuario (opcional).
+        :type password: str, opcional
+        :param extra_fields: Campos adicionales para el modelo de usuario.
+        :type extra_fields: dict
+        :raises ValueError: Si no se proporciona un correo electrónico.
+        :return: El usuario creado.
+        :rtype: CustomUser
         """
 
         if not email:
@@ -99,39 +96,36 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
         Permisos:
             - Permisos para contenido:
-                - ("create_content", "Crear contenidos"): Permiso para crear contenidos.
-                - ("edit_content", "Editar contenidos"): Permiso para editar contenidos.
-                - ("publish_content", "Publicar contenidos"): Permiso para publicar contenidos.
-                - ("comment_post", "Comentar contenidos"): Permiso para comentar en contenidos.
-                - ("react_to_post", "Reaccionar a contenidos"): Permiso para reaccionar a contenidos.
-                - ("report_post", "Reportar contenidos"): Permiso para reportar contenidos.
-                - ("view_content", "Ver contenidos"): Permiso para ver contenidos.
-                - ("edit_is_active", "Editar estado de contenidos"): Permiso para editar el estado activo de contenidos.
-
+                - ("create_content", "Crear contenidos")
+                - ("edit_content", "Editar contenidos")
+                - ("publish_content", "Publicar contenidos")
+                - ("comment_post", "Comentar contenidos")
+                - ("react_to_post", "Reaccionar a contenidos")
+                - ("report_post", "Reportar contenidos")
+                - ("view_content", "Ver contenidos")
+                - ("edit_is_active", "Editar estado de contenidos")
             - Permisos para roles:
-                - ("create_roles", "Crear roles"): Permiso para crear roles.
-                - ("edit_roles", "Editar roles"): Permiso para editar roles.
-                - ("delete_roles", "Eliminar roles"): Permiso para eliminar roles.
-                - ("assign_roles", "Asignar roles a usuarios"): Permiso para asignar roles a usuarios.
-                - ("remove_roles", "Quitar roles a usuarios"): Permiso para quitar roles a usuarios.
-                - ("view_roles", "Ver roles"): Permiso para ver roles.
-
+                - ("create_roles", "Crear roles")
+                - ("edit_roles", "Editar roles")
+                - ("delete_roles", "Eliminar roles")
+                - ("assign_roles", "Asignar roles a usuarios")
+                - ("remove_roles", "Quitar roles a usuarios")
+                - ("view_roles", "Ver roles")
             - Permisos para usuarios:
-                - ("create_users", "Crear usuarios"): Permiso para crear usuarios.
-                - ("edit_users", "Editar usuarios"): Permiso para editar usuarios.
-                - ("delete_users", "Eliminar usuarios"): Permiso para eliminar usuarios.
-                - ("block_users", "Bloquear usuarios"): Permiso para bloquear usuarios.
-                - ("unblock_users", "Desbloquear usuarios"): Permiso para desbloquear usuarios.
-                - ("reset_passwords", "Restablecer contraseñas"): Permiso para restablecer contraseñas.
-                - ("view_users", "Ver usuarios"): Permiso para ver usuarios.
-
+                - ("create_users", "Crear usuarios")
+                - ("edit_users", "Editar usuarios")
+                - ("delete_users", "Eliminar usuarios")
+                - ("block_users", "Bloquear usuarios")
+                - ("unblock_users", "Desbloquear usuarios")
+                - ("reset_passwords", "Restablecer contraseñas")
+                - ("view_users", "Ver usuarios")
             - Permisos para categorías:
-                - ("create_category", "Crear categorías"): Permiso para crear categorías.
-                - ("view_category", "Ver categorías"): Permiso para ver categorías.
-                - ("edit_category", "Editar categorías"): Permiso para editar categorías.
-                - ("delete_category", "Eliminar categorías"): Permiso para eliminar categorías.
-                - ("activate_category", "Activar categorías"): Permiso para activar categorías.
-                - ("deactivate_category", "Desactivar categorías"): Permiso para desactivar categorías.
+                - ("create_category", "Crear categorías")
+                - ("view_category", "Ver categorías")
+                - ("edit_category", "Editar categorías")
+                - ("delete_category", "Eliminar categorías")
+                - ("activate_category", "Activar categorías")
+                - ("deactivate_category", "Desactivar categorías")
         """
         verbose_name = 'Usuario'
         verbose_name_plural = 'Usuarios'
@@ -181,8 +175,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         """
         Propiedad que indica si el usuario es parte del personal (staff).
 
-        Retorna:
-            bool: True si el usuario tiene permisos de administrador, de lo contrario False.
+        :return: True si el usuario tiene permisos de administrador, de lo contrario False.
+        :rtype: bool
         """
 
         return self.is_admin()
@@ -191,8 +185,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         """
         Devuelve una representación en cadena del usuario.
 
-        Retorna:
-            str: El correo electrónico del usuario.
+        :return: El correo electrónico del usuario.
+        :rtype: str
         """
 
         return self.email
@@ -221,8 +215,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         Acciones:
             - Itera sobre un conjunto de permisos específicos para los creadores y verifica si el usuario tiene alguno de ellos.
 
-        Retorna:
-            bool: True si el usuario tiene alguno de los permisos de creador, de lo contrario False.
+        :return: True si el usuario tiene alguno de los permisos de creador, de lo contrario False.
+        :rtype: bool
         """
 
         for auth in self.__creator_perms:
@@ -251,8 +245,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         Acciones:
             - Itera sobre un conjunto de permisos específicos para los administradores y verifica si el usuario tiene alguno de ellos.
 
-        Retorna:
-            bool: True si el usuario tiene alguno de los permisos de administrador, de lo contrario False.
+        :return: True si el usuario tiene alguno de los permisos de administrador, de lo contrario False.
+        :rtype: bool
         """
 
         for auth in self.__admin_perms:
@@ -264,8 +258,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         """
         Obtiene una cadena con los nombres de los grupos a los que pertenece el usuario.
 
-        Retorna:
-            str: Una cadena con los nombres de los grupos separados por ' - '.
+        :return: Una cadena con los nombres de los grupos separados por ' - '.
+        :rtype: str
         """
 
         return ' - '.join(self.groups.values_list('name', flat=True))

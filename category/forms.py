@@ -10,13 +10,11 @@ class CategoryForm(forms.ModelForm):
     con las reglas de negocio definidas.
 
     Atributos:
-        Meta (class): Clase interna que define el modelo y los campos a utilizar en el formulario.
+        :param Meta: Clase interna que define el modelo y los campos a utilizar en el formulario.
+        :type Meta: class
 
     Métodos:
-        clean
-
-    Retorna:
-        dict: Datos limpiados del formulario después de aplicar las validaciones personalizadas.
+        :param clean: Realiza las validaciones personalizadas sobre los datos ingresados.
     """
     class Meta:
         model = Category
@@ -34,12 +32,12 @@ class CategoryForm(forms.ModelForm):
             - Si el tipo de categoría no es 'Pago', verifica que no se proporcione un valor para `price`.
               En este caso, si se detecta un valor en `price`, se genera un error y el campo se limpia para evitar su envío.
 
-        Retorna:
-            dict: Un diccionario con los datos del formulario limpiados y validados.
+        :return: Un diccionario con los datos del formulario limpiados y validados.
+        :rtype: dict
 
-        Errores:
-            - Añade un error en `price` si no se cumple la regla de obligatoriedad para las categorías de pago.
-            - Añade un error en `price` si se proporciona un valor para categorías que no son de pago.
+        :raises ValidationError:
+            - Si no se proporciona un precio para una categoría de tipo 'Pago'.
+            - Si se proporciona un precio para una categoría que no es de tipo 'Pago'.
         """
         cleaned_data = super().clean()
         tipo = cleaned_data.get('type')

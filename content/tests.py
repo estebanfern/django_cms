@@ -196,6 +196,7 @@ class ContentUpdateViewTest(TestCase):
     def test_update_content_view(self):
         """
         Verifica que un usuario con permiso puede acceder a la vista de actualización de contenido.
+
         Lógica:
             - Intenta acceder a la URL de actualización del contenido con un usuario que tiene permisos.
             - Verifica que la respuesta tiene un código de estado 200.
@@ -233,6 +234,7 @@ class ContentUpdateViewTest(TestCase):
     def test_form_invalid_content_update(self):
         """
         Verifica que si el formulario para actualizar contenido tiene datos inválidos, se muestra el formulario de nuevo con errores.
+
         Lógica:
             - Envía un formulario con un campo obligatorio vacío a la URL de actualización de contenido.
             - Verifica que la respuesta tiene un código de estado 200, indicando que el formulario se muestra de nuevo.
@@ -311,6 +313,7 @@ class ContentUpdateViewEditorTest(TestCase):
     def test_update_content_view_for_editor(self):
         """
         Verifica que un editor puede acceder a la vista de actualización de contenido en estado revisión.
+
         Lógica:
             - Intenta acceder a la URL de actualización del contenido con un usuario que tiene permisos de edición.
             - Verifica que la respuesta tiene un código de estado 200.
@@ -347,6 +350,7 @@ class ContentUpdateViewEditorTest(TestCase):
     def test_editor_cannot_update_other_fields(self):
         """
         Verifica que un editor no puede actualizar campos distintos a 'content' en estado 'revision'.
+
         Lógica:
             - Envía un formulario con campos adicionales modificados (como título y resumen) junto con el contenido.
             - Verifica que la respuesta es una redirección (código 302).
@@ -407,10 +411,12 @@ class ContentFormTest(TestCase):
     def test_content_form_creation_valid(self):
         """
         Verifica que el formulario de creación de contenido es válido con los datos correctos.
+
         Lógica:
             - Define datos válidos para el formulario de contenido.
             - Crea una instancia del formulario con los datos proporcionados.
             - Verifica que el formulario es válido usando `assertTrue`.
+
         """
         form_data = {
             'title': 'New Content',

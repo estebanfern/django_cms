@@ -1,5 +1,3 @@
-from email.policy import default
-
 from ckeditor_uploader.fields import RichTextUploadingField
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -9,7 +7,6 @@ from category.models import Category
 from taggit.managers import TaggableManager
 from django.contrib.auth import get_user_model
 from django.db.models import Avg
-from ckeditor.fields import RichTextField
 
 class Content (models.Model):
     """
@@ -35,12 +32,14 @@ class Content (models.Model):
             - revision: Contenido en revisión.
             - to_publish: Contenido a publicar.
             - publish: Contenido publicado.
-            - rejected: Contenido rechazado.
+            - inactive: Contenido inactivo.
 
     Métodos:
         clean: Valida que el estado del contenido sea uno de los definidos en StateChoices.
         save: Sobrescribe el método de guardado para llamar a la validación personalizada antes de guardar.
         __str__: Retorna una representación en cadena del objeto, mostrando su título y estado.
+        update_rating_avg: Actualiza el promedio de calificación del contenido.
+        get_state_name: Devuelve el nombre descriptivo del estado en español.
 
     Meta:
         verbose_name (str): Nombre singular del modelo para mostrar en el panel de administración.
@@ -57,7 +56,7 @@ class Content (models.Model):
     date_published = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de publicación')
     content = RichTextUploadingField(verbose_name='Contenido')  # Campo de texto enriquecido con CKEditor 5
     tags = TaggableManager()
-    history = HistoricalRecords()
+    history = HistoricalRecords(excluded_fields=['rating_avg'])
     likes = models.ManyToManyField(get_user_model(), related_name='liked_content', blank=True)
     dislikes = models.ManyToManyField(get_user_model(), related_name='disliked_content', blank=True)
     rating_avg = models.FloatField(default = 0.0, verbose_name="Promedio de calificacion")
@@ -100,8 +99,7 @@ class Content (models.Model):
         Este método personaliza la validación del modelo para asegurarse de que el valor del campo `state`
         sea uno de los estados permitidos por la enumeración StateChoices.
 
-        Lanza:
-            ValidationError: Si el estado del contenido no es válido según las opciones definidas en StateChoices.
+        :raises ValidationError: Si el estado del contenido no es válido según las opciones definidas en StateChoices.
         """
         # Validar que el estado sea uno de los definidos en StateChoices
         if self.state not in dict(Content.StateChoices.choices):
@@ -113,9 +111,8 @@ class Content (models.Model):
         Este método llama a `clean()` para ejecutar validaciones personalizadas antes de guardar la instancia
         del contenido en la base de datos, asegurando que los datos sean consistentes y válidos.
 
-        Parámetros:
-            args: Argumentos posicionales adicionales.
-            kwargs: Argumentos de palabra clave adicionales.
+        :param args: Argumentos posicionales adicionales.
+        :param kwargs: Argumentos de palabra clave adicionales.
         """
         self.clean()  # Llama a la validación personalizada
         super().save(*args, **kwargs)
@@ -133,27 +130,35 @@ class Content (models.Model):
         Esta función devuelve el título del contenido junto con su estado legible,
         utilizando la descripción de la elección correspondiente.
 
-        Retorna:
-            str: Una cadena con el formato "título (estado)", donde 'título' es el título del contenido y
-            'estado' es la descripción del estado del contenido.
+        :return: Una cadena con el formato "título (estado)", donde 'título' es el título del contenido y
+        'estado' es la descripción del estado del contenido.
+        :rtype: str
         """
         return f"{self.title}"
 
 
     def update_rating_avg(self):
+        """
+        Actualiza el promedio de calificación del contenido.
+
+        Este método recalcula el promedio de todas las calificaciones asociadas al contenido y actualiza
+        el campo `rating_avg` en la base de datos.
+        """
+
         avg_rating = self.rating_set.aggregate(Avg('rating'))['rating__avg']
         self.rating_avg = avg_rating or 0.0
         self.save()
 
     def get_state_name(self, state):
         """
-        Devuelve el nombre descriptivo del estado de un contenido en español, si no coincide con niguna opcion, devuelve Desconocido.
+        Devuelve el nombre descriptivo del estado de un contenido en español.
 
-        Parámetros:
-            state (str): El estado del contenido representado por las opciones de `Content.StateChoices`.
+        Si el estado no coincide con ninguna opción, devuelve "Desconocido".
 
-        Retorna:
-            str: El nombre descriptivo del estado del contenido en español.
+        :param state: El estado del contenido representado por las opciones de `Content.StateChoices`.
+        :type state: str
+        :return: El nombre descriptivo del estado del contenido en español.
+        :rtype: str
         """
         if state == Content.StateChoices.draft:
             return "Borrador"

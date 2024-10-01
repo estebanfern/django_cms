@@ -14,12 +14,10 @@ def profile_view(request):
     Si el formulario es válido, guarda los cambios en el perfil del usuario.
     También proporciona un formulario para cambiar la contraseña del usuario.
 
-    Parámetros:
-        request (HttpRequest): La solicitud HTTP recibida.
-
-    Retorna:
-        HttpResponse: Redirige a la vista de perfil después de actualizarlo o
-        renderiza la página de perfil con el formulario de actualización y el formulario de cambio de contraseña.
+    :param request: La solicitud HTTP recibida.
+    :type request: HttpRequest
+    :return: Redirige a la vista de perfil después de actualizarlo o renderiza la página de perfil con el formulario de actualización y el formulario de cambio de contraseña.
+    :rtype: HttpResponse
     """
     if request.method == 'POST':
         form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user)
@@ -43,12 +41,10 @@ def change_password(request):
     Si el método de solicitud es POST, procesa el formulario de cambio de contraseña.
     Si el formulario es válido, cambia la contraseña del usuario y muestra un mensaje de éxito.
 
-    Parámetros:
-        request (HttpRequest): La solicitud HTTP recibida.
-
-    Retorna:
-        HttpResponse: Redirige a la página de inicio de sesión si el cambio de contraseña es exitoso o
-        redirige a la vista de perfil si el formulario contiene errores.
+    :param request: La solicitud HTTP recibida.
+    :type request: HttpRequest
+    :return: Redirige a la página de inicio de sesión si el cambio de contraseña es exitoso o redirige a la vista de perfil si el formulario contiene errores.
+    :rtype: HttpResponse
     """
     if request.method == 'POST':
         password_form = ChangePasswordForm(request.user, request.POST)
@@ -69,12 +65,12 @@ def other_profile_view(request, id):
 
     Obtiene el perfil de un usuario específico basado en su ID.
 
-    Parámetros:
-        request (HttpRequest): La solicitud HTTP recibida.
-        id (int): El ID del usuario cuyo perfil se desea mostrar.
-
-    Retorna:
-        HttpResponse: Renderiza la página del perfil del usuario especificado.
+    :param request: La solicitud HTTP recibida.
+    :type request: HttpRequest
+    :param id: El ID del usuario cuyo perfil se desea mostrar.
+    :type id: int
+    :return: Renderiza la página del perfil del usuario especificado.
+    :rtype: HttpResponse
     """
     user_profile = get_object_or_404(CustomUser, id=id)
     return render(request, 'profile/view_profile.html', {'user_profile' : user_profile})
