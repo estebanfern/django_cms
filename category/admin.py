@@ -44,12 +44,12 @@ class CategoryAdmin(admin.ModelAdmin):
 
         Elimina la acción predeterminada de eliminar elementos seleccionados para personalizar la eliminación.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-
-        Retorna:
-            dict: Diccionario con las acciones disponibles, excluyendo la acción de eliminación predeterminada.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :return: Diccionario con las acciones disponibles, excluyendo la acción de eliminación predeterminada.
+        :rtype: dict
         """
+
         actions = super().get_actions(request)
         # Eliminar la acción predeterminada de eliminación
         if 'delete_selected' in actions:
@@ -64,15 +64,16 @@ class CategoryAdmin(admin.ModelAdmin):
         Esta función personaliza la vista de modificación de un objeto en el panel de administración,
         añadiendo un botón de cancelar que redirige a la lista de objetos del mismo tipo.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            object_id (str): ID del objeto que se va a modificar.
-            form_url (str, opcional): URL del formulario, si existe. Por defecto es una cadena vacía.
-            extra_context (dict, opcional): Contexto adicional para la plantilla. Por defecto es None.
-
-        Retorna:
-            HttpResponse: La respuesta HTTP renderizada para la vista de cambio del objeto,
-            incluyendo el contexto adicional con la URL de cancelación.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param object_id: ID del objeto que se va a modificar.
+        :type object_id: str
+        :param form_url: URL del formulario, si existe. Por defecto es una cadena vacía.
+        :type form_url: str, opcional
+        :param extra_context: Contexto adicional para la plantilla. Por defecto es None.
+        :type extra_context: dict, opcional
+        :return: La respuesta HTTP renderizada para la vista de cambio del objeto, incluyendo el contexto adicional con la URL de cancelación.
+        :rtype: HttpResponse
         """
         extra_context = extra_context or {}
         cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
@@ -87,15 +88,16 @@ class CategoryAdmin(admin.ModelAdmin):
         Esta función personaliza la vista de adición de un nuevo objeto en el panel de administración,
         añadiendo un botón de cancelar que redirige a la lista de objetos del mismo tipo.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            form_url (str, opcional): URL del formulario, si existe. Por defecto es una cadena vacía.
-            extra_context (dict, opcional): Contexto adicional para la plantilla. Por defecto es None.
-
-        Retorna:
-            HttpResponse: La respuesta HTTP renderizada para la vista de adición del objeto,
-            incluyendo el contexto adicional con la URL de cancelación.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param form_url: URL del formulario, si existe. Por defecto es una cadena vacía.
+        :type form_url: str, opcional
+        :param extra_context: Contexto adicional para la plantilla. Por defecto es None.
+        :type extra_context: dict, opcional
+        :return: La respuesta HTTP renderizada para la vista de adición del objeto, incluyendo el contexto adicional con la URL de cancelación.
+        :rtype: HttpResponse
         """
+
         extra_context = extra_context or {}
         cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
         extra_context['cancel_url'] = cancel_url
@@ -109,14 +111,10 @@ class CategoryAdmin(admin.ModelAdmin):
 
         Esta acción establece el estado de moderación de las categorías seleccionadas como moderadas.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            queryset (QuerySet): QuerySet que contiene las categorías seleccionadas para la acción.
-
-        Acciones:
-            - Verifica si el usuario tiene permisos para moderar categorías.
-            - Si el usuario no tiene permisos, muestra un mensaje de error.
-            - Si tiene permisos, marca las categorías seleccionadas como moderadas y muestra un mensaje de éxito.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param queryset: QuerySet que contiene las categorías seleccionadas para la acción.
+        :type queryset: QuerySet
         """
         if not request.user.has_perm('app.edit_category'):
             self.message_user(request, "No tienes permiso para moderar categorías.", level=messages.ERROR)
@@ -133,14 +131,10 @@ class CategoryAdmin(admin.ModelAdmin):
 
         Esta acción establece el estado de moderación de las categorías seleccionadas como no moderadas.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            queryset (QuerySet): QuerySet que contiene las categorías seleccionadas para la acción.
-
-        Acciones:
-            - Verifica si el usuario tiene permisos para modificar la moderación de categorías.
-            - Si el usuario no tiene permisos, muestra un mensaje de error.
-            - Si tiene permisos, marca las categorías seleccionadas como no moderadas y muestra un mensaje de éxito.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param queryset: QuerySet que contiene las categorías seleccionadas para la acción.
+        :type queryset: QuerySet
         """
         if not request.user.has_perm('app.edit_category'):
             self.message_user(request, "No tienes permiso para quitar la moderación de categorías.",
@@ -158,14 +152,10 @@ class CategoryAdmin(admin.ModelAdmin):
 
         Esta acción establece el estado de activación de las categorías seleccionadas como activas.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            queryset (QuerySet): QuerySet que contiene las categorías seleccionadas para la acción.
-
-        Acciones:
-            - Verifica si el usuario tiene permisos para activar categorías.
-            - Si el usuario no tiene permisos, muestra un mensaje de error.
-            - Si tiene permisos, activa las categorías seleccionadas y muestra un mensaje de éxito.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param queryset: QuerySet que contiene las categorías seleccionadas para la acción.
+        :type queryset: QuerySet
         """
         if not request.user.has_perm('app.edit_category'):
             self.message_user(request, "No tienes permiso para activar categorías.", level=messages.ERROR)
@@ -182,15 +172,12 @@ class CategoryAdmin(admin.ModelAdmin):
 
         Esta acción establece el estado de activación de las categorías seleccionadas como inactivas.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            queryset (QuerySet): QuerySet que contiene las categorías seleccionadas para la acción.
-
-        Acciones:
-            - Verifica si el usuario tiene permisos para desactivar categorías.
-            - Si el usuario no tiene permisos, muestra un mensaje de error.
-            - Si tiene permisos, desactiva las categorías seleccionadas y muestra un mensaje de éxito.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param queryset: QuerySet que contiene las categorías seleccionadas para la acción.
+        :type queryset: QuerySet
         """
+
         if not request.user.has_perm('app.edit_category'):
             self.message_user(request, "No tienes permiso para desactivar categorías.", level=messages.ERROR)
             return
@@ -207,13 +194,10 @@ class CategoryAdmin(admin.ModelAdmin):
         Verifica si las categorías tienen contenidos asociados antes de eliminarlas.
         Si hay contenidos asociados, muestra un mensaje de error; de lo contrario, elimina las categorías seleccionadas.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            queryset (QuerySet): QuerySet que contiene las categorías seleccionadas para la acción.
-
-        Acciones:
-            - Verifica permisos y la existencia de contenidos asociados antes de eliminar.
-            - Muestra mensajes de éxito o error según corresponda.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param queryset: QuerySet que contiene las categorías seleccionadas para la acción.
+        :type queryset: QuerySet
         """
         if not request.user.has_perm('app.delete_category'):
             self.message_user(request, "No tienes permiso para eliminar categorías.", level=messages.ERROR)
@@ -245,14 +229,12 @@ class CategoryAdmin(admin.ModelAdmin):
         Verifica si el objeto tiene contenidos asociados antes de permitir la eliminación.
         Si hay contenidos asociados, muestra un mensaje de error.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            obj (Model): Objeto del modelo que se va a eliminar.
-
-        Acciones:
-            - Verifica contenidos asociados antes de eliminar.
-            - Muestra un mensaje de error si existen contenidos asociados.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param obj: Objeto del modelo que se va a eliminar.
+        :type obj: Model
         """
+
         if obj.content_set.exists():
             self.message_user(request, "No se puede eliminar esta categoría porque tiene contenidos asociados.",
                               level=messages.ERROR)
@@ -264,81 +246,68 @@ class CategoryAdmin(admin.ModelAdmin):
     # Métodos para verificar permisos personalizados
     def has_module_permission(self, request):
         """
-        Verifican si el usuario actual tiene permisos específicos de module en el panel de administración.
+        Verifica si el usuario actual tiene permisos para acceder al módulo de administración de categorías.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            obj (Model, opcional): Objeto del modelo específico para verificar permisos (opcional en algunas funciones).
-
-        Retorna:
-            bool: True si el usuario tiene los permisos necesarios, de lo contrario False.
-
-        Notas:
-            - Se incluyen validaciones adicionales para la eliminación de objetos que tienen contenidos asociados.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :return: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :rtype: bool
         """
+
         return request.user.has_perm('app.view_category')
 
     def has_view_permission(self, request, obj=None):
         """
-        Verifican si el usuario actual tiene permisos de view en el panel de administración.
+        Verifica si el usuario actual tiene permisos para ver categorías específicas.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            obj (Model, opcional): Objeto del modelo específico para verificar permisos (opcional en algunas funciones).
-
-        Retorna:
-            bool: True si el usuario tiene los permisos necesarios, de lo contrario False.
-
-        Notas:
-            - Se incluyen validaciones adicionales para la eliminación de objetos que tienen contenidos asociados.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param obj: Objeto categoría específico (opcional).
+        :type obj: Model, opcional
+        :return: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :rtype: bool
         """
+
         return request.user.has_perm('app.view_category')
 
     def has_add_permission(self, request):
         """
-        Verifican si el usuario actual tiene permisos de add en el panel de administración.
+        Verifica si el usuario actual tiene permisos para añadir nuevas categorías.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            obj (Model, opcional): Objeto del modelo específico para verificar permisos (opcional en algunas funciones).
-
-        Retorna:
-            bool: True si el usuario tiene los permisos necesarios, de lo contrario False.
-
-        Notas:
-            - Se incluyen validaciones adicionales para la eliminación de objetos que tienen contenidos asociados.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :return: True si el usuario tiene permisos para añadir categorías, de lo contrario False.
+        :rtype: bool
         """
+
         return request.user.has_perm('app.create_category')
 
     def has_change_permission(self, request, obj=None):
         """
-        Verifican si el usuario actual tiene permisos de change en el panel de administración.
+        Verifica si el usuario actual tiene permisos para cambiar categorías.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            obj (Model, opcional): Objeto del modelo específico para verificar permisos (opcional en algunas funciones).
-
-        Retorna:
-            bool: True si el usuario tiene los permisos necesarios, de lo contrario False.
-
-        Notas:
-            - Se incluyen validaciones adicionales para la eliminación de objetos que tienen contenidos asociados.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param obj: Objeto categoría específico (opcional).
+        :type obj: Model, opcional
+        :return: True si el usuario tiene permisos para cambiar categorías, de lo contrario False.
+        :rtype: bool
         """
+
         return request.user.has_perm('app.edit_category')
 
     def has_delete_permission(self, request, obj=None):
         """
-        Verifican si el usuario actual tiene permisos de delete en el panel de administración.
+        Verifica si el usuario actual tiene permisos para eliminar categorías.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            obj (Model, opcional): Objeto del modelo específico para verificar permisos (opcional en algunas funciones).
+        Verifica si las categorías tienen contenidos asociados antes de permitir la eliminación.
 
-        Retorna:
-            bool: True si el usuario tiene los permisos necesarios, de lo contrario False.
-
-        Notas:
-            - Se incluyen validaciones adicionales para la eliminación de objetos que tienen contenidos asociados.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param obj: Objeto categoría específico (opcional).
+        :type obj: Model, opcional
+        :return: True si el usuario tiene permisos para eliminar categorías y no hay contenidos asociados, de lo contrario False.
+        :rtype: bool
         """
         # Validar permisos y que no existan contenidos asociados antes de permitir eliminar
         if obj:

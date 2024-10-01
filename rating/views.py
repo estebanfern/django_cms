@@ -8,6 +8,22 @@ from django.views.decorators.http import require_POST
 
 @require_POST
 def rate_content(request, content_id):
+    """
+    Permite a un usuario autenticado calificar un contenido.
+
+    Este endpoint recibe una solicitud POST para puntuar un contenido. Si el usuario ya ha calificado el contenido previamente, se actualiza la calificación. Además, se actualiza el promedio de calificaciones del contenido.
+
+    :param request: El objeto de solicitud HTTP.
+    :type request: HttpRequest
+    :param content_id: El ID del contenido que se va a calificar.
+    :type content_id: int
+
+    :return: Devuelve una respuesta JSON indicando el estado de la operación.
+    :rtype: JsonResponse
+
+    Si el usuario no está autenticado, se devuelve un error 403.
+    Si no se proporciona una calificación o el valor es inválido, se devuelve un error 400.
+    """
 
     if not request.user.is_authenticated:
         return JsonResponse({'status': 'error', 'message': 'Para poder puntuar contenidos debes estar registrado'}, status=403)

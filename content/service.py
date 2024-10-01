@@ -1,7 +1,28 @@
 
 
 def validate_permission_kanban(user, content, newState, oldState):
-    
+    """
+    Valida si un usuario tiene permiso para cambiar el estado de un contenido en un flujo de trabajo tipo Kanban.
+
+    Esta función verifica:
+    - Si la transición entre estados es válida según el flujo de estados predefinido.
+    - Si el usuario tiene los permisos necesarios para cambiar a un nuevo estado.
+    - Restricciones adicionales según las reglas del negocio para ciertos estados, como la moderación de categorías.
+
+    :param user: El usuario que intenta realizar la acción.
+    :type user: User (Django User model)
+    :param content: El contenido cuyo estado se está modificando.
+    :type content: Content (Modelo de contenido)
+    :param newState: El nuevo estado al que se desea cambiar.
+    :type newState: str
+    :param oldState: El estado actual del contenido.
+    :type oldState: str
+
+    :return: Un diccionario con el estado de la validación y un mensaje de error o éxito.
+    :rtype: dict
+
+    :raises KeyError: Si el `newState` o el `oldState` no son válidos dentro del flujo de estados.
+    """
     stateFlow = {
         'draft': {
             'name': 'Borrador',
