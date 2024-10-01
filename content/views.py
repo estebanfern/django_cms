@@ -21,6 +21,7 @@ from django.contrib import messages
 from django.urls import reverse
 
 from .service import validate_permission_kanban
+from .tasks import update_reactions
 
 
 @login_required
@@ -501,8 +502,11 @@ def view_content(request, id):
 
     history = content.history.all().order_by('-history_date')
     # Obtener si el usuario ha dado like o dislike
+    reaction_status = 'none'
     user_has_liked = content.likes.filter(id=request.user.id).exists() if request.user.is_authenticated else False
     user_has_disliked = content.dislikes.filter(id=request.user.id).exists() if request.user.is_authenticated else False
+    if user_has_liked: reaction_status = 'liked'
+    elif user_has_disliked: reaction_status = 'disliked'
 
     # Verificar si el usuario ya ha dado una calificación (rating) al contenido
     user_rating = 0
@@ -516,8 +520,7 @@ def view_content(request, id):
     return render(request, 'content/view.html', {
         "content": content,
         "history": history,
-        "user_has_liked": user_has_liked,
-        "user_has_disliked": user_has_disliked,
+        "reaction_status": reaction_status,
         "user_rating": user_rating,
         "is_authenticated": request.user.is_authenticated,  # Para verificar en el frontend
     })
@@ -609,7 +612,7 @@ def like_content(request, content_id):
     :param content_id: El ID del contenido que se va a marcar con 'me gusta'.
     :type content_id: int
 
-    :return: Respuesta en JSON con el estado de la operación y el conteo actualizado de 'me gusta' y 'no me gusta'.
+    :return: Respuesta en JSON con el estado de la operación.
     :rtype: JsonResponse
     """
     if not request.user.is_authenticated:
@@ -620,16 +623,18 @@ def like_content(request, content_id):
     if content.likes.filter(id=request.user.id).exists():
         content.likes.remove(request.user)
         message = "Me gusta eliminado"
+        result = "deleted"
     else:
         content.likes.add(request.user)
-        content.dislikes.remove(request.user)  # Elimina el dislike si existe
+        content.dislikes.remove(request.user)
         message = "Me gusta agregado"
+        result = "created"
 
+    update_reactions.delay(content.id)
     return JsonResponse({
         'status': 'success',
         'message': message,
-        'likes_count': content.likes.count(),  # Retorna el conteo actualizado de likes
-        'dislikes_count': content.dislikes.count()  # Retorna el conteo actualizado de dislikes
+        'result': result,
     })
 
 def dislike_content(request, content_id):
@@ -641,7 +646,7 @@ def dislike_content(request, content_id):
     :param content_id: El ID del contenido que se va a marcar con 'no me gusta'.
     :type content_id: int
 
-    :return: Respuesta en JSON con el estado de la operación y el conteo actualizado de 'me gusta' y 'no me gusta'.
+    :return: Respuesta en JSON con el estado de la operación.
     :rtype: JsonResponse
     """
 
@@ -653,14 +658,16 @@ def dislike_content(request, content_id):
     if content.dislikes.filter(id=request.user.id).exists():
         content.dislikes.remove(request.user)
         message = "No me gusta eliminado"
+        result = "deleted"
     else:
         content.dislikes.add(request.user)
-        content.likes.remove(request.user)  # Elimina el like si existe
+        content.likes.remove(request.user)
         message = "No me gusta agregado"
+        result = "created"
 
+    update_reactions.delay(content.id)
     return JsonResponse({
         'status': 'success',
         'message': message,
-        'likes_count': content.likes.count(),  # Retorna el conteo actualizado de likes
-        'dislikes_count': content.dislikes.count()  # Retorna el conteo actualizado de dislikes
+        'result': result,
     })

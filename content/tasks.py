@@ -52,3 +52,26 @@ def update_rating_avg(content_id):
     avg_rating = content.rating_set.aggregate(Avg('rating'))['rating__avg']
     content.rating_avg = avg_rating or 0.0
     content.save()
+
+@shared_task()
+def update_reactions(content_id):
+    """
+    Tarea programada de Celery para actualizar los likes y dislikes de un contenido.
+
+    Esta función calcula la cantidad de likes y dislikes de un contenido específico y actualiza
+    el campo `likes_count` y 'dislikes_count' del modelo de contenido.
+
+    :param content_id: ID del contenido cuyas reaciones se actualizarán.
+    :type content_id: int
+
+    Acciones:
+        - Obtiene el contenido por su ID.
+        - Calcula la cantidad de reacciones.
+        - Actualiza los campos del contenido con los nuevos valores..
+
+    :return: None
+    """
+    content = Content.objects.get(id=content_id)
+    content.likes_count = content.likes.count() or 0
+    content.dislikes_count = content.dislikes.count() or 0
+    content.save()
