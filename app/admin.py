@@ -1,6 +1,7 @@
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin, UserAdmin
 from django.contrib.auth.models import Group
 from django.contrib import admin, messages
+from django.http import HttpResponseRedirect
 
 import notification.service
 from app.models import CustomUser
@@ -238,6 +239,9 @@ class CustomGroupAdmin(BaseGroupAdmin):
         has_delete_permission: Verifica si el usuario tiene permisos para eliminar grupos.
     """
 
+    # Sobreescribir la acción de eliminar seleccionados
+    actions = ['delete_selected_roles']
+
     # Boton de Cancelar al modificar
     def change_view(self, request, object_id, form_url='', extra_context=None):
         """
@@ -255,6 +259,78 @@ class CustomGroupAdmin(BaseGroupAdmin):
         cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
         extra_context['cancel_url'] = cancel_url
         return super().change_view(request, object_id, form_url, extra_context=extra_context)
+
+    # Restricción para no eliminar grupos con usuarios asociados
+    def delete_view(self, request, object_id, extra_context=None):
+        """
+        Sobrescribe la vista de eliminación para impedir eliminar grupos con usuarios asociados.
+        """
+        group = self.get_object(request, object_id)
+
+        # Verificar si hay usuarios asociados al grupo
+        if group.user_set.exists():
+            # Si el grupo tiene usuarios, mostrar un mensaje de error y redirigir al listado de grupos
+            messages.error(request, 'No puedes eliminar el rol porque tiene usuarios asociados.')
+            return HttpResponseRedirect(reverse('admin:auth_group_changelist'))
+
+        # Si no hay usuarios asociados, permitir la eliminación
+        return super().delete_view(request, object_id, extra_context)
+
+    # Mensaje de éxito después de la eliminación
+    def response_delete(self, request, obj_display, obj_id):
+        """
+        Sobrescribe el método response_delete para mostrar el mensaje de éxito
+        después de que el grupo haya sido eliminado.
+        """
+        # Mostrar el mensaje de éxito
+        messages.success(request, f'El grupo "{obj_display}" se ha eliminado correctamente.')
+
+        # Redirigir a la lista de grupos después de la eliminación
+        return HttpResponseRedirect(reverse('admin:auth_group_changelist'))
+
+    # Acción personalizada para eliminar roles seleccionados
+    @admin.action(description='Eliminar roles seleccionados')
+    def delete_selected_roles(self, request, queryset):
+        """
+        Acción para eliminar grupos seleccionados. Si alguno de los grupos tiene usuarios asociados,
+        se muestra un mensaje de error y no se elimina ese grupo.
+        """
+        if not request.user.has_perm('app.delete_roles'):
+            self.message_user(request, "No tienes permiso para eliminar roles.", level=messages.ERROR)
+            return
+
+        groups_with_users = [group for group in queryset if group.user_set.exists()]
+
+        if groups_with_users:
+            # Mostrar un mensaje de error si algunos roles tienen usuarios asociados
+            group_names = ', '.join([group.name for group in groups_with_users])
+            messages.error(request,
+                           f'No puedes eliminar los siguientes grupos porque tienen usuarios asociados: {group_names}')
+            # Redirigir de vuelta a la lista de grupos
+            return HttpResponseRedirect(reverse('admin:auth_group_changelist'))
+
+        # Si ningún rol tiene usuarios asociados, proceder con la eliminación
+        roles = ', '.join([group.name for group in queryset])
+        super().delete_queryset(request, queryset)
+        self.message_user(request, f"Roles eliminadas con éxito: {roles}.", level=messages.SUCCESS)
+
+    # Desactivar la acción predeterminada de eliminar
+    def get_actions(self, request):
+        """
+        Sobrescribe las acciones disponibles en el panel de administración.
+
+        Elimina la acción predeterminada de eliminar elementos seleccionados para personalizar la eliminación.
+
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :return: Diccionario con las acciones disponibles, excluyendo la acción de eliminación predeterminada.
+        :rtype: dict
+        """
+        actions = super().get_actions(request)
+        # Eliminar la acción predeterminada de eliminación
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
 
     # Boton de Cancelar al agregar
     def add_view(self, request, form_url='', extra_context=None):
@@ -323,12 +399,17 @@ class CustomGroupAdmin(BaseGroupAdmin):
         """
         Verifica si el usuario actual tiene permisos para eliminar grupos.
 
+        Verifica si las roles tienen usuarios asociados antes de permitir la eliminación.
+
         :param request: Objeto de solicitud HTTP.
         :param obj: Objeto grupo específico (opcional).
-        :return: True si el usuario tiene permisos para eliminar grupos, de lo contrario False.
+        :return: True si el usuario tiene permisos para eliminar roles y no hay usuarios asociados, de lo contrario False.
         :rtype: bool
         """
-
+        if obj:
+            if obj.user_set.exists():
+                self.message_user(request, ("No se puede eliminar este rol porque tiene usuarios asociados."), level=messages.ERROR)
+                return False
         return request.user.is_staff and request.user.has_perm('app.delete_roles')
 
 # Desregistrar el modelo Group
