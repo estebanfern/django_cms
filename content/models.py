@@ -46,20 +46,23 @@ class Content (models.Model):
         verbose_name_plural (str): Nombre plural del modelo para mostrar en el panel de administración.
         db_table (str): Nombre de la tabla en la base de datos.
     """
-    title = models.CharField(max_length=255, verbose_name=('Título'))
-    summary = models.TextField(max_length=255, verbose_name=('Resumen'))
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name=('Categoría'))
-    autor = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name=('Autor'))
+
+    title = models.CharField(max_length=255, verbose_name='Título')
+    summary = models.TextField(max_length=255, verbose_name='Resumen')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name='Categoría')
+    autor = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name='Autor')
     is_active = models.BooleanField(default=True, verbose_name='Activo')
-    date_create= models.DateTimeField(auto_now_add=True, verbose_name=('Fecha de creacion'))
-    date_expire = models.DateTimeField(null=True, blank=True,verbose_name=('Fecha de expiración'))
+    date_create= models.DateTimeField(auto_now_add=True, verbose_name='Fecha de creación')
+    date_expire = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de expiración')
     date_published = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de publicación')
     content = RichTextUploadingField(verbose_name='Contenido')  # Campo de texto enriquecido con CKEditor 5
     tags = TaggableManager()
-    history = HistoricalRecords(excluded_fields=['rating_avg'])
+    history = HistoricalRecords(excluded_fields=['rating_avg', 'likes_count', 'dislikes_count'])
     likes = models.ManyToManyField(get_user_model(), related_name='liked_content', blank=True)
     dislikes = models.ManyToManyField(get_user_model(), related_name='disliked_content', blank=True)
-    rating_avg = models.FloatField(default = 0.0, verbose_name="Promedio de calificacion")
+    rating_avg = models.FloatField(default = 0.0, verbose_name="Promedio de calificación")
+    likes_count = models.IntegerField(default=0, verbose_name="Cantidad de likes")
+    dislikes_count = models.IntegerField(default=0, verbose_name="Cantidad de dislikes")
 
     class StateChoices(models.TextChoices):
         """
