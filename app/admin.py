@@ -5,7 +5,6 @@ from django.contrib import admin, messages
 import notification.service
 from app.models import CustomUser
 from django.utils.translation import gettext_lazy as _
-from django.forms.models import fields_for_model
 from app.forms import CustomUserFormAdmin
 from django.urls import reverse
 
@@ -49,6 +48,16 @@ def desbloquear_usuarios(self, request, queryset):
             self.message_user(request, f'El usuario {usuario.name} ha sido desbloqueado.', messages.SUCCESS)
 
 
+def custom_title_filter_factory(filter_cls, title):
+    class Wrapper(filter_cls):
+        def __new__(cls, *args, **kwargs):
+            instance = filter_cls(*args, **kwargs)
+            instance.title = title
+            return instance
+
+    return Wrapper
+
+
 class CustomUserAdmin(UserAdmin):
     """
     Configuración personalizada para la administración de usuarios en el panel de administración de Django.
@@ -67,10 +76,12 @@ class CustomUserAdmin(UserAdmin):
     form = CustomUserFormAdmin
 
     list_display = ('email', 'name', 'is_active')
-    list_filter = ('is_active', 'groups')
+    list_filter = (
+        'is_active',
+        ('groups', custom_title_filter_factory(admin.RelatedFieldListFilter, 'Roles')),
+    )
 
     fieldsets = (
-        (None, {'fields': ()}),
         (_('Informacion personal'), {'fields': ('name', 'email' ,'photo', 'about')}),
         (_('Roles y estado'), {'fields': ('is_active', 'groups')}),
         (_('Fechas relevantes'), {'fields': ('last_login', 'date_joined')}),
@@ -80,6 +91,16 @@ class CustomUserAdmin(UserAdmin):
     filter_horizontal = ('groups', 'user_permissions',)
 
     readonly_fields = ('name', 'email', 'photo', 'about', 'last_login', 'date_joined')
+
+    # Cambiar tanto el label como el help_text de "groups" (ahora "Roles")
+    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
+        if db_field.name == 'groups':
+            # Cambiar el label a "Roles"
+            kwargs['label'] = _('Roles')
+            # Cambiar el mensaje de ayuda
+            kwargs['help_text'] = _('Los roles a los que pertenece este usuario. '
+                                    'Un usuario tendrá todos los permisos asignados a cada uno de sus roles. ')
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
 
     def save_model(self, request, obj, form, change):
 
@@ -143,7 +164,7 @@ class CustomUserAdmin(UserAdmin):
         :rtype: bool
         """
 
-        return request.user.is_staff and request.user.has_perm('app.view_users')
+        return request.user.has_perm('app.view_users')
 
     def has_view_permission(self, request, obj=None):
         """
@@ -155,18 +176,22 @@ class CustomUserAdmin(UserAdmin):
         :rtype: bool
         """
 
-        return request.user.is_staff and request.user.has_perm('app.view_users')
+        return request.user.has_perm('app.view_users')
 
     def has_add_permission(self, request):
         """
-        Verifica si el usuario actual tiene permisos para añadir nuevos usuarios.
+        Controla el permiso para añadir nuevos usuarios desde el panel de administración.
+
+        Esta función siempre devuelve False, impidiendo que los usuarios puedan agregar
+        nuevos usuarios directamente desde el panel de administración.
 
         :param request: Objeto de solicitud HTTP.
-        :return: True si el usuario tiene permisos para añadir usuarios, de lo contrario False.
+        :type request: HttpRequest
+
+        :return: False, indicando que no se permite la adición de nuevos usuarios.
         :rtype: bool
         """
-
-        return request.user.is_staff and request.user.has_perm('app.create_users')
+        return False
 
     def has_change_permission(self, request, obj=None):
         """
@@ -178,37 +203,24 @@ class CustomUserAdmin(UserAdmin):
         :rtype: bool
         """
 
-        return request.user.is_staff and request.user.has_perm('app.edit_roles')
+        return request.user.has_perm('app.edit_roles')
 
     def has_delete_permission(self, request, obj=None):
         """
-        Verifica si el usuario actual tiene permisos para eliminar usuarios.
+        Controla el permiso para eliminar usuarios desde el panel de administración.
+
+        Esta función siempre devuelve False, impidiendo que los usuarios puedan eliminar
+        usuarios directamente desde el panel de administración.
 
         :param request: Objeto de solicitud HTTP.
-        :param obj: Objeto usuario específico (opcional).
-        :return: True si el usuario tiene permisos para eliminar usuarios, de lo contrario False.
+        :type request: HttpRequest
+        :param obj: Objeto del modelo específico para verificar permisos (opcional).
+        :type obj: Model, opcional
+
+        :return: False, indicando que no se permite la eliminación de usuarios.
         :rtype: bool
         """
-
-        return request.user.is_staff and request.user.has_perm('app.delete_users')
-
- # Restringir la edición solo a 'groups' e 'is_active'
-    def get_readonly_fields(self, request, obj=None):
-        """
-        Restringe la edición a solo los campos 'groups' e 'is_active', dejando los demás como solo lectura.
-
-        :param request: Objeto de solicitud HTTP.
-        :param obj: Objeto usuario específico (opcional).
-        :return: Lista de campos de solo lectura.
-        :rtype: list
-        """
-
-        if obj:
-            # Obtener todos los campos del modelo
-            all_fields = list(fields_for_model(self.model).keys())
-            editable_fields = {'groups', 'is_active'}
-            return [field for field in all_fields if field not in editable_fields]
-        return super().get_readonly_fields(request, obj)
+        return False
 
 
 class CustomGroupAdmin(BaseGroupAdmin):
