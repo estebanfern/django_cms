@@ -260,16 +260,16 @@ class CustomGroupAdmin(BaseGroupAdmin):
         extra_context['cancel_url'] = cancel_url
         return super().change_view(request, object_id, form_url, extra_context=extra_context)
 
-    # Restricción para no eliminar grupos con usuarios asociados
+    # Restricción para no eliminar roles con usuarios asociados
     def delete_view(self, request, object_id, extra_context=None):
         """
-        Sobrescribe la vista de eliminación para impedir eliminar grupos con usuarios asociados.
+        Sobrescribe la vista de eliminación para impedir eliminar roles con usuarios asociados.
         """
-        group = self.get_object(request, object_id)
+        rol = self.get_object(request, object_id)
 
         # Verificar si hay usuarios asociados al grupo
-        if group.user_set.exists():
-            # Si el grupo tiene usuarios, mostrar un mensaje de error y redirigir al listado de grupos
+        if rol.user_set.exists():
+            # Si el rol tiene usuarios, mostrar un mensaje de error y redirigir al listado de roles
             messages.error(request, 'No puedes eliminar el rol porque tiene usuarios asociados.')
             return HttpResponseRedirect(reverse('admin:auth_group_changelist'))
 
@@ -280,10 +280,10 @@ class CustomGroupAdmin(BaseGroupAdmin):
     def response_delete(self, request, obj_display, obj_id):
         """
         Sobrescribe el método response_delete para mostrar el mensaje de éxito
-        después de que el grupo haya sido eliminado.
+        después de que el rol haya sido eliminado.
         """
         # Mostrar el mensaje de éxito
-        messages.success(request, f'El grupo "{obj_display}" se ha eliminado correctamente.')
+        messages.success(request, f'El rol "{obj_display}" se ha eliminado correctamente.')
 
         # Redirigir a la lista de grupos después de la eliminación
         return HttpResponseRedirect(reverse('admin:auth_group_changelist'))
@@ -292,21 +292,21 @@ class CustomGroupAdmin(BaseGroupAdmin):
     @admin.action(description='Eliminar roles seleccionados')
     def delete_selected_roles(self, request, queryset):
         """
-        Acción para eliminar grupos seleccionados. Si alguno de los grupos tiene usuarios asociados,
-        se muestra un mensaje de error y no se elimina ese grupo.
+        Acción para eliminar roles seleccionados. Si alguno de los roles tiene usuarios asociados,
+        se muestra un mensaje de error y no se elimina ese rol.
         """
         if not request.user.has_perm('app.delete_roles'):
             self.message_user(request, "No tienes permiso para eliminar roles.", level=messages.ERROR)
             return
 
-        groups_with_users = [group for group in queryset if group.user_set.exists()]
+        roles_with_users = queryset.filter(user__isnull=False).distinct()
 
-        if groups_with_users:
+        if roles_with_users:
             # Mostrar un mensaje de error si algunos roles tienen usuarios asociados
-            group_names = ', '.join([group.name for group in groups_with_users])
+            roles_names = ', '.join([group.name for group in roles_with_users])
             messages.error(request,
-                           f'No puedes eliminar los siguientes grupos porque tienen usuarios asociados: {group_names}')
-            # Redirigir de vuelta a la lista de grupos
+                           f'No puedes eliminar los siguientes roles porque tienen usuarios asociados: {roles_names}')
+            # Redirigir de vuelta a la lista de roles
             return HttpResponseRedirect(reverse('admin:auth_group_changelist'))
 
         # Si ningún rol tiene usuarios asociados, proceder con la eliminación
