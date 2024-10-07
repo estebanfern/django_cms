@@ -131,3 +131,46 @@ h6 {
     width: 100% !important;
 
 }
+
+.info span {
+    color: #4154f1 !important;
+    font-size: 14px;
+}
+
+.info span:hover {
+    color: #717ff5 !important;
+}
+
+.user-panel .image i {
+    color: #4154f1 !important;
+    font-size: 28px !important;  /* Cambia el tamaño del ícono (ajusta a tu necesidad) */
+    line-height: 1 !important;  /* Asegura que no haya espacio extra vertical alrededor del ícono */
+}
+
+.brand-link {
+    display: flex;  /* Utiliza flexbox para que los elementos internos se ajusten al contenedor */
+    align-items: center;  /* Alinea verticalmente el contenido dentro del enlace */
+}
+
+.brand-text {
+    flex: 1;  /* Permite que el texto ocupe todo el espacio disponible dentro del enlace */
+    overflow: hidden;  /* Oculta el texto que sobrepasa el tamaño del contenedor */
+    text-overflow: ellipsis;  /* Añade puntos suspensivos si el texto es demasiado largo */
+    white-space: nowrap;  /* Evita que el texto se divida en varias líneas */
+}
+
+/* Estilo para cambiar el tamaño de fuente del span con clase brand-text */
+.brand-text {
+    font-size: 13.3px !important;  
+}
+
+.info span {
+    display: block;  /* Asegura que el span se comporte como un bloque */
+    white-space: nowrap;  /* Evita que el texto se divida en varias líneas */
+    overflow: hidden;  /* Oculta el contenido que sobrepasa el tamaño del contenedor */
+    text-overflow: ellipsis;  /* Añade puntos suspensivos si el texto es demasiado largo */
+    max-width: 100%;  /* Asegura que el correo no sobresalga del contenedor */
+    font-size: 13.3px;  
+}
+
+

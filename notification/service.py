@@ -47,7 +47,7 @@ def changeRole(user, groups, added):
     :param user: Usuario al que se le han añadido o removido roles.
     :type user: User
     :param groups: Lista de grupos (roles) que se le han añadido o removido al usuario.
-    :type groups: list
+    :type groups: set
     :param added: Indica si los roles fueron añadidos (True) o removidos (False).
     :type added: bool
 
