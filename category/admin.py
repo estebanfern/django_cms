@@ -1,4 +1,6 @@
 from django.contrib import admin, messages
+from django.http import HttpResponseRedirect
+
 from .models import Category
 from .forms import CategoryForm
 from django.utils.translation import gettext_lazy as _
@@ -205,6 +207,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
         # Filtrar las categorías con contenidos asociados
         categories_with_content = queryset.filter(content__isnull=False).distinct()
+        categories_without_content = queryset.exclude(content__isnull=False).distinct()
 
         if categories_with_content.exists():
             # Mostrar mensaje de error para categorías con contenidos asociados
@@ -213,35 +216,46 @@ class CategoryAdmin(admin.ModelAdmin):
                 f"No se pueden eliminar las siguientes categorías porque tienen contenidos asociados: {', '.join([str(cat) for cat in categories_with_content])}.",
                 level=messages.ERROR
             )
-        else:
-            # Guardar los nombres antes de eliminar
-            nombres = ', '.join([str(cat) for cat in queryset])
-            # Continuar con la eliminación solo si no hay categorías con contenidos
-            super().delete_queryset(request, queryset)
-            # Mostrar mensaje de éxito después de eliminar
-            self.message_user(request, f"Categorías eliminadas con éxito: {nombres}.", level=messages.SUCCESS)
+        if categories_without_content.exists():
+            deleted_categories_name = ', '.join([str(cat) for cat in categories_without_content])
+            queryset.filter(id__in=[category.id for category in categories_without_content]).delete()
+            self.message_user(request, f"Categorías eliminadas con éxito: {deleted_categories_name}.", level=messages.SUCCESS)
 
-    # Sobrescribir delete_model para manejar la eliminación individual
-    def delete_model(self, request, obj):
+        # Redirigir de vuelta a la lista de categorias
+        return HttpResponseRedirect(reverse('admin:category_category_changelist'))
+
+    def delete_view (self, request, object_id, extra_context=None):
         """
-        Sobrescribe la eliminación individual de un modelo en el panel de administración.
-
-        Verifica si el objeto tiene contenidos asociados antes de permitir la eliminación.
-        Si hay contenidos asociados, muestra un mensaje de error.
-
-        :param request: Objeto de solicitud HTTP.
-        :type request: HttpRequest
-        :param obj: Objeto del modelo que se va a eliminar.
-        :type obj: Model
+        Sobrescribe la vista de eliminación para impedir eliminar categorias con contenidos asociados.
         """
+        category = self.get_object(request, object_id)
 
-        if obj.content_set.exists():
-            self.message_user(request, "No se puede eliminar esta categoría porque tiene contenidos asociados.",
-                              level=messages.ERROR)
-        else:
-            super().delete_model(request, obj)
-            # Mostrar mensaje de éxito personalizado
-            # self.message_user(request, f"La categoría “{obj}” fue eliminada con éxito.", level=messages.SUCCESS)
+        if category.content_set.exists():
+            messages.error(request, "No se puede eliminar esta categoría porque tiene contenidos asociados.")
+            return HttpResponseRedirect(reverse('admin:category_category_changelist'))
+
+        return super().delete_view(request, object_id, extra_context)
+
+    def response_delete(self, request, obj_display, obj_id):
+        """
+        Sobrescribe el método response_delete para mostrar el mensaje de éxito
+        después de que la categoria haya sido eliminado.
+        """
+        messages.success(request, f'La categoria "{obj_display}" se ha eliminado correctamente.')
+
+        return HttpResponseRedirect(reverse('admin:category_category_changelist'))
+
+    def response_add(self, request, obj, post_url_continue=None):
+        """
+        Sobrescribe el método response_add para mostrar un mensaje de éxito personalizado
+        después de crear un grupo.
+        """
+        # Mensaje de éxito personalizado
+        messages.success(request, f'La categoria "{obj.name}" se ha creado exitosamente.')
+
+        # Redirigir a la lista de categorias después de la eliminación
+        return HttpResponseRedirect(reverse('admin:category_category_changelist'))
+
 
     # Métodos para verificar permisos personalizados
     def has_module_permission(self, request):
