@@ -1,10 +1,11 @@
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin, UserAdmin
 from django.contrib.auth.models import Group
 from django.contrib import admin, messages
-from app import models
+from django.http import HttpResponseRedirect
+
+import notification.service
 from app.models import CustomUser
 from django.utils.translation import gettext_lazy as _
-from django.forms.models import fields_for_model
 from app.forms import CustomUserFormAdmin
 from django.urls import reverse
 
@@ -13,10 +14,9 @@ def bloquear_usuarios(self, request, queryset):
     """
     Bloquea los usuarios seleccionados en el panel de administración.
 
-    Parámetros:
-        self: Referencia al objeto actual.
-        request: Objeto de solicitud HTTP que contiene metadatos sobre la solicitud.
-        queryset: QuerySet que contiene los usuarios seleccionados para la acción.
+    :param self: Referencia al objeto actual.
+    :param request: Objeto de solicitud HTTP que contiene metadatos sobre la solicitud.
+    :param queryset: QuerySet que contiene los usuarios seleccionados para la acción.
 
     Acciones:
         - Itera sobre los usuarios seleccionados y desactiva su cuenta.
@@ -34,12 +34,9 @@ def desbloquear_usuarios(self, request, queryset):
     """
     Desbloquea los usuarios seleccionados en el panel de administración.
 
-    Parameters:
-        self: Referencia al objeto actual.
-
-        request: Objeto de solicitud HTTP que contiene metadatos sobre la solicitud.
-
-        queryset: QuerySet que contiene los usuarios seleccionados para la acción.
+    :param self: Referencia al objeto actual.
+    :param request: Objeto de solicitud HTTP que contiene metadatos sobre la solicitud.
+    :param queryset: QuerySet que contiene los usuarios seleccionados para la acción.
 
     Acciones:
         - Itera sobre los usuarios seleccionados y activa su cuenta.
@@ -50,6 +47,16 @@ def desbloquear_usuarios(self, request, queryset):
             usuario.is_active = True
             usuario.save()
             self.message_user(request, f'El usuario {usuario.name} ha sido desbloqueado.', messages.SUCCESS)
+
+
+def custom_title_filter_factory(filter_cls, title):
+    class Wrapper(filter_cls):
+        def __new__(cls, *args, **kwargs):
+            instance = filter_cls(*args, **kwargs)
+            instance.title = title
+            return instance
+
+    return Wrapper
 
 
 class CustomUserAdmin(UserAdmin):
@@ -70,10 +77,12 @@ class CustomUserAdmin(UserAdmin):
     form = CustomUserFormAdmin
 
     list_display = ('email', 'name', 'is_active')
-    list_filter = ('is_active', 'groups')
+    list_filter = (
+        'is_active',
+        ('groups', custom_title_filter_factory(admin.RelatedFieldListFilter, 'Roles')),
+    )
 
     fieldsets = (
-        (None, {'fields': ()}),
         (_('Informacion personal'), {'fields': ('name', 'email' ,'photo', 'about')}),
         (_('Roles y estado'), {'fields': ('is_active', 'groups')}),
         (_('Fechas relevantes'), {'fields': ('last_login', 'date_joined')}),
@@ -84,21 +93,62 @@ class CustomUserAdmin(UserAdmin):
 
     readonly_fields = ('name', 'email', 'photo', 'about', 'last_login', 'date_joined')
 
+    # Cambiar tanto el label como el help_text de "groups" (ahora "Roles")
+    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
+        if db_field.name == 'groups':
+            # Cambiar el label a "Roles"
+            kwargs['label'] = _('Roles')
+            # Cambiar el mensaje de ayuda
+            kwargs['help_text'] = _('Los roles a los que pertenece este usuario. '
+                                    'Un usuario tendrá todos los permisos asignados a cada uno de sus roles. ')
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+
+        """
+        Sobrescribe el método save_model para manejar la lógica de guardado del grupo y enviar notificaciones
+        cuando se cambian los roles de un usuario.
+
+        :param request: Objeto de solicitud HTTP.
+        :param obj: El objeto del usuario que se está guardando.
+        :param form: El formulario que contiene los datos del usuario.
+        :param change: Booleano que indica si el objeto está siendo cambiado.
+        """
+
+        if not 'groups' in form.changed_data:
+            super().save_model(request, obj, form, change)
+            return
+
+
+        old_groups = set(obj.groups.all())  # Grupos antes de guardar
+
+        super().save_model(request, obj, form, change)
+
+        new_groups = set(form.cleaned_data['groups'])  # Grupos seleccionados en el formulario
+
+        # Comparar usuarios y enviar notificaciones si se les ha asignado o quitado el grupo
+        added_groups = new_groups - old_groups
+        removed_groups = old_groups - new_groups
+
+        # Enviar notificación a los usuarios añadidos al grupo
+        if added_groups:
+            notification.service.changeRole(obj, added_groups, True)
+        if removed_groups:
+            notification.service.changeRole(obj, removed_groups, False)
+
     # Boton de Cancelar al modificar
     def change_view(self, request, object_id, form_url='', extra_context=None):
         """
-        Modifica la vista de cambio en el panel de administración para agregar un botón de cancelar. En el panel
-        de administración añade un botón de cancelar que redirige a la lista de objetos del mismo tipo.
+        Modifica la vista de cambio en el panel de administración para agregar un botón de cancelar.
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            object_id (str): ID del objeto que se va a modificar.
-            form_url (str, opcional): URL del formulario, si existe. Por defecto es una cadena vacía.
-            extra_context (dict, opcional): Contexto adicional para la plantilla. Por defecto es None.
+        En el panel de administración añade un botón de cancelar que redirige a la lista de objetos del mismo tipo.
 
-        Retorna:
-            HttpResponse: La respuesta HTTP renderizada para la vista de cambio del objeto,
-            incluyendo el contexto adicional con la URL de cancelación.
+        :param request: Objeto de solicitud HTTP.
+        :param object_id: ID del objeto que se va a modificar.
+        :param form_url: URL del formulario, si existe. Por defecto es una cadena vacía.
+        :param extra_context: Contexto adicional para la plantilla. Por defecto es None.
+        :return: La respuesta HTTP renderizada para la vista de cambio del objeto, incluyendo el contexto adicional con la URL de cancelación.
+        :rtype: HttpResponse
         """
 
         extra_context = extra_context or {}
@@ -110,89 +160,68 @@ class CustomUserAdmin(UserAdmin):
         """
         Verifica si el usuario actual tiene permisos para acceder al módulo de administración de usuarios.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-
-        Retorna:
-            bool: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :return: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :rtype: bool
         """
 
-        return request.user.is_staff and request.user.has_perm('app.view_users')
+        return request.user.has_perm('app.view_users')
 
     def has_view_permission(self, request, obj=None):
         """
         Verifica si el usuario actual tiene permisos para ver usuarios específicos.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-            obj: Objeto usuario específico (opcional).
-
-        Retorna:
-            bool: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :param obj: Objeto usuario específico (opcional).
+        :return: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :rtype: bool
         """
 
-        return request.user.is_staff and request.user.has_perm('app.view_users')
+        return request.user.has_perm('app.view_users')
 
     def has_add_permission(self, request):
         """
-        Verifica si el usuario actual tiene permisos para añadir nuevos usuarios.
+        Controla el permiso para añadir nuevos usuarios desde el panel de administración.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
+        Esta función siempre devuelve False, impidiendo que los usuarios puedan agregar
+        nuevos usuarios directamente desde el panel de administración.
 
-        Retorna:
-            bool: True si el usuario tiene permisos para añadir usuarios, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+
+        :return: False, indicando que no se permite la adición de nuevos usuarios.
+        :rtype: bool
         """
-
-        return request.user.is_staff and request.user.has_perm('app.create_users')
+        return False
 
     def has_change_permission(self, request, obj=None):
         """
         Verifica si el usuario actual tiene permisos para cambiar usuarios.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-            obj: Objeto usuario específico (opcional).
-
-        Retorna:
-            bool: True si el usuario tiene permisos para cambiar usuarios, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :param obj: Objeto usuario específico (opcional).
+        :return: True si el usuario tiene permisos para cambiar usuarios, de lo contrario False.
+        :rtype: bool
         """
 
-        return request.user.is_staff and request.user.has_perm('app.edit_roles')
+        return request.user.has_perm('app.edit_roles')
 
     def has_delete_permission(self, request, obj=None):
         """
-        Verifica si el usuario actual tiene permisos para eliminar usuarios.
+        Controla el permiso para eliminar usuarios desde el panel de administración.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-            obj: Objeto usuario específico (opcional).
+        Esta función siempre devuelve False, impidiendo que los usuarios puedan eliminar
+        usuarios directamente desde el panel de administración.
 
-        Retorna:
-            bool: True si el usuario tiene permisos para eliminar usuarios, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param obj: Objeto del modelo específico para verificar permisos (opcional).
+        :type obj: Model, opcional
+
+        :return: False, indicando que no se permite la eliminación de usuarios.
+        :rtype: bool
         """
-
-        return request.user.is_staff and request.user.has_perm('app.delete_users')
-
- # Restringir la edición solo a 'groups' e 'is_active'
-    def get_readonly_fields(self, request, obj=None):
-        """
-        Restringe la edición a solo los campos 'groups' e 'is_active', dejando los demás como solo lectura.
-
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-            obj: Objeto usuario específico (opcional).
-
-        Retorna:
-            list: Lista de campos de solo lectura.
-        """
-
-        if obj:
-            # Obtener todos los campos del modelo
-            all_fields = list(fields_for_model(self.model).keys())
-            editable_fields = {'groups', 'is_active'}
-            return [field for field in all_fields if field not in editable_fields]
-        return super().get_readonly_fields(request, obj)
+        return False
 
 
 class CustomGroupAdmin(BaseGroupAdmin):
@@ -210,46 +239,114 @@ class CustomGroupAdmin(BaseGroupAdmin):
         has_delete_permission: Verifica si el usuario tiene permisos para eliminar grupos.
     """
 
+    # Sobreescribir la acción de eliminar seleccionados
+    actions = ['delete_selected_roles']
+
     # Boton de Cancelar al modificar
     def change_view(self, request, object_id, form_url='', extra_context=None):
         """
         Modifica la vista de cambio en el panel de administración para agregar un botón de cancelar.
 
-        Esta función personaliza la vista de modificación de un objeto en el panel de administración,
-        añadiendo un botón de cancelar que redirige a la lista de objetos del mismo tipo.
-
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            object_id (str): ID del objeto que se va a modificar.
-            form_url (str, opcional): URL del formulario, si existe. Por defecto es una cadena vacía.
-            extra_context (dict, opcional): Contexto adicional para la plantilla. Por defecto es None.
-
-        Retorna:
-            HttpResponse: La respuesta HTTP renderizada para la vista de cambio del objeto,
-            incluyendo el contexto adicional con la URL de cancelación.
+        :param request: Objeto de solicitud HTTP.
+        :param object_id: ID del objeto que se va a modificar.
+        :param form_url: URL del formulario, si existe. Por defecto es una cadena vacía.
+        :param extra_context: Contexto adicional para la plantilla. Por defecto es None.
+        :return: La respuesta HTTP renderizada para la vista de cambio del objeto, incluyendo el contexto adicional con la URL de cancelación.
+        :rtype: HttpResponse
         """
+
         extra_context = extra_context or {}
         cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
         extra_context['cancel_url'] = cancel_url
         return super().change_view(request, object_id, form_url, extra_context=extra_context)
+
+    # Restricción para no eliminar roles con usuarios asociados
+    def delete_view(self, request, object_id, extra_context=None):
+        """
+        Sobrescribe la vista de eliminación para impedir eliminar roles con usuarios asociados.
+        """
+        rol = self.get_object(request, object_id)
+
+        # Verificar si hay usuarios asociados al grupo
+        if rol.user_set.exists():
+            # Si el rol tiene usuarios, mostrar un mensaje de error y redirigir al listado de roles
+            messages.error(request, 'No puedes eliminar el rol porque tiene usuarios asociados.')
+            return HttpResponseRedirect(reverse('admin:auth_group_changelist'))
+
+        # Si no hay usuarios asociados, permitir la eliminación
+        return super().delete_view(request, object_id, extra_context)
+
+    # Mensaje de éxito después de la eliminación
+    def response_delete(self, request, obj_display, obj_id):
+        """
+        Sobrescribe el método response_delete para mostrar el mensaje de éxito
+        después de que el rol haya sido eliminado.
+        """
+        # Mostrar el mensaje de éxito
+        messages.success(request, f'El rol "{obj_display}" se ha eliminado correctamente.')
+
+        # Redirigir a la lista de roles después de la eliminación
+        return HttpResponseRedirect(reverse('admin:auth_group_changelist'))
+
+    # Acción personalizada para eliminar roles seleccionados
+    @admin.action(description='Eliminar roles seleccionados')
+    def delete_selected_roles(self, request, queryset):
+        """
+        Acción para eliminar roles seleccionados. Si alguno de los roles tiene usuarios asociados,
+        se muestra un mensaje de error y no se elimina ese rol.
+        """
+        if not request.user.has_perm('app.delete_roles'):
+            self.message_user(request, "No tienes permiso para eliminar roles.", level=messages.ERROR)
+            return
+
+        roles_with_users = queryset.filter(user__isnull=False).distinct()
+        roles_without_users = queryset.filter(user__isnull=True).distinct()
+
+        if roles_with_users:
+            # Mostrar un mensaje de error si algunos roles tienen usuarios asociados
+            roles_names = ', '.join([group.name for group in roles_with_users])
+            messages.error(request,
+                           f'No puedes eliminar los siguientes roles porque tienen usuarios asociados: {roles_names}')
+
+        # Eliminar los grupos que no tienen usuarios asociados
+        if roles_without_users:
+            deleted_roles_names = ', '.join([group.name for group in roles_without_users])
+            queryset.filter(id__in=[rol.id for rol in roles_without_users]).delete()
+            self.message_user(request, f"Roles eliminadas con éxito: {deleted_roles_names}.", level=messages.SUCCESS)
+
+        # Redirigir de vuelta a la lista de roles
+        return HttpResponseRedirect(reverse('admin:auth_group_changelist'))
+
+    # Desactivar la acción predeterminada de eliminar
+    def get_actions(self, request):
+        """
+        Sobrescribe las acciones disponibles en el panel de administración.
+
+        Elimina la acción predeterminada de eliminar elementos seleccionados para personalizar la eliminación.
+
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :return: Diccionario con las acciones disponibles, excluyendo la acción de eliminación predeterminada.
+        :rtype: dict
+        """
+        actions = super().get_actions(request)
+        # Eliminar la acción predeterminada de eliminación
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
 
     # Boton de Cancelar al agregar
     def add_view(self, request, form_url='', extra_context=None):
         """
         Modifica la vista de adición en el panel de administración para agregar un botón de cancelar.
 
-        Esta función personaliza la vista de adición de un nuevo objeto en el panel de administración,
-        añadiendo un botón de cancelar que redirige a la lista de objetos del mismo tipo.
-
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP.
-            form_url (str, opcional): URL del formulario, si existe. Por defecto es una cadena vacía.
-            extra_context (dict, opcional): Contexto adicional para la plantilla. Por defecto es None.
-
-        Retorna:
-            HttpResponse: La respuesta HTTP renderizada para la vista de adición del objeto,
-            incluyendo el contexto adicional con la URL de cancelación.
+        :param request: Objeto de solicitud HTTP.
+        :param form_url: URL del formulario, si existe. Por defecto es una cadena vacía.
+        :param extra_context: Contexto adicional para la plantilla. Por defecto es None.
+        :return: La respuesta HTTP renderizada para la vista de adición del objeto, incluyendo el contexto adicional con la URL de cancelación.
+        :rtype: HttpResponse
         """
+
         extra_context = extra_context or {}
         cancel_url = reverse('admin:%s_%s_changelist' % (self.model._meta.app_label, self.model._meta.model_name))
         extra_context['cancel_url'] = cancel_url
@@ -259,11 +356,9 @@ class CustomGroupAdmin(BaseGroupAdmin):
         """
         Verifica si el usuario actual tiene permisos para acceder al módulo de administración de grupos.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-
-        Retorna:
-            bool: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :return: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :rtype: bool
         """
 
         return request.user.is_staff and request.user.has_perm('app.view_roles')
@@ -272,12 +367,10 @@ class CustomGroupAdmin(BaseGroupAdmin):
         """
         Verifica si el usuario actual tiene permisos para ver grupos específicos.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-            obj: Objeto grupo específico (opcional).
-
-        Retorna:
-            bool: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :param obj: Objeto grupo específico (opcional).
+        :return: True si el usuario tiene permisos de visualización, de lo contrario False.
+        :rtype: bool
         """
 
         return request.user.is_staff and request.user.has_perm('app.view_roles')
@@ -286,11 +379,9 @@ class CustomGroupAdmin(BaseGroupAdmin):
         """
         Verifica si el usuario actual tiene permisos para añadir nuevos grupos.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-
-        Retorna:
-            bool: True si el usuario tiene permisos para añadir grupos, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :return: True si el usuario tiene permisos para añadir grupos, de lo contrario False.
+        :rtype: bool
         """
 
         return request.user.is_staff and request.user.has_perm('app.create_roles')
@@ -299,12 +390,10 @@ class CustomGroupAdmin(BaseGroupAdmin):
         """
         Verifica si el usuario actual tiene permisos para cambiar grupos.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-            obj: Objeto grupo específico (opcional).
-
-        Retorna:
-            bool: True si el usuario tiene permisos para cambiar grupos, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :param obj: Objeto grupo específico (opcional).
+        :return: True si el usuario tiene permisos para cambiar grupos, de lo contrario False.
+        :rtype: bool
         """
 
         return request.user.is_staff and request.user.has_perm('app.edit_roles')
@@ -313,14 +402,17 @@ class CustomGroupAdmin(BaseGroupAdmin):
         """
         Verifica si el usuario actual tiene permisos para eliminar grupos.
 
-        Parámetros:
-            request: Objeto de solicitud HTTP.
-            obj: Objeto grupo específico (opcional).
+        Verifica si las roles tienen usuarios asociados antes de permitir la eliminación.
 
-        Retorna:
-            bool: True si el usuario tiene permisos para eliminar grupos, de lo contrario False.
+        :param request: Objeto de solicitud HTTP.
+        :param obj: Objeto grupo específico (opcional).
+        :return: True si el usuario tiene permisos para eliminar roles y no hay usuarios asociados, de lo contrario False.
+        :rtype: bool
         """
-
+        if obj:
+            if obj.user_set.exists():
+                self.message_user(request, ("No se puede eliminar este rol porque tiene usuarios asociados."), level=messages.ERROR)
+                return False
         return request.user.is_staff and request.user.has_perm('app.delete_roles')
 
 # Desregistrar el modelo Group

@@ -1,9 +1,10 @@
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, get_object_or_404
+from django.utils import timezone
 from category.models import Category
 from content.models import Content
-from django.contrib import messages
+from suscription.models import Suscription
 
 
 # Create your views here.
@@ -12,27 +13,39 @@ def home_view(request):
     """
     Vista principal para mostrar contenidos publicados y activos.
 
-    Parámetros:
-        request (HttpRequest): La solicitud HTTP recibida.
+    :param request: La solicitud HTTP recibida.
+    :type request: HttpRequest
 
     Lógica:
         - Obtiene el filtro de categoría y de búsqueda desde los parámetros de la URL.
         - Filtra los contenidos activos y publicados, ordenándolos por fecha de publicación.
         - Si se especifica una categoría, filtra los contenidos por esa categoría.
         - Si se proporciona una consulta de búsqueda, filtra los contenidos por título o por nombre del autor.
-        - Pagina los resultados para mostrar un máximo de 10 contenidos por página.
+        - Si se selecciona la opción de favoritos, muestra solo los contenidos de las categorías a las que el usuario está suscrito.
+        - Configura la paginación para mostrar un máximo de 10 contenidos por página.
 
-    Retorna:
-        HttpResponse: Renderiza la plantilla 'inicio.html' con los contenidos filtrados y paginados.
+    :return: Renderiza la plantilla 'inicio.html' con los contenidos filtrados y paginados.
+    :rtype: HttpResponse
     """
+
     cat_query = request.GET.get('cat')
     category = None
     query = request.GET.get('query')
+    favs = request.GET.get('favs')
     # Filtra los contenidos activos y publicados, y los ordena por fecha de publicación
     contents = Content.objects.filter(
         is_active=True,
-        state=Content.StateChoices.publish
+        state=Content.StateChoices.publish,
+        date_published__lt=timezone.now()
     ).select_related('category', 'autor').order_by('-date_published')
+
+    if request.user.is_authenticated:
+        suscribed_categories = Suscription.objects.filter(user=request.user).values_list('category', flat=True)
+    else:
+        suscribed_categories = []
+
+    if favs:
+        contents = contents.filter(category_id__in=suscribed_categories)
 
     # Si se busco una categoria, verificar si el usuario está logueado en caso de que no sea categoria publica
     # si no está loguead, redirigirle al login con un mensaje

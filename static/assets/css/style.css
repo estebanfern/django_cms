@@ -1173,6 +1173,36 @@ h6 {
 }
 
 /*--------------------------------------------------------------
+# Rating
+--------------------------------------------------------------*/
+
+ .rating-stars {
+    display: inline-block;
+    font-size: 24px;
+    color: gold;
+  }
+ .avg-stars {
+    font-size: 15px;
+    color: gold;
+  }
+  .star-btn {
+    cursor: pointer;
+    margin: 0 5px; /* Asegura que las estrellas estén separadas y el cuadro sea amplio */
+  }
+  .star-btn:hover {
+    color: darkorange;
+  }
+
+/*--------------------------------------------------------------
+# Favorites
+--------------------------------------------------------------*/
+
+  .fav-heart{
+    font-size: 15px !important;
+    color: #FD1D1D;
+  }
+
+/*--------------------------------------------------------------
 # Error 404
 --------------------------------------------------------------*/
 .error-404 {

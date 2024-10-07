@@ -33,6 +33,13 @@
   <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
   {% endblock css %}
 
+  <script src="{% static 'assets/js/jquery-3.7.1.min.js' %}"></script>
+  <script src="{% static 'assets/js/bootbox.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/tinymce/tinymce.min.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
+  <script src="{% static 'assets/js/utils.js' %}"></script>
+
 </head>
 
 <body {% if not user.is_creator %} class="toggle-sidebar" {% endif %}>
@@ -67,25 +74,40 @@
       <ul class="d-flex align-items-center gap-4">
         <!-- Todas las categorias (elimina el filtro) -->
         <li class="nav-item">
-          <a class="nav-link d-flex align-items-center" href="#" onclick="deleteParam('/', 'cat'); return false;"">
+          <a class="nav-link d-flex align-items-center" href="#" onclick="deleteParam('/', 'cat', 'favs'); return false;"">
             <span>Todas las categorias</span>
           </a>
         </li>
 
+        <!-- Categorias favoritas (elimina el filtro) -->
+        {% if user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center" href="#" onclick="deleteParam(null, 'cat'); redirectWithParams(this, '/', 'favs', 'favs'); return false;"">
+            <span>Favoritas</span>
+          </a>
+        </li>
+        {% endif %}
+
         <!-- Publicas -->
         <li class="nav-item dropdown">
           <a class="nav-link d-flex align-items-center" href="#" data-bs-toggle="dropdown">
-            <span>Categorías Públicas</span>
+            <span>Públicas</span>
             <span class="d-none d-md-block dropdown-toggle ps-2"></span>
           </a>
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
             {% for cat in categories_publicas|slice:":5" %}
-            <a href="#" type="button" cat-value="{{cat.id}}" onclick="redirectWithParams(this, '/', 'cat'); return false;"">
+            <a href="#" type="button" cat-value="{{cat.id}}" onclick="deleteParam(null, 'favs'); redirectWithParams(this, '/', 'cat'); return false;"">
               <li class="notification-item">
                 <div>
-                  <h4>{{ cat.name }}</h4>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ cat.name }}</h4>
+                    {% if cat.id in user_suscriptions %}
+                      <i class="bi bi-heart-fill fav-heart"></i>
+                    {% endif %}
+                  </div>
                   <p>{{ cat.description }}</p>
                 </div>
+
               </li>
               <li>
             </a>
@@ -104,15 +126,20 @@
         <!-- Suscripción -->
         <li class="nav-item dropdown">
           <a class="nav-link d-flex align-items-center" href="#" data-bs-toggle="dropdown">
-            <span>Categorías de Suscripción</span>
+            <span>De Suscripción</span>
             <span class="d-none d-md-block dropdown-toggle ps-2"></span>
           </a>
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
             {% for cat in categories_suscriptores|slice:":5" %}
-            <a href="#" type="button" cat-value="{{cat.id}}" onclick="redirectWithParams(this, '/', 'cat'); return false;"">
+            <a href="#" type="button" cat-value="{{cat.id}}" onclick="deleteParam(null, 'favs'); redirectWithParams(this, '/', 'cat'); return false;"">
               <li class="notification-item">
                 <div>
-                  <h4>{{ cat.name }}</h4>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ cat.name }}</h4>
+                    {% if cat.id in user_suscriptions %}
+                      <i class="bi bi-heart-fill fav-heart"></i>
+                    {% endif %}
+                  </div>
                   <p>{{ cat.description }}</p>
                 </div>
               </li>
@@ -133,15 +160,20 @@
         <!-- Pago -->
         <li class="nav-item dropdown">
           <a class="nav-link d-flex align-items-center" href="#" data-bs-toggle="dropdown">
-            <span>Categorías de Pago</span>
+            <span>De Pago</span>
             <span class="d-none d-md-block dropdown-toggle ps-2"></span>
           </a>
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
             {% for cat in categories_pago|slice:":5" %}
-            <a href="#" type="button" cat-value="{{cat.id}}" onclick="redirectWithParams(this, '/', 'cat'); return false;"">
+            <a href="#" type="button" cat-value="{{cat.id}}" onclick="deleteParam(null, 'favs'); redirectWithParams(this, '/', 'cat'); return false;"">
               <li class="notification-item">
                 <div>
-                  <h4>{{ cat.name }}</h4>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ cat.name }}</h4>
+                    {% if cat.id in user_suscriptions %}
+                      <i class="bi bi-heart-fill fav-heart"></i>
+                    {% endif %}
+                  </div>
                   <p>{{ cat.description }}</p>
                 </div>
               </li>
@@ -287,19 +319,13 @@
 
   {% block js %}
   <!-- Vendor JS Files -->
-  <script src="{% static 'assets/js/jquery-3.7.1.min.js' %}"></script>
-  <script src="{% static 'assets/js/bootbox.min.js' %}"></script>
   <script src="{% static 'assets/vendor/apexcharts/apexcharts.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'assets/vendor/chart.js/chart.umd.js' %}"></script>
   <script src="{% static 'assets/vendor/echarts/echarts.min.js' %}"></script>
   <script src="{% static 'assets/vendor/quill/quill.js' %}"></script>
   <script src="{% static 'assets/vendor/simple-datatables/simple-datatables.js' %}"></script>
-  <script src="{% static 'assets/vendor/tinymce/tinymce.min.js' %}"></script>
   <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
   <!-- Template Main JS File -->
-  <script src="{% static 'assets/js/main.js' %}"></script>
-  <script src="{% static 'assets/js/utils.js' %}"></script>
   {% endblock js %}
 
   <script>

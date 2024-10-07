@@ -1,0 +1,39 @@
+
+<form id="reportForm" method="post" action="{% url 'report_post' content_id=post.id %}">
+    {% csrf_token %}
+    {% if user.is_authenticated %}
+      <!-- Ocultamos los labels y campos cuando el usuario está autenticado -->
+      <div class="d-none">
+        <p>
+          <label for="id_nombre">Nombre:</label>
+          {{ form.name }}
+        </p>
+        <p>
+          <label for="id_email">Email:</label>
+          {{ form.email }}
+        </p>
+      </div>
+    {% else %}
+      <!-- Mostramos los labels y campos si el usuario no está autenticado -->
+      <p>
+        <label for="id_nombre">Nombre:</label>
+        {{ form.name }}
+      </p>
+      <p>
+        <label for="id_email">Email:</label>
+        {{ form.email }}
+      </p>
+    {% endif %}
+    
+    <!-- Campos comunes que siempre se muestran -->
+    <p>
+      <label for="id_reason">Motivo del reporte:</label>
+      {{ form.reason }}
+    </p>
+    <p>
+      <label for="id_description">Descripción:</label>
+      {{ form.description }}
+    </p>
+
+
+</form>

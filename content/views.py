@@ -1,18 +1,29 @@
+from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse, Http404
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
-
+from rating.models import Rating
+from notification.tasks import notify_new_content_suscription
+from . import service
+from .forms import ReportForm
+from django.contrib.admin import site as admin_site
+import notification.service
 from category.models import Category
-from .models import Content
+from .models import Content, Report
 import json
 from django.contrib.auth.decorators import login_required
-from django.views.generic import CreateView, UpdateView, View
+from django.views.generic import CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from .forms import ContentForm
 from django.core.exceptions import PermissionDenied
 from simple_history.utils import update_change_reason
 from django.contrib import messages
+from django.urls import reverse
+
+
+from .service import validate_permission_kanban
+from .tasks import update_reactions
 
 
 @login_required
@@ -20,16 +31,11 @@ def kanban_board(request):
     """
     Muestra el tablero Kanban con los contenidos filtrados según los permisos del usuario.
 
-    Parámetros:
-        request (HttpRequest): La solicitud HTTP recibida.
+    :param request: La solicitud HTTP recibida.
+    :type request: HttpRequest
 
-    Lógica:
-        - Verifica si el usuario tiene permisos específicos para ver y manejar contenidos.
-        - Filtra y organiza los contenidos en diferentes estados ('Borrador', 'Edicion', etc.) según los permisos del usuario.
-        - Pasa los contenidos y los permisos al contexto de la plantilla para su visualización.
-
-    Retorna:
-        HttpResponse: Renderiza la vista 'kanban_board.html' con los contenidos y permisos correspondientes.
+    :return: Renderiza la vista 'kanban_board.html' con los contenidos y permisos correspondientes.
+    :rtype: HttpResponse
     """
     user = request.user
 
@@ -50,20 +56,20 @@ def kanban_board(request):
     }
 
     # Filtrar contenidos según los permisos del usuario y que estén activos
-    if user.has_perm('app.create_content'):
-        # Los autores ven solo sus contenidos activos en cualquier estado
-        contents['Borrador'] = Content.objects.filter(state='draft', autor=user, is_active=True)
-        contents['Edicion'] = Content.objects.filter(state='revision', autor=user, is_active=True)
-        contents['A publicar'] = Content.objects.filter(state='to_publish', autor=user, is_active=True)
-        contents['Publicado'] = Content.objects.filter(state='publish', autor=user, is_active=True)
-        contents['Inactivo'] = Content.objects.filter(state='inactive', autor=user, is_active=True)
-    elif user.has_perm('app.edit_content') or user.has_perm('app.publish_content') or user.has_perm('app.edit_is_active'):
+    if user.has_perm('app.edit_content') or user.has_perm('app.publish_content') or user.has_perm('app.edit_is_active'):
         # Los editores y publicadores ven todos los contenidos activos sin importar el autor
         contents['Borrador'] = Content.objects.filter(state='draft', is_active=True)
         contents['Edicion'] = Content.objects.filter(state='revision', is_active=True)
         contents['A publicar'] = Content.objects.filter(state='to_publish', is_active=True)
         contents['Publicado'] = Content.objects.filter(state='publish', is_active=True)
         contents['Inactivo'] = Content.objects.filter(state='inactive', is_active=True)
+    elif user.has_perm('app.create_content'):
+        # Los autores ven solo sus contenidos activos en cualquier estado
+        contents['Borrador'] = Content.objects.filter(state='draft', autor=user, is_active=True)
+        contents['Edicion'] = Content.objects.filter(state='revision', autor=user, is_active=True)
+        contents['A publicar'] = Content.objects.filter(state='to_publish', autor=user, is_active=True)
+        contents['Publicado'] = Content.objects.filter(state='publish', autor=user, is_active=True)
+        contents['Inactivo'] = Content.objects.filter(state='inactive', autor=user, is_active=True)
 
     # Pasar permisos al contexto de la plantilla
     context = {
@@ -83,19 +89,26 @@ def update_content_state(request, content_id):
     """
     API para actualizar el estado de un contenido específico basado en los permisos del usuario.
 
-    Parámetros:
-        request (HttpRequest): La solicitud HTTP recibida.
-        content_id (int): El ID del contenido cuyo estado se actualizará.
+    :param request: La solicitud HTTP recibida.
+    :type request: HttpRequest
+    :param content_id: El ID del contenido cuyo estado se actualizará.
+    :type content_id: int
 
-    Lógica:
-        - Verifica si el usuario tiene los permisos necesarios para actualizar el estado del contenido.
-        - Valida la solicitud para asegurarse de que el método es POST.
-        - Actualiza el estado del contenido según las reglas definidas para cada permiso.
-        - Registra la razón del cambio si se proporciona.
-
-    Retorna:
-        JsonResponse: Respuesta con el estado de la operación (éxito o error) y un mensaje informativo.
+    :return: Respuesta con el estado de la operación (éxito o error) y un mensaje informativo.
+    :rtype: JsonResponse
     """
+
+    if not request.method == 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Método no permitido.'}, status=405)
+
+    mappState = {
+        'draft': 'Borrador',
+        'revision': 'Edicion',
+        'to_publish': 'A publicar',
+        'publish': 'Publicado',
+        'inactive': 'Inactivo',
+    }
+
     user = request.user
 
     if not (
@@ -107,10 +120,7 @@ def update_content_state(request, content_id):
         raise PermissionDenied
 
     content = get_object_or_404(Content, id=content_id)
-
-    if not request.method == 'POST':
-        return JsonResponse({'status': 'error', 'message': 'Método no permitido.'}, status=405)
-
+    oldState = content.state
     data = json.loads(request.body)
     new_state = data.get('state')
     reason = data.get('reason')
@@ -120,69 +130,73 @@ def update_content_state(request, content_id):
         # No realizar la actualización ni registrar en el historial si el estado no cambia
         return JsonResponse({'status': 'no_change', 'message': 'El estado no ha cambiado, no se actualizará.'})
 
-    # Verificar los estados válidos según los permisos
-    if user.has_perm('app.create_content'):
-        # Permite mover de 'Borrador' a 'Edición', de 'Publicado' a 'Inactivo', viceversa, y al mismo estado
-        if content.autor == user:
-            if (
-                (content.state == 'draft' and new_state == 'revision') or
-                (content.state == 'publish' and new_state == 'inactive') or
-                (content.state == 'inactive' and new_state == 'publish' and timezone.now() < content.date_expire) or
-                (content.state == new_state)  # Permite mover al mismo estado
-            ):
-                if reason:
-                    content.state = new_state
-                    content.save()
-                    update_change_reason(content, reason)
-                else:
-                    Content.objects.filter(id=content.id).update(state=new_state)
-                return JsonResponse({'status': 'success'})
-            elif content.state == 'inactive' and new_state == 'publish' and timezone.now() >= content.date_expire:
-                return JsonResponse({'status': 'error', 'message': 'No se puede publicar un contenido expirado.'}, status=403)
-            # Restricción para pasar de 'Borrador' a 'Publicado' si la categoría no es moderada
-            elif content.state == 'draft' and new_state == 'publish':
-                if not content.category.is_moderated:
-                    if content.date_published is None or content.date_published < timezone.now():
-                        content.date_published = timezone.now()
-                    if reason:
-                        content.state = new_state
-                        content.save()
-                        update_change_reason(content, reason)
-                    else:
-                        Content.objects.filter(id=content.id).update(state=new_state)
-                    return JsonResponse({'status': 'success'})
-                else:
-                    return JsonResponse({'status': 'error',
-                                         'message': 'No se puede publicar un contenido de categoría moderada desde el estado de Borrador.'},
-                                        status=403)
+    # Verificar si el usuario tiene permisos para cambiar el estado
+    response = service.validate_permission_kanban(user, content, new_state, oldState)
+    if response['status'] == 'error':
+        return JsonResponse(response, status=403)
 
-    elif user.has_perm('app.edit_content'):
-        # Permite mover de 'Edición' a 'A publicar', a 'Borrador'  al mismo estado
-        if (content.state == 'revision' and new_state in ['draft', 'revision', 'to_publish']) or (content.state == new_state):
-            if reason:
-                content.state = new_state
-                content.save()
-                update_change_reason(content, reason)
-            else:
-                Content.objects.filter(id=content.id).update(state=new_state)
-            return JsonResponse({'status': 'success'})
+    # Verificar si el contenido está expirado
+    if new_state == 'publish' and oldState == 'inactive' and timezone.now() >= content.date_expire:
+        return JsonResponse({'status': 'error', 'message': 'No se puede publicar un contenido expirado.'}, status=403)
 
-    elif user.has_perm('app.publish_content'):
-        # Permite mover de 'A publicar' a 'Publicado', 'Revisión' y al mismo estado
-        if content.state == 'to_publish' and new_state in ['publish', 'revision', 'to_publish'] or (content.state == new_state):
-            if new_state == 'publish' and  content.state != 'publish':
-                if content.date_published is None or content.date_published < timezone.now():
-                    content.date_published = timezone.now()
-            if reason:
-                content.state = new_state
-                content.save()
-                update_change_reason(content, reason)
-            else:
-                Content.objects.filter(id=content.id).update(state=new_state)
-            return JsonResponse({'status': 'success'})
+    # Verificar si el  contenido no tiene fecha de publicacion o si la fecha de publicacion es menor a la actual
+    if new_state == 'publish' and oldState != 'inactive' and (content.date_published is None or content.date_published < timezone.now()):
+        content.date_published = timezone.now()
 
-    # Responder con un error si la acción no está permitida
-    return JsonResponse({'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}, status=403)
+    if not reason:
+        reason = f"Cambio de estado de {mappState[oldState]} a {mappState[new_state]}"
+
+    content.state = new_state
+    content.save()
+    update_change_reason(content, reason)
+
+    if new_state == 'publish':
+        if content.date_published <= timezone.now():
+            notify_new_content_suscription.delay(content_id) # Notificar a los suscriptores inmediatamente
+        else:
+            notify_new_content_suscription.apply_async((content_id,), eta=content.date_published) # Programar la notificación para la fecha de publicación
+
+    notification.service.changeState([content.autor.email], content, oldState)
+    return JsonResponse({'status': 'success'})
+
+# API para validar los permisos de cambio de estado en el kanban
+@csrf_exempt
+@login_required
+def validate_permission_kanban_api(request):
+    """
+    API para validar los permisos de cambio de estado en el tablero Kanban.
+
+    :param request: La solicitud HTTP recibida.
+    :type request: HttpRequest
+
+    :return: JsonResponse con el resultado de la validación.
+    :rtype: JsonResponse
+    """
+    if not request.method == 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Método no permitido.'}, status=405)
+
+    # Obtener los datos de la petición
+    user = request.user
+    data = json.loads(request.body)
+    content_id = data.get('content_id', None)
+    new_state = data.get('new_state', None)
+    old_state = data.get('old_state', None)
+
+    # Validar que los datos sean correctos
+    if not user or not content_id or not new_state or not old_state:
+        return JsonResponse({'status': 'error', 'message': 'Datos incorrectos.'}, status=400)
+
+    # Obtener el contenido
+    content = get_object_or_404(Content, id=content_id)
+
+    # Validar los permisos
+    validation_result = validate_permission_kanban(user=user, content=content, newState=new_state, oldState=old_state)
+
+    # validation_result en un JsonResponse
+    if validation_result['status'] == 'error':
+        return JsonResponse(validation_result, status=403)
+    return JsonResponse(validation_result, status=200)
+
 
 class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     """
@@ -199,17 +213,8 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         template_name (str): Nombre de la plantilla para la vista de creación.
         success_url (str): URL a redirigir tras la creación exitosa del contenido.
         permission_required (str): Permiso requerido para acceder a la vista.
-
-    Métodos:
-        get_form:
-            Elimina el campo 'change_reason' del formulario para que no se muestre durante la creación.
-
-        form_valid:
-            Verifica que la fecha de publicación no sea posterior a la fecha de expiración.
-            Si es válido, establece el autor, estado, y fecha de creación del contenido.
-            Guarda las relaciones Many-to-Many (tags) y registra la razón del cambio como 'Creación de contenido'.
-            Redirige a la URL de éxito tras la creación exitosa.
     """
+
     model = Content
     form_class = ContentForm
     template_name = 'content/content_form.html'
@@ -217,6 +222,14 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     permission_required = 'app.create_content'
 
     def get_form(self, form_class=None):
+        """
+        Obtiene el formulario para la creación de contenido.
+
+        :param form_class: Clase del formulario a obtener. Si no se proporciona, se utilizará la clase de formulario predeterminada.
+        :type form_class: class, opcional
+        :return: El formulario modificado, eliminando el campo 'change_reason' para que no se muestre.
+        :rtype: Form
+        """
 
         form = super().get_form(form_class)
         # Elimina el campo 'change_reason' para que no se muestre en el formulario de creación
@@ -224,6 +237,20 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         return form
 
     def form_valid(self, form):
+        """
+        Valida el formulario y guarda el contenido si es válido.
+
+        Lógica:
+            - Verifica que la fecha de publicación no sea posterior a la fecha de expiración.
+            - Guarda el contenido y sus relaciones M2M (tags).
+            - Establece la razón de cambio en el historial como 'Creación de contenido'.
+            - Redirige a la URL de éxito tras la creación exitosa del contenido.
+
+        :param form: Formulario con los datos del contenido.
+        :type form: ContentForm
+        :return: Redirige a la URL de éxito si la validación es correcta.
+        :rtype: HttpResponseRedirect
+        """
 
         # La fecha de publicacion no debe ser igual a la de expiracion
         date_published = form.cleaned_data.get('date_published')
@@ -250,6 +277,15 @@ class ContentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         return redirect(self.success_url)
         
     def form_invalid(self, form):
+        """
+        Maneja el caso en que el formulario no sea válido.
+
+        :param form: Formulario con los datos incorrectos.
+        :type form: ContentForm
+        :return: Renderiza la respuesta con el formulario inválido.
+        :rtype: HttpResponse
+        """
+
         return self.render_to_response(self.get_context_data(form=form))
 
 
@@ -266,15 +302,8 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
         form_class (ContentForm): Formulario asociado para la actualización de contenido.
         template_name (str): Nombre de la plantilla para la vista de actualización.
         success_url (str): URL a redirigir tras la actualización exitosa del contenido.
-        required_permissions (list): Lista de permisos requeridos para acceder a la vista.
-
-    Métodos:
-        dispatch: Verifica los permisos del usuario antes de permitir la actualización.
-        get_initial: Obtiene los datos iniciales para el formulario, considerando posibles datos históricos.
-        get_form: Elimina campos del formulario según el estado del contenido.
-        form_valid: Valida el formulario y actualiza el contenido, registrando la razón de los cambios.
-        form_invalid: Maneja la respuesta si el formulario es inválido.
     """
+
     model = Content
     form_class = ContentForm
     template_name = 'content/content_form.html'
@@ -454,51 +483,68 @@ def view_content(request, id):
     """
     Vista para mostrar el contenido detallado.
 
-    Acciones:
-        - Verifica si el contenido está activo; si no, levanta un error 404.
-        - Verifica si el usuario está autenticado para acceder a contenidos de categorías de suscripción o pago.
-        - Si el usuario no está registrado y el contenido no es de categoría pública, redirige al login con un mensaje de advertencia.
-        - Recupera el historial del contenido ordenado por fecha.
+    :param request: El objeto de la solicitud HTTP.
+    :type request: HttpRequest
+    :param id: ID del contenido a visualizar.
+    :type id: int
 
-    Parámetros:
-        request (HttpRequest): El objeto de la solicitud HTTP.
-        id (int): ID del contenido a visualizar.
-
-    Retorna:
-        HttpResponse: Renderiza la plantilla 'content/view.html' con el contenido y su historial.
+    :return: Renderiza la plantilla 'content/view.html' con el contenido y su historial.
+    :rtype: HttpResponse
     """
     content = get_object_or_404(Content, id=id)
     if not content.is_active:
         raise Http404
 
+    user = request.user
     # Verificar que si el usuario esta registrado y esta queriendo ver un contenido de categoria de suscripcion o pago
     # en caso de que no, redirigirle al login con un mensaje
     # TODO: verificar que el usuario este suscripto y al dia si es un contenido de categoria de pago
-    if not request.user.is_authenticated and not content.category.type == Category.TypeChoices.public:
+    if not user.is_authenticated and not content.category.type == Category.TypeChoices.public:
         messages.warning(request, 'Para poder acceder a contenidos de categorias de suscripción o pago debes estar registrado')
         return redirect('login')
 
+    if content.date_published > timezone.now() and not (user.has_perm('app.create_content') or user.has_perm('app.edit_content') or user.has_perm('app.publish_content') or user.has_perm('app.edit_is_active')):
+        raise Http404
+
     history = content.history.all().order_by('-history_date')
-    return render(request, 'content/view.html', {"content" : content, "history" : history})
+    # Obtener si el usuario ha dado like o dislike
+    reaction_status = 'none'
+    user_has_liked = content.likes.filter(id=request.user.id).exists() if request.user.is_authenticated else False
+    user_has_disliked = content.dislikes.filter(id=request.user.id).exists() if request.user.is_authenticated else False
+    if user_has_liked: reaction_status = 'liked'
+    elif user_has_disliked: reaction_status = 'disliked'
+
+    # Verificar si el usuario ya ha dado una calificación (rating) al contenido
+    user_rating = 0
+    if request.user.is_authenticated:
+        try:
+            user_rating = Rating.objects.get(user=request.user, content=content).rating
+        except Rating.DoesNotExist:
+            user_rating = 0  # Si no ha dado ninguna calificación, usar 0
+
+    # Pasar todos los datos necesarios al contexto
+    return render(request, 'content/view.html', {
+        "content": content,
+        "history": history,
+        "reaction_status": reaction_status,
+        "user_rating": user_rating,
+        "is_authenticated": request.user.is_authenticated,  # Para verificar en el frontend
+    })
 
 @login_required
 def view_version(request, content_id, history_id):
     """
     Vista para mostrar una versión específica de un contenido basado en su historial.
 
-    Acciones:
-        - Verifica si el usuario tiene permisos para ver la versión del contenido según su rol (autor, editor, publicador).
-        - Si el usuario no tiene los permisos necesarios, levanta un error de `PermissionDenied`.
-        - Recupera el historial específico del contenido usando el `history_id`.
-        - Si la versión del historial no existe o el contenido no está activo, levanta un error 404.
+    :param request: El objeto de la solicitud HTTP.
+    :type request: HttpRequest
+    :param content_id: ID del contenido.
+    :type content_id: int
+    :param history_id: ID del historial para la versión a visualizar.
+    :type history_id: int
 
-    Parámetros:
-        request (HttpRequest): El objeto de la solicitud HTTP.
-        content_id (int): ID del contenido.
-        history_id (int): ID del historial para la versión a visualizar.
-
-    Retorna:
-        HttpResponse: Renderiza la plantilla 'content/view_version.html' con el contenido y la versión del historial.
+    :return: Renderiza la plantilla 'content/view_version.html' con el contenido y la versión del historial.
+    :rtype: HttpResponse
     """
     user = request.user
     content = get_object_or_404(Content, id=content_id)
@@ -518,3 +564,181 @@ def view_version(request, content_id, history_id):
     if not history or not content.is_active:
         raise Http404
     return render(request, 'content/view_version.html', {"content" : content, "history" : history})
+
+
+def report_post(request, content_id):
+    """
+    Maneja la lógica para reportar un contenido.
+
+    :param request: La solicitud HTTP realizada por el usuario.
+    :type request: HttpRequest
+    :param content_id: El ID del contenido que se va a reportar.
+    :type content_id: int
+
+    :return: Una respuesta HTTP, que puede ser un JSON, una redirección, o un error 400.
+    :rtype: HttpResponse
+    """
+
+    post = get_object_or_404(Content, id=content_id)
+
+    if request.method == 'POST':
+        form = ReportForm(request.POST, user=request.user)
+        if form.is_valid():
+            report = form.save(commit=False)
+            report.content = post
+            if request.user.is_authenticated:
+                report.reported_by = request.user
+            report.save()
+
+        
+            messages.success(request, 'Contenido reportado exitosamente.')
+
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True})
+            else:
+                return HttpResponseRedirect(reverse('content_view', args=[post.id]))
+        else:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': form.errors})
+            else:
+                return HttpResponseBadRequest("No se permite acceso directo")
+    else:
+        form = ReportForm(user=request.user)
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return render(request, 'content/report_form_partial.html', {'form': form, 'post': post})
+        else:
+            return HttpResponseBadRequest("No se permite acceso directo")
+
+def like_content(request, content_id):
+    """
+    Gestiona la acción de 'me gusta' en un contenido por parte del usuario.
+
+    :param request: La solicitud HTTP realizada por el usuario.
+    :type request: HttpRequest
+    :param content_id: El ID del contenido que se va a marcar con 'me gusta'.
+    :type content_id: int
+
+    :return: Respuesta en JSON con el estado de la operación.
+    :rtype: JsonResponse
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Para poder reaccionar a contenidos debes estar registrado'}, status=403)
+
+    content = get_object_or_404(Content, id=content_id)
+
+    if content.likes.filter(id=request.user.id).exists():
+        content.likes.remove(request.user)
+        message = "Me gusta eliminado"
+        result = "deleted"
+    else:
+        content.likes.add(request.user)
+        content.dislikes.remove(request.user)
+        message = "Me gusta agregado"
+        result = "created"
+
+    update_reactions.delay(content.id)
+    return JsonResponse({
+        'status': 'success',
+        'message': message,
+        'result': result,
+    })
+
+def dislike_content(request, content_id):
+    """
+    Gestiona la acción de 'no me gusta' en un contenido por parte del usuario.
+
+    :param request: La solicitud HTTP realizada por el usuario.
+    :type request: HttpRequest
+    :param content_id: El ID del contenido que se va a marcar con 'no me gusta'.
+    :type content_id: int
+
+    :return: Respuesta en JSON con el estado de la operación.
+    :rtype: JsonResponse
+    """
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Para poder reaccionar a contenidos debes estar registrado'}, status=403)
+
+    content = get_object_or_404(Content, id=content_id)
+
+    if content.dislikes.filter(id=request.user.id).exists():
+        content.dislikes.remove(request.user)
+        message = "No me gusta eliminado"
+        result = "deleted"
+    else:
+        content.dislikes.add(request.user)
+        content.likes.remove(request.user)
+        message = "No me gusta agregado"
+        result = "created"
+
+    update_reactions.delay(content.id)
+    return JsonResponse({
+        'status': 'success',
+        'message': message,
+        'result': result,
+    })
+
+def report_detail(request, report_id):
+    """
+    Muestra los detalles de un reporte en una vista personalizada.
+
+    Parámetros:
+        request (HttpRequest): Objeto de solicitud HTTP.
+        report_id (int): ID del reporte cuyos detalles se van a visualizar.
+
+    Comportamiento:
+        - Obtiene el reporte utilizando el ID proporcionado o devuelve un error 404 si no existe.
+        - Obtiene las opciones de metadatos del modelo `Report` para usarlas en la plantilla.
+        - Renderiza la plantilla `report_detail.html` con el reporte y sus metadatos.
+
+    Retorna:
+        HttpResponse: La respuesta renderizada con los detalles del reporte.
+    """
+    user = request.user
+    if not (
+        user.has_perm('app.view_reports')
+    ):
+        raise PermissionDenied
+
+    report = get_object_or_404(Report, pk=report_id)
+    content = report.content
+    opts = content._meta
+    context = dict(
+        admin_site.each_context(request),  # Contexto del admin
+        report=report,
+        content=content,
+        opts=opts,
+    )
+    return TemplateResponse(request, 'admin/content/report/report_detail.html', context)
+
+def view_content_detail(request, content_id):
+    """
+    Muestra los detalles de un contenido en una vista personalizada.
+
+    Parámetros:
+        request (HttpRequest): Objeto de solicitud HTTP.
+        content_id (int): ID del contenido cuyos detalles se van a visualizar.
+
+    Comportamiento:
+        - Obtiene el contenido utilizando el ID proporcionado o devuelve un error 404 si no existe.
+        - Obtiene las opciones de metadatos del modelo `Content` para usarlas en la plantilla.
+        - Renderiza la plantilla `content_detail.html` con el contenido y sus metadatos.
+
+    Retorna:
+        HttpResponse: La respuesta renderizada con los detalles del contenido.
+    """
+    user = request.user
+    if not (
+        user.has_perm('app.view_content')
+    ):
+        raise PermissionDenied
+
+    content = get_object_or_404(Content, pk=content_id)
+    opts = content._meta
+    context = dict(
+        admin_site.each_context(request),  # Contexto del admin
+        content=content,
+        opts=opts,
+    )
+    return TemplateResponse(request, 'admin/content/content/content_detail.html', context)
+

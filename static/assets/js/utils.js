@@ -71,11 +71,18 @@ function redirectWithParams(element, url, param, value=null) {
     window.location.href = `${url}?${urlParams.toString()}`;
 }
 
-function deleteParam(url, param) {
+function deleteParam(url, ...params) {
     // Obtener los parámetros existentes de la URL actual
     const urlParams = new URLSearchParams(window.location.search);
     // Eliminar el parámetro
-    urlParams.delete(param);
-    // Redireccionar con los parámetros actualizados
-    window.location.href = `${url}?${urlParams.toString()}`;
+    params.forEach( param => {
+        urlParams.delete(param);    // Redireccionar con los parámetros actualizados
+    })
+
+    if (url !== null) {
+        window.location.href = `${url}?${urlParams.toString()}`;
+    } else {
+        const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+        history.replaceState(null, '', newUrl);
+    }
 }

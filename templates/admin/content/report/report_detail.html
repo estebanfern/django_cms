@@ -1,0 +1,41 @@
+{% extends 'admin/base_site.html' %}
+{% load i18n admin_urls %}
+
+{% block title %}
+    Detalle del Reporte | Sitio de administración de Django
+{% endblock %}
+
+{% block content_title %}
+    {{ opts.verbose_name_plural }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin:index' %}">Inicio</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a></li>
+        <li class="breadcrumb-item">
+            <a href="{% url opts|admin_urlname:'changelist' %}" class="active">{{ opts.verbose_name_plural|capfirst }}</a>
+        </li>
+        <li class="breadcrumb-item active">{{ object|default:content }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+<div class="container col-12">
+    <h4 class="mt-4 mb-4">Detalles del Reporte</h4>
+    <div class="card">
+        <div class="card-body">
+            <p><strong>Contenido:</strong> {{ report.content.title }}</p>
+            <p><strong>Reportado por:</strong> {{ report.name }} ({{ report.email }})</p>
+            <p><strong>Motivo:</strong> {{ report.get_reason_display }}</p>
+            <p><strong>Descripción:</strong> {{ report.description }}</p>
+            <p><strong>Fecha de creación:</strong> {{ report.created_at }}</p>
+        </div>
+        <div class="card-footer text-right">
+            <a href="{% url 'admin:content_content_change' report.content.id %}" class="btn btn-primary">
+                Volver al contenido
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

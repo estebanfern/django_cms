@@ -27,12 +27,17 @@
 {% endif %}
 <div class="pagetitle">
   <h1>Contenido</h1>
-  <nav>
-    <ol class="breadcrumb">
+  <nav class="d-flex justify-content-between align-items-center">
+    <ol class="breadcrumb mb-0 mx-0 justify-content-center">
       <li class="breadcrumb-item"><a href="/">Inicio</a></li>
       <!-- <li class="breadcrumb-item">Anterior</li> -->
       <li class="breadcrumb-item active">Contenido</li>
     </ol>
+    <div>
+      <button type="button" id="reportBtn" class="btn btn-outline-danger" data-content-id="{{ content.id }}">
+        <i class="bi bi-exclamation-circle-fill"></i> Reportar contenido
+      </button>
+    </div>
   </nav>
 </div><!-- End Page Title -->
 <section class="section">
@@ -67,12 +72,74 @@
               <span class="badge text-bg-secondary">{{ tag }}</span>
               {% endfor %}
             </div>
+            <div class="col-12 text-center mt-4">
+              {% if reaction_status == 'liked' %}
+                <button id="like-btn" class="btn btn-outline-primary" data-content-id="{{ content.id }}" count="{{ content.likes_count }}">
+                  <i class="bi bi-hand-thumbs-up-fill"></i>
+                  Me gusta
+                  ({{ content.likes_count }})
+                </button>
+              {% else %}
+                <button id="like-btn" class="btn btn-outline-secondary" data-content-id="{{ content.id }}" count="{{ content.likes_count }}">
+                  <i class="bi bi-hand-thumbs-up"></i>
+                  Me gusta
+                  ({{ content.likes_count }})
+                </button>
+              {% endif %}
+                
+              {% if reaction_status == 'disliked' %}
+                <button id="dislike-btn" class="btn btn-outline-danger" data-content-id="{{ content.id }}" count="{{ content.dislikes_count }}">
+                  <i class="bi bi-hand-thumbs-down-fill"></i>
+                  No me gusta
+                  ({{ content.dislikes_count }})
+                </button>
+              {% else %}
+                <button id="dislike-btn" class="btn btn-outline-secondary" data-content-id="{{ content.id }}" count="{{ content.dislikes_count }}">
+                  <i class="bi bi-hand-thumbs-down"></i>
+                  No me gusta
+                  ({{ content.dislikes_count }})
+                </button>
+              {% endif %}
+            </div>
+          
+            <div class="col-12 text-center mt-4">
+              <form id="rating-form" data-content-id="{{ content.id }}">
+                <div class="rating-stars">
+                  {% for star in "12345" %}
+                    <i class="bi {% if star|add:'0' <= user_rating|default:0 %}bi-star-fill{% else %}bi-star{% endif %} star-btn" data-value="{{ star }}"></i>
+                  {% endfor %}
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </div>
 
     </div>
-  
+    
+    <div class="col-lg-12">
+      <div class="card">
+        <div class="card-header">
+          Comentarios
+        </div>
+        <div class="card-body">
+          <div id="disqus_thread"></div>
+          <script>
+              var disqus_config = function () {
+                  this.page.url = '{{ request.build_absolute_uri }}';  // URL CANÓNICA
+                  this.page.identifier = '{{ content.id }}';           // IDENTIFICADOR ÚNICO DE LA PÁGINA
+              };
+
+              (function() {  // Cargar Disqus
+                  var d = document, s = d.createElement('script');
+                  s.src = 'https://is2equipo10-me.disqus.com/embed.js';
+                  s.setAttribute('data-timestamp', +new Date());
+                  (d.head || d.body).appendChild(s);
+              })();
+          </script>
+        </div>
+      </div>
+    </div>
 
     <!-- Historial del contenido -->
     {% if perms.app.create_content and user.id == content.autor_id or perms.app.edit_content or perms.app.publish_content or perms.app.edit_is_active  %}
@@ -137,4 +204,277 @@
 
   </div>
 </section>
+
+
+
+
+<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reportModalLabel">Reportar Contenido</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="modalFormContainer">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="submit" form="reportForm" class="btn btn-primary">Enviar reporte</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reportes -->
+<script>
+    $(document).ready(function() {
+       
+        $('#reportBtn').on('click', function(e) {
+            e.preventDefault();
+            var contentId = $(this).data('content-id');
+           
+            $.ajax({
+                url: "/report/" + contentId + "/",
+                type: "GET",
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    $('#modalFormContainer').html(response);  
+                    var reportModal = new bootstrap.Modal(document.getElementById('reportModal')); 
+                    reportModal.show();  
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error en la solicitud AJAX:", error);
+                }
+            });
+        });
+
+        
+        $(document).on('submit', '#reportForm', function(e) {
+            e.preventDefault();
+            var form = $(this);
+            $.ajax({
+                url: form.attr('action'),
+                type: "POST",
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                data: form.serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        var reportModal = bootstrap.Modal.getInstance(document.getElementById('reportModal'));
+                        reportModal.hide();  
+                        location.reload();
+                    } else {
+                       
+                        $('.form-error').remove();
+
+                       
+                        $.each(response.errors, function(field, errors) {
+                            var fieldElement = $('[name="' + field + '"]');
+                            if (fieldElement.length > 0) {
+                                fieldElement.after('<div class="form-error text-danger">' + errors.join(', ') + '</div>');
+                            }
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error en la solicitud AJAX:", error);
+                }
+            });
+        });
+    });
+</script>
+
+
+<!-- Reacciones -->
+<script>
+
+  let STATUS = '{{ reaction_status|default:"none" |lower }}';
+
+  function updateCount(btn, sign) {
+    let count = parseInt(btn.attr('count'));
+    if (sign === '+') {
+      count += 1;
+    } else if (sign === '-') {
+      count -= 1;
+    }
+    btn.attr('count', count);
+    return count;
+  }
+
+  $(document).ready(function() {
+    // Evento para el botón de Me gusta
+    let likeBtn = $('#like-btn')
+    let dislikeBtn = $('#dislike-btn')
+
+    let BTN_CONST = {
+      like: {
+        active: {
+          class: 'btn btn-outline-primary',
+          body: (count) => `<i class="bi bi-hand-thumbs-up-fill"></i> Me gusta (${count})`
+        },
+        inactive: {
+          class: 'btn btn-outline-secondary',
+          body: (count) => `<i class="bi bi-hand-thumbs-up"></i> Me gusta (${count})`
+        },
+      },
+      dislike: {
+        active: {
+          class: 'btn btn-outline-danger',
+          body: (count) => `<i class="bi bi-hand-thumbs-down-fill"></i> No me gusta (${count})`
+        },
+        inactive: {
+          class: 'btn btn-outline-secondary',
+          body: (count) => `<i class="bi bi-hand-thumbs-down"></i> No me gusta (${count})`
+        },
+      }
+    }
+      
+    likeBtn.on('click', function() {
+        
+      var contentId = $(this).data('content-id');
+      $.ajax({
+        url: '/like/' + contentId + '/',
+        type: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}'  // Agrega el token CSRF para seguridad
+        },
+        success: function(response) {
+          if (response.result === 'created') {
+            likeBtn.html(BTN_CONST.like.active.body(updateCount(likeBtn, '+')));
+            likeBtn.attr('class', BTN_CONST.like.active.class)
+            if (STATUS === 'disliked') {
+              dislikeBtn.html(BTN_CONST.dislike.inactive.body(updateCount(dislikeBtn, '-')));
+            } else {
+              dislikeBtn.html(BTN_CONST.dislike.inactive.body(updateCount(dislikeBtn)));
+            }
+            dislikeBtn.attr('class', BTN_CONST.dislike.inactive.class)
+            dislikeBtn.attr('class', BTN_CONST.dislike.inactive.class) 
+            STATUS = 'liked';
+          } else {
+            likeBtn.html(BTN_CONST.like.inactive.body(updateCount(likeBtn, '-')));
+            likeBtn.attr('class', BTN_CONST.like.inactive.class)
+            STATUS = 'none';
+          }
+        },
+        error: function(xhr, status, error) {
+          if (xhr.status === 403) {
+            modal.warning({
+              message: xhr.responseJSON.message,
+            });
+          }
+          console.error('Error en la solicitud AJAX:', error);
+        }
+      });
+
+    });
+
+    // Evento para el botón de No me gusta
+    dislikeBtn.on('click', function() {
+        
+      var contentId = $(this).data('content-id');
+      $.ajax({
+        url: '/dislike/' + contentId + '/',
+        type: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}'  // Agrega el token CSRF para seguridad
+        },
+        success: function(response) {
+          if (response.result === 'created') {
+            dislikeBtn.html(BTN_CONST.dislike.active.body(updateCount(dislikeBtn, '+')));
+            dislikeBtn.attr('class', BTN_CONST.dislike.active.class)
+            if (STATUS === 'liked') {
+              likeBtn.html(BTN_CONST.like.inactive.body(updateCount(likeBtn, '-')));
+            } else {
+              likeBtn.html(BTN_CONST.like.inactive.body(updateCount(likeBtn)));
+            }
+            likeBtn.attr('class', BTN_CONST.like.inactive.class)
+            STATUS = 'disliked';
+          } else {
+            dislikeBtn.html(BTN_CONST.dislike.inactive.body(updateCount(dislikeBtn, '-')));
+            dislikeBtn.attr('class', BTN_CONST.dislike.inactive.class)
+            STATUS = 'none';
+          }
+        },
+        error: function(xhr, status, error) {
+          if (xhr.status === 403) {
+            modal.warning({
+              message: xhr.responseJSON.message,
+            });
+          }
+          console.error('Error en la solicitud AJAX:', error);
+        }
+      });
+
+    });
+  });
+</script>
+
+<!-- Rating -->    
+<script>
+  $(document).ready(function() {
+    // Manejar el clic en las estrellas
+    $('.star-btn').on('click', function() {
+
+      var contentId = $('#rating-form').data('content-id');  // Obtener el ID del contenido
+      var rating = parseInt($(this).data('value'));  // Obtener el valor de la estrella seleccionada y asegurarse de que sea un entero
+
+      // Enviar la calificación vía AJAX
+      $.ajax({
+        url: '/rate/' + contentId + '/',  // URL que envía la calificación al servidor
+        type: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',  // Asegurarse de agregar el token CSRF para seguridad
+        },
+        data: {
+          'rating': rating  // Calificación seleccionada
+        },
+        success: function(response) {
+          if (response.status === 'success' && response.rating !== undefined) {
+            // Actualizar la visualización de las estrellas según la calificación
+            $('.star-btn').each(function(index) {
+              if (index < rating) {
+                $(this).removeClass('bi-star').addClass('bi-star-fill');
+              } else {
+                $(this).removeClass('bi-star-fill').addClass('bi-star');
+              }
+            });
+          } else {
+            console.error("Error en la respuesta del servidor: " + response.message);
+          }
+        },
+        error: function(xhr, status, error) {
+          if (xhr.status === 403) {
+            modal.warning({
+              message: xhr.responseJSON.message,
+            });
+          }
+          console.error("Error en la solicitud AJAX:", error);
+        }
+      });
+    });
+
+    // Asegurar que las estrellas se muestren correctamente al cargar la página
+    var userRating = parseInt('{{ user_rating|default:0 }}');  // Valor de la calificación actual del usuario
+    $('.star-btn').each(function(index) {
+      if (index < userRating) {
+        $(this).removeClass('bi-star').addClass('bi-star-fill');
+      } else {
+        $(this).removeClass('bi-star-fill').addClass('bi-star');
+      }
+    });
+
+  });
+</script>
+
+
+
+
+
+    
+    
 {% endblock content %}

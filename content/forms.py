@@ -1,6 +1,7 @@
 import datetime
 from django import forms
 from .models import Content
+from .models import Report
 
 class ContentForm(forms.ModelForm):
     """
@@ -77,9 +78,9 @@ class ContentForm(forms.ModelForm):
             *args: Argumentos posicionales.
             **kwargs: Argumentos nombrados.
 
-        Retorna:
-            None
+        :return: None
         """
+
         super(ContentForm, self).__init__(*args, **kwargs)
             # Verifica si el formulario está en modo de edición o creación
         if self.instance.pk:
@@ -120,3 +121,67 @@ class ContentForm(forms.ModelForm):
             # En modo de creación
             # Se hace algo?
             self.fields['tags'].widget.attrs['class'] = 'form-control'
+
+
+
+class ReportForm(forms.ModelForm):
+    """
+    Formulario para crear un reporte de contenido.
+
+    Campos:
+        name (CharField): Nombre de quien reporta. Oculto y completado automáticamente si el usuario está autenticado.
+        email (EmailField): Correo electrónico de quien reporta. Oculto y completado automáticamente si el usuario está autenticado.
+        reason (ChoiceField): Motivo del reporte, con una lista desplegable de opciones.
+        description (TextField): Descripción opcional del motivo del reporte.
+
+    Widgets:
+        Se personalizan los widgets para agregar clases CSS a los campos, facilitando la integración con un framework de frontend.
+
+    Métodos:
+        __init__(user): Inicializa el formulario, completando los campos de nombre y email si el usuario está autenticado.
+                        Si el usuario no está autenticado, los campos de nombre y correo son obligatorios.
+                        Además, oculta los campos de nombre y email para usuarios autenticados.
+    """
+
+    class Meta:
+        model = Report
+        fields = ['name', 'email', 'reason', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'reason': forms.Select(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control'}),
+        }
+        email = forms.EmailField(
+        error_messages={'invalid': 'Introduzca una dirección de correo electrónico válida.'}
+    )
+
+    def __init__(self, *args, **kwargs):
+        """
+        Inicializa el formulario, completando los campos de nombre y email si el usuario está autenticado.
+
+        Si el usuario no está autenticado, los campos de nombre y correo son obligatorios. Además, se ocultan los campos de nombre y email para usuarios autenticados.
+
+        Parámetros:
+            *args: Argumentos posicionales.
+            **kwargs: Argumentos nombrados, incluyendo la opción de pasar un usuario autenticado.
+
+        :return: None
+        """
+
+        user = kwargs.pop('user', None)  
+        super(ReportForm, self).__init__(*args, **kwargs)
+
+        self.fields['reason'].choices = [('', 'Seleccione un motivo')] + list(self.fields['reason'].choices[1:])
+
+        # Si el usuario está autenticado, llenamos automáticamente nombre y email
+        if user and user.is_authenticated:
+            self.fields['name'].initial = user.name
+            self.fields['email'].initial = user.email
+            self.fields['name'].widget.attrs['hidden'] = 'hidden'  
+            self.fields['email'].widget.attrs['hidden'] = 'hidden'  
+        else:
+            # Si es un visitante, hacemos que estos campos sean obligatorios
+            self.fields['name'].required = True
+            self.fields['email'].required = True
+

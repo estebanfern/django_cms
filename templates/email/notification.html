@@ -437,14 +437,13 @@
   <![endif]-->
   </head>
   <body>
-    <span class="preheader">Usa este link para recuperar tu contraseña. Este link solo es válido por 24hs.</span>
     <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" role="presentation">
       <tr>
         <td align="center">
           <table class="email-content" width="100%" cellpadding="0" cellspacing="0" role="presentation">
             <tr>
               <td class="email-masthead">
-                <a href="https://example.com" class="f-fallback email-masthead_name">
+                <a href="https://is2equipo10.me/" class="f-fallback email-masthead_name">
                 CMS - IS2 - Equipo 10
               </a>
               </td>
@@ -458,7 +457,7 @@
                     <td class="content-cell">
                       <div class="f-fallback">
                         <h1>Te saluda el equipo de CMS,</h1>
-                        <p>Recientemente, solicitaste recuperar tu contraseña de CMS. Usa el botón de abajo para restaurarla. <strong>Esta recuperación de contraseña solo es válida por 24hs</strong></p>
+                        <p>{{ message }}</strong></p>
                         <!-- Action -->
                         <table class="body-action" align="center" width="100%" cellpadding="0" cellspacing="0" role="presentation">
                           <tr>
@@ -468,27 +467,14 @@
                               <table width="100%" border="0" cellspacing="0" cellpadding="0" role="presentation">
                                 <tr>
                                   <td align="center">
-                                    <a href="{{ reset_link }}" class="f-fallback button button--green" target="_blank">Recupera tu contraseña</a>
+                                    <a href="https://is2equipo10.me/" class="f-fallback button button--green" style="color: white !important;" target="_blank">Ir a la página</a>
                                   </td>
                                 </tr>
                               </table>
                             </td>
                           </tr>
                         </table>
-                        <p>
-                            Por tu seguridad, no compartas este correo con nadie, ningún operador de CMS te pedirá que compartas algún código, link o contraseña.
-                        </p>
-                        <p>Gracias,
-                          <br>El equipo de CMS</p>
-                        <!-- Sub copy -->
-                        <table class="body-sub" role="presentation">
-                          <tr>
-                            <td>
-                              <p class="f-fallback sub">Si tienes problemas con el botón, copia y pega la URL de abajo en tu navegador.</p>
-                              <p class="f-fallback sub">{{ reset_link }}</p>
-                            </td>
-                          </tr>
-                        </table>
+                        <p><br>El equipo de CMS</p>
                       </div>
                     </td>
                   </tr>
@@ -501,9 +487,8 @@
                   <tr>
                     <td class="content-cell" align="center">
                       <p class="f-fallback sub align-center">
-                        [Company Name, LLC]
-                        <br>1234 Street Rd.
-                        <br>Suite 1234
+                        CMS
+                        <br>Designed by Esteban, Fabrizio, Roberto y Abigail
                       </p>
                     </td>
                   </tr>

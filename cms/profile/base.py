@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 from decouple import config
+from pygments.lexer import default
 
 from category.context_processors import categories
 
@@ -47,6 +48,10 @@ INSTALLED_APPS = [
     'ckeditor',
     'ckeditor_uploader', 
     'taggit',
+    'notification',
+    'rating',
+    'django_celery_beat',
+    'suscription',
 ]
 
 MIDDLEWARE = [
@@ -74,6 +79,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'category.context_processors.categories',
+                'suscription.context_processors.suscriptions',
             ],
         },
     },
@@ -233,3 +239,17 @@ CKEDITOR_CONFIGS = {
         'filebrowserBrowseUrl': '/ckeditor/browse/',
     },
 }
+
+# Configuración de Celery con Redis como broker
+
+CELERY_BROKER_URL = f'redis://{config("REDIS_HOST", default="localhost:6379")}/0'
+
+# Opciones de Celery
+CELERY_ACCEPT_CONTENT=['application/json']
+CELERY_RESULT_SERIALIZER='json'
+CELERY_TASK_SERIALIZER='json'
+CELERY_TIMEZONE='America/Asuncion'
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+# CELERY BEAT SCHEDULER
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'

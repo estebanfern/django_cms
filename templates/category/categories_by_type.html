@@ -56,9 +56,22 @@
                 <div class="card-header card-title text-center">{{ category.name  }}</div>
                 <div class="card-body mt-3">
                   {{ category.description }}
+                  <div class="text-center mt-3">
+                    <a href="/?cat={{category.id}}">Ver los contenidos de esta categoria</a>
+                  </div>
                 </div>
                 <div class="card-footer text-center">
-                  <a href="/?cat={{category.id}}">Ver los contenidos de esta categoria</a>
+                  {% if category.id in user_suscriptions  %}
+                  <button class="btn btn-sm btn-light unsuscribe-btn" category-id="{{ category.id }}">
+                    <i class="bi bi-heart-fill"></i>
+                    Suscrito
+                  </button>
+                  {% else %}
+                  <button class="btn btn-sm btn-light suscribe-btn" category-id="{{ category.id }}">
+                    <i class="bi bi-heart"></i>
+                    Suscribirse
+                  </button>
+                  {% endif %}
                 </div>
               </div>
             </div>
@@ -94,4 +107,80 @@
 
     </div>
 </section>
+<script>
+
+  const SUSCRIPTION_BTN = {
+    suscribed : {
+      btnClass : `btn btn-sm btn-light unsuscribe-btn`,
+      btnChildren : `<i class="bi bi-heart-fill"></i> Suscrito`
+    },
+    unsuscribed : {
+      btnClass : `btn btn-sm btn-light suscribe-btn`,
+      btnChildren : `<i class="bi bi-heart"></i> Suscribirse`
+    }
+  }
+
+  $(document).on('click', '.suscribe-btn', function() {
+    btn = $(this);
+    var category_id = parseInt(btn.attr('category-id'));
+
+    $.ajax({
+      url: `/category/${category_id}/suscribe/`,
+      type: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      success: function(response) {
+        if (response.status === 'success') {
+          modal.info({message: response.message});
+          btn.attr('class', SUSCRIPTION_BTN.suscribed.btnClass);
+          btn.html(SUSCRIPTION_BTN.suscribed.btnChildren);
+        } else {
+          console.error("Error en la respuesta del servidor: " + response.message);
+        }
+      },
+      error: function(xhr, status, error) {
+        if (xhr.status === 403) {
+          modal.warning({
+            message: xhr.responseJSON.message,
+          });
+        }
+        console.error("Error en la solicitud AJAX:", error);
+        console.log(xhr);
+      }
+    });
+  });
+
+  $(document).on('click', '.unsuscribe-btn', function() {
+    btn = $(this);
+    var category_id = parseInt(btn.attr('category-id'));
+
+    $.ajax({
+      url: `/category/${category_id}/unsuscribe/`,
+      type: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      success: function(response) {
+        if (response.status === 'success') {
+          modal.info({message: response.message});
+          btn.attr('class', SUSCRIPTION_BTN.unsuscribed.btnClass);
+          btn.html(SUSCRIPTION_BTN.unsuscribed.btnChildren);
+        } else {
+          console.error("Error en la respuesta del servidor: " + response.message);
+        }
+      },
+      error: function(xhr, status, error) {
+        if (xhr.status === 403) {
+          modal.warning({
+            message: xhr.responseJSON.message,
+          });
+        }
+        console.error("Error en la solicitud AJAX:", error);
+        console.log(xhr);
+      }
+    });
+  });
+
+</script>
 {% endblock content %}

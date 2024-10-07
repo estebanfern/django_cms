@@ -51,19 +51,21 @@
                 <h4 class="text-center">{{ state }}</h4>
                 <div class="kanban-items p-2 border rounded" data-state="{{ state }}">
                   {% for item in items %}
-                    <div class="kanban-item bg-light p-3 mb-3 rounded shadow-sm" data-id="{{ item.id }}" style="cursor: pointer; border: 1px solid #ddd;">
+                    <div class="kanban-item bg-light p-3 mb-3 rounded shadow-sm" data-id="{{ item.id }}" data-autor="{{ item.autor }}" style="cursor: pointer; border: 1px solid #ddd;">
                       <strong>
-                        {% if can_create_content and item.state != 'draft' %}
-                          <a href="{% url 'content_view' item.id %}" class="kanban-title-link">{{ item.title }}</a>
-                        {% elif can_create_content and item.state == 'draft' %}
+                        {% if can_create_content and item.state == 'draft' and item.autor == user %}
+                          <!-- El autor puede editar su contenido si está en borrador -->
                           <a href="{% url 'content-update' item.id %}" class="kanban-title-link">{{ item.title }}</a>
                         {% elif can_edit_content and item.state == 'revision' %}
+                          <!-- Los editores pueden editar contenidos en revisión -->
                           <a href="{% url 'content-update' item.id %}" class="kanban-title-link">{{ item.title }}</a>
-                        {% elif can_edit_content or can_publish_content or can_edit_is_active %}
+                        {% elif can_create_content or can_edit_content or can_publish_content or can_edit_is_active %}
+                          <!-- Cualquier usuario con permisos adecuados puede ver el contenido -->
                           <a href="{% url 'content_view' item.id %}" class="kanban-title-link">{{ item.title }}</a>
                         {% else %}
-                          <span>{{ item.title }}</span> <!-- Fallback if no valid permission -->
-                        {% endif %}                     
+                          <!-- Si no tiene permisos, mostrar el título sin enlace -->
+                          <span>{{ item.title }}</span>
+                        {% endif %}
                       </strong>
                       <p class="small mb-1"><strong>Autor:</strong> {{ item.autor.name }}</p>
                       <p class="small mb-1"><strong>Categoría:</strong> {{ item.category.name }}</p>
@@ -137,178 +139,212 @@
 
 <script src="{% static 'assets/js/Sortable.min.js' %}"></script>
 <script>
-    document.querySelectorAll('.kanban-items').forEach(function (column) {
-        new Sortable(column, {
-            group: 'kanban',
-            animation: 150,
-            scroll: true,  // Habilitar auto-scroll en contenedores
-            scrollSensitivity: 100, // Ajusta para mayor sensibilidad en el scroll
-            scrollSpeed: 20, // Ajusta la velocidad del desplazamiento al arrastrar
-            onEnd: function (evt) {
-                const itemId = evt.item.dataset.id;
-                const newState = evt.to.dataset.state;
-                const originalState = evt.from.dataset.state;
-                let changeReasonModal = null;
 
-                // Mapeo de etiquetas a claves internas del modelo
-                const stateMap = {
-                    'Borrador': 'draft',
-                    'Edicion': 'revision',
-                    'A publicar': 'to_publish',
-                    'Publicado': 'publish',
-                    'Inactivo': 'inactive'
-                };
+  // Mapeo de etiquetas a claves internas del modelo
+  const stateMap = {
+    'Borrador': 'draft',
+    'Edicion': 'revision',
+    'A publicar': 'to_publish',
+    'Publicado': 'publish',
+    'Inactivo': 'inactive'
+  };
 
-                const stateFlow = {
-                  draft: {
-                    name: 'Borrador',
-                    next: ['revision', 'inactive', 'publish'],
-                    prev: [],
-                  },
-                  revision: {
-                    name: 'Edicion',
-                    next: ['to_publish', 'inactive'],
-                    prev: ['draft'],
-                  },
-                  to_publish: {
-                    name: 'A publicar',
-                    next: ['publish', 'inactive'],
-                    prev: ['revision'],
-                  },
-                  publish: {
-                    name: 'Publicado',
-                    next: ['inactive'],
-                    prev: [],
-                  },
-                  inactive: {
-                    name: 'Inactivo',
-                    next: [],
-                    prev: ['publish'],
-                  },
-                }
+  const stateFlow = {
+    draft: {
+      name: 'Borrador',
+      next: ['revision','publish'],
+      prev: [],
+    },
+    revision: {
+      name: 'Edicion',
+      next: ['to_publish'],
+      prev: ['draft'],
+    },
+    to_publish: {
+      name: 'A publicar',
+      next: ['publish'],
+      prev: ['revision'],
+    },
+    publish: {
+      name: 'Publicado',
+      next: ['inactive'],
+      prev: [],
+    },
+    inactive: {
+      name: 'Inactivo',
+      next: [],
+      prev: ['publish'],
+    },
+  }
+  const userPermissions = {
+    create: {{ can_create_content|yesno:"true,false" }},
+    edit: {{ can_edit_content|yesno:"true,false" }},
+    publish: {{ can_publish_content|yesno:"true,false" }},
+    editIsActive: {{ can_edit_is_active|yesno:"true,false" }}
+  };
 
-                const mappedState = stateMap[newState];  // Convertir la etiqueta a la clave
-                const oldStateMapped = stateMap[originalState];  // Convertir la etiqueta a la clave
+  const currentUser = '{{ user }}';
+  
+  document.querySelectorAll('.kanban-items').forEach(function (column) {
+      new Sortable(column, {
+        group: 'kanban',
+        animation: 150,
+        scroll: true,  // Habilitar auto-scroll en contenedores
+        scrollSensitivity: 100, // Ajusta para mayor sensibilidad en el scroll
+        scrollSpeed: 20, // Ajusta la velocidad del desplazamiento al arrastrar
+        onEnd: function (evt) {
+            const itemId = evt.item.dataset.id;
+            const newState = evt.to.dataset.state;
+            const originalState = evt.from.dataset.state;
+            const autor = evt.item.dataset.autor;
 
-                // Verifica los permisos en función de los atributos de estado del contenido
-                const userPermissions = {
-                    create: {{ can_create_content|yesno:"true,false" }},
-                    edit: {{ can_edit_content|yesno:"true,false" }},
-                    publish: {{ can_publish_content|yesno:"true,false" }},
-                    editIsActive: {{ can_edit_is_active|yesno:"true,false" }}
-                };
+            const mappedState = stateMap[newState];  // Convertir la etiqueta a la clave
+            const oldStateMapped = stateMap[originalState];  // Convertir la etiqueta a la clave
 
-                let canChangeState = false;
-                const itemData = evt.item.dataset;  // Accede a los datos del ítem, como autor y categoría
-
-                // Lógica de permisos según el estado del contenido y los permisos del usuario
-                if (userPermissions.create) {
-                    // Verifica si la categoría no es moderada para permitir el cambio de Borrador a Publicado
-                    const isModerated = itemData.isModerated === 'true';
-                    if (
-                        (originalState === 'Borrador' && newState === 'Edicion') ||
-                        (originalState === 'Borrador' && newState === 'Publicado' && !isModerated) || // Nueva restricción
-                        (originalState === 'Publicado' && newState === 'Inactivo') ||
-                        (originalState === 'Inactivo' && newState === 'Publicado') ||
-                        (originalState === newState)  // Permite mover al mismo estado
-                    ) {
-                        canChangeState = true;
-                    }
-                } else if (userPermissions.edit) {
-                    if (
-                        (originalState === 'Edicion' && newState === 'A publicar') ||
-                        (originalState === 'Edicion' && newState === 'Borrador') ||
-                        (originalState === newState)  // Permite mover al mismo estado
-                    ) {
-                        canChangeState = true;
-                    }
-                } else if (userPermissions.publish) {
-                    if (
-                        (originalState === 'A publicar' && ['Publicado', 'Edicion'].includes(newState)) ||
-                        (originalState === newState)  // Permite mover al mismo estado
-                    ) {
-                        canChangeState = true;
-                    }
-                } else if (userPermissions.editIsActive) {
-                    if (
-                        (originalState === newState)  // Permite mover al mismo estado
-                    ){
-                        canChangeState = true;
-                    }
-                }
-
-                if (!canChangeState) {
-                    modal.warning({message:'No tienes permiso para cambiar el estado.'});
-                    evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
-                    return;
-                }
-
-                if (stateFlow[oldStateMapped].prev.includes(mappedState) && !userPermissions.create) {
-                  //Regresando de estado
-                  changeReasonModal = modal.info({
-                    message: `
-                        <div class="form-group col-12">
-                            <label for="name" class="form-label">Motivo de cambio (*)</label>
-                            <input type="text" class="form-control" name="change_reason_ipt" id="change_reason_ipt" placeholder="Ingrese el motivo de cambio" required />
-                            <label class="text-danger form-text" id="change_reason_iptHelp" hidden>Este campo es obligatorio</label>
-                        </div>
-                    `,
-                    buttons: {
-                      ok: {
-                        label: 'Ingresar',
-                        className: 'btn btn-success',
-                        callback: function() {
-                          var changeReasonVal = document.getElementById('change_reason_ipt').value;
-                          if (changeReasonVal.length > 0) {
-                            postState(itemId, mappedState, evt, userPermissions, changeReasonVal);
-                            return true;
-                          } else {
-                            document.getElementById('change_reason_iptHelp').hidden = false;
-                            return false;
-                          }
-                        }
-                      }
-                    }
-                  });
-                } else {
-                  //Ascendiendo de estado
-                  postState(itemId, mappedState, evt, userPermissions);
-                }
-                
+            // Evitar cambios innecesarios
+            if (mappedState === oldStateMapped) {
+              return;
             }
-        });
+
+            changeState(itemId,mappedState,oldStateMapped,evt,autor);
+          }
+      });
+  });
+
+  function postState(itemId, mappedState, evt, message=null, autor) {
+    // Llamar a la API para actualizar el estado del contenido
+    fetch(`/api/update-content-state/${itemId}/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({ state: mappedState, reason: message })
+    }).then(response => {
+        if (!response.ok) {
+          return response.json().then(data => {
+            modal.error({title: '<i class="bi bi-exclamation-octagon text-danger"></i> Cambio de estado rechazado',
+                message:`Error al actualizar el estado: ${data.message}`});
+            evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
+          });
+        } else {
+
+          if (mappedState === 'to_publish' || mappedState === 'publish' || mappedState === 'inactive') { 
+            evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
+          }
+          if (mappedState === 'draft' && currentUser !== autor) {
+            evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
+          }
+          if (mappedState === 'draft' && currentUser === autor) {
+            evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}/edit`;
+          }
+          if (mappedState === 'revision' && !userPermissions.edit) {
+            evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
+          }
+          if (mappedState === 'revision' && userPermissions.edit) {
+            evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}/edit`;
+          }
+        }
+    }).catch(error => {
+        console.error('Error en la solicitud fetch:', error);
+        modal.error({message:'Error en la comunicación con el servidor.'});
+        evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
     });
+  }
 
-    function postState(itemId, mappedState, evt, userPermissions, message=null) {
-      // Llamar a la API para actualizar el estado del contenido
-      fetch(`/api/update-content-state/${itemId}/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': '{{ csrf_token }}'
+  function changeState(itemId, mappedState, oldStateMapped, evt, autor){
+    // Llamar a la API para validar el cambio de estado
+    fetch(`/api/validate-permission-kanban/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({ content_id: itemId, new_state: mappedState, old_state: oldStateMapped })
+    }).then(response => {
+        if (!response.ok) {
+          return response.json().then(data => {
+            modal.error({title: '<i class="bi bi-exclamation-octagon text-danger"></i> Cambio de estado rechazado',
+                message:`${data.message}`});
+            evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
+          });
+        } 
+        doChangeState(oldStateMapped, mappedState, evt, itemId, autor);
+    }).catch(error => {
+        console.error('Error en la solicitud fetch:', error);
+        modal.error({message:'Error en la comunicación con el servidor.'});
+        evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
+    });
+  }
+
+  function doChangeState(oldStateMapped, mappedState, evt, itemId, autor) {
+    let changeReasonModal = null;
+    if (stateFlow[oldStateMapped].prev.includes(mappedState) ) {
+      //Regresando de estado
+      changeReasonModal = modal.info({
+        message: `
+            <div class="form-group col-12">
+                <label for="name" class="form-label">Motivo de cambio (*)</label>
+                <input type="text" class="form-control" name="change_reason_ipt" id="change_reason_ipt" placeholder="Ingrese el motivo de cambio" required />
+                <label class="text-danger form-text" id="change_reason_iptHelp" hidden>Este campo es obligatorio</label>
+            </div>
+        `,
+        onEscape: function() {
+          evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
         },
-        body: JSON.stringify({ state: mappedState, reason: message })
-      }).then(response => {
-          if (!response.ok) {
-            return response.json().then(data => {
-              modal.error({message:`Error al actualizar el estado: ${data.message}`});
-              evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
-            });
-          } else {
-            if (mappedState === 'to_publish' || mappedState === 'publish' || mappedState === 'inactive' || mappedState === 'draft' ) { 
-              evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
+        buttons: {
+          ok: {
+            label: 'Ingresar',
+            className: 'btn btn-success',
+            callback: function() {
+              var changeReasonVal = document.getElementById('change_reason_ipt').value;
+              if (changeReasonVal.length > 0) {
+                postState(itemId, mappedState, evt, changeReasonVal, autor);
+                return true;
+              } else {
+                document.getElementById('change_reason_iptHelp').hidden = false;
+                return false;
+              }
             }
-            if (mappedState === 'revision' && userPermissions.create) {
-              evt.item.querySelector('.kanban-title-link').href = `/content/${itemId}`;
+          },
+          cancel: {
+            label: 'Cancelar',
+            className: 'btn btn-danger',
+            callback: function() {
+              evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
             }
           }
-      }).catch(error => {
-          console.error('Error en la solicitud fetch:', error);
-          modal.error({message:'Error en la comunicación con el servidor.'});
-          evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
+        }
       });
-    }
+    } else {
+      //Ascendiendo de estado
+      modal.info({
+        onEscape: function() {
+          evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
+        },
+        message: 'Estas seguro que deseas cambiar de estado?',
+        centerVertical: true,
+        title : '<i class="fa-solid fa-triangle-exclamation text-danger"></i> Confirmación de cambio de estado',
+        buttons: {
+          confirm: {
+            label: '<span class="fas fa-trash"></span> Confirmar',
+            className: 'btn btn-success',
+            callback: function() {
+              postState(itemId, mappedState, evt, null, autor);
+            }
+          },
+          cancel: {
+            label: 'Cancelar',
+            className: 'btn btn-danger',
+            callback: function() {
+              evt.from.appendChild(evt.item);  // Devuelve el ítem a su columna original
+            }
+          }
+        }
+    });
 
+    }
+  }
 </script>
 
 {% endblock content %}

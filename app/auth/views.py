@@ -1,13 +1,12 @@
-from decouple import config
 from django.contrib.auth import logout, get_user_model
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
 from django.shortcuts import render, redirect
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from notification.tasks import send_notification_task
 
+import notification.service
 from app.forms import CustomAuthenticationForm, CustomUserCreationForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth import login, authenticate
 from django.contrib import messages
@@ -19,12 +18,10 @@ def register_view(request):
     Si el método de solicitud es POST, se procesa el formulario de creación de usuario.
     Si el formulario es válido, se guarda el nuevo usuario y se inicia sesión automáticamente.
 
-    Parámetros:
-        request (HttpRequest): La solicitud HTTP recibida.
-
-    Retorna:
-        HttpResponse: Redirige a la página de inicio si el registro es exitoso o
-        renderiza la página de registro con el formulario correspondiente.
+    :param request: La solicitud HTTP recibida.
+    :type request: HttpRequest
+    :return: Redirige a la página de inicio si el registro es exitoso o renderiza la página de registro con el formulario correspondiente.
+    :rtype: HttpResponse
     """
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST, request.FILES)
@@ -32,6 +29,7 @@ def register_view(request):
             user = form.save()
             login(request, user)
             messages.success(request, '¡Registro exitoso!')
+            notification.service.welcomeUser(user)
             return redirect('home')
     else:
         form = CustomUserCreationForm()
@@ -44,12 +42,10 @@ def login_view(request):
     Si el método de solicitud es POST, se procesa el formulario de autenticación.
     Si el formulario es válido, se inicia sesión del usuario.
 
-    Parámetros:
-        request (HttpRequest): La solicitud HTTP recibida.
-
-    Retorna:
-        HttpResponse: Redirige a la página de inicio si el inicio de sesión es exitoso o
-        renderiza la página de inicio de sesión con el formulario correspondiente.
+    :param request: La solicitud HTTP recibida.
+    :type request: HttpRequest
+    :return: Redirige a la página de inicio si el inicio de sesión es exitoso o renderiza la página de inicio de sesión con el formulario correspondiente.
+    :rtype: HttpResponse
     """
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)
@@ -66,11 +62,10 @@ def logout_view(request):
     """
     Vista para cerrar la sesión del usuario actual.
 
-    Parámetros:
-        request (HttpRequest): La solicitud HTTP recibida.
-
-    Retorna:
-        HttpResponse: Redirige a la página principal después de cerrar la sesión.
+    :param request: La solicitud HTTP recibida.
+    :type request: HttpRequest
+    :return: Redirige a la página principal después de cerrar la sesión.
+    :rtype: HttpResponse
     """
     logout(request)
     messages.success(request, '¡Sesión cerrada exitosamente!')
@@ -84,12 +79,10 @@ def reset_password_view(request):
     Si el método de solicitud es POST, se procesa el formulario de restablecimiento de contraseña.
     Si el formulario es válido, se envía un correo electrónico al usuario con un enlace para restablecer la contraseña.
 
-    Parámetros:
-        request (HttpRequest): La solicitud HTTP recibida.
-
-    Retorna:
-        HttpResponse: Redirige a la página de inicio de sesión después de enviar el correo o
-        renderiza la página de restablecimiento de contraseña con el formulario correspondiente.
+    :param request: La solicitud HTTP recibida.
+    :type request: HttpRequest
+    :return: Redirige a la página de inicio de sesión después de enviar el correo o renderiza la página de restablecimiento de contraseña con el formulario correspondiente.
+    :rtype: HttpResponse
     """
     if request.method == 'POST':
         form = PasswordResetForm(request.POST)
@@ -105,20 +98,13 @@ def reset_password_view(request):
                 reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
             )
 
-            # Renderizar el email
+            # Enviar el email
             email_subject = 'Restablecimiento de contraseña'
-            email_body = render_to_string('password_reset_email.html', {'reset_link': reset_link})
-
-            # Enviar el correo electrónico
-            send_mail(
-                email_subject,
-                '',
-                config('EMAIL_HOST_USER'),  # Puedes personalizar esto o usar DEFAULT_FROM_EMAIL
-                [user.email],
-                fail_silently=False,
-                html_message=email_body,
-            )
-
+            template='email/password_reset_email.html'
+            context = {
+                "reset_link": reset_link
+            }
+            send_notification_task.delay(email_subject, [user.email], context, template)
             messages.success(request, "¡Envío de correo electrónico de recuperación exitoso!")
             return redirect('login')
         else:
@@ -128,7 +114,7 @@ def reset_password_view(request):
             return redirect('password_reset')
     else:
         form = PasswordResetForm()
-    return render(request, 'password-reset.html', {'form': form})
+    return render(request, 'email/../../templates/password-reset.html', {'form': form})
 
 def password_reset_confirm_view(request, uidb64, token):
     """
@@ -137,14 +123,14 @@ def password_reset_confirm_view(request, uidb64, token):
     Valida el token y el UID del usuario para permitir el cambio de contraseña.
     Si la validación es exitosa, permite al usuario establecer una nueva contraseña.
 
-    Parámetros:
-        request (HttpRequest): La solicitud HTTP recibida.
-        uidb64 (str): El UID del usuario codificado en base64.
-        token (str): El token de seguridad para confirmar la validez del enlace.
-
-    Retorna:
-        HttpResponse: Redirige a la página de inicio de sesión si la actualización es exitosa o
-        renderiza la página de confirmación de restablecimiento de contraseña con el formulario correspondiente.
+    :param request: La solicitud HTTP recibida.
+    :type request: HttpRequest
+    :param uidb64: El UID del usuario codificado en base64.
+    :type uidb64: str
+    :param token: El token de seguridad para confirmar la validez del enlace.
+    :type token: str
+    :return: Redirige a la página de inicio de sesión si la actualización es exitosa o renderiza la página de confirmación de restablecimiento de contraseña con el formulario correspondiente.
+    :rtype: HttpResponse
     """
     user_model = get_user_model()
     try:
@@ -166,7 +152,7 @@ def password_reset_confirm_view(request, uidb64, token):
                 for field, errors in form.errors.items():
                     for error in errors:
                         messages.error(request, error)
-                return render(request, 'password_reset_confirm.html', {'form': form})
+                return render(request, 'email/../../templates/password_reset_confirm.html', {'form': form})
         else:
             form = SetPasswordForm()
 
@@ -174,4 +160,4 @@ def password_reset_confirm_view(request, uidb64, token):
         messages.error(request, "El enlace de restablecimiento de contraseña no es válido.")
         return redirect('login')
 
-    return render(request, 'password_reset_confirm.html', {'form': form})
+    return render(request, 'email/../../templates/password_reset_confirm.html', {'form': form})
