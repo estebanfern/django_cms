@@ -24,6 +24,16 @@ jobs:
       EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
 
     services:
+      
+      redis:
+        image: redis:7.4.0-bookworm
+        env:
+          REDIS_PASSWORD: local-dev
+          REDIS_PORT: 6379
+          REDIS_DATABASES: 16
+        ports:
+          - 6379:6379
+
       postgres:
         image: postgres:16
         env:
