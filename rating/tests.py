@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -35,15 +36,18 @@ class RatingTestCase(TestCase):
         # URL para calificar el contenido
         self.url = reverse('rate_content', args=[self.content.id])
 
-    def test_rate_content_unauthenticated(self):
+    @patch('rating.views.update_rating_avg.delay')  # Mock the Celery task
+    def test_rate_content_unauthenticated(self, mock_update_rating_avg):
         """
         Asegura que un usuario no autenticado no pueda calificar un contenido.
         """
         response = self.client.post(self.url, {'rating': 5})
         self.assertEqual(response.status_code, 403)
         self.assertJSONEqual(response.content, {'status': 'error', 'message': 'Para poder puntuar contenidos debes estar registrado'})
+        mock_update_rating_avg.assert_not_called()
 
-    def test_rate_content_authenticated_valid(self):
+    @patch('rating.views.update_rating_avg.delay')  # Mock the Celery task
+    def test_rate_content_authenticated_valid(self, mock_update_rating_avg):
         """
         Asegura que un usuario autenticado pueda calificar un contenido con un valor válido (1-5).
         """
@@ -56,20 +60,11 @@ class RatingTestCase(TestCase):
         rating = Rating.objects.get(user=self.user, content=self.content)
         self.assertEqual(rating.rating, 4)
 
-    def test_rate_content_invalid_rating(self):
-        """
-        Asegura que un usuario pueda calificar un contenido, incluso con un valor fuera de rango (sin validar rango).
-        """
-        self.client.login(email='testuser@example.com', password='testpassword123')
-        response = self.client.post(self.url, {'rating': 10})  # Valor fuera de rango, pero permitido por la vista actual
-        self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.content, {'status': 'success', 'message': 'Calificación guardada correctamente', 'rating': 10})
+        # Ensure that the mocked task was called
+        mock_update_rating_avg.assert_called_once_with(self.content.id)
 
-        # Verificar que la calificación fue registrada en la base de datos con el valor fuera de rango
-        rating = Rating.objects.get(user=self.user, content=self.content)
-        self.assertEqual(rating.rating, 10)
-
-    def test_update_existing_rating(self):
+    @patch('rating.views.update_rating_avg.delay')  # Mock the Celery task
+    def test_update_existing_rating(self, mock_update_rating_avg):
         """
         Asegura que un usuario pueda actualizar su calificación previa en lugar de crear una nueva.
         """
@@ -86,7 +81,28 @@ class RatingTestCase(TestCase):
         rating = Rating.objects.get(user=self.user, content=self.content)
         self.assertEqual(rating.rating, 5)
 
-    def test_missing_rating_value(self):
+        # Ensure that the mocked task was called twice
+        self.assertEqual(mock_update_rating_avg.call_count, 2)
+
+    @patch('rating.views.update_rating_avg.delay')  # Mock the Celery task
+    def test_rate_content_invalid_rating(self, mock_update_rating_avg):
+        """
+        Asegura que un usuario pueda calificar un contenido, incluso con un valor fuera de rango (sin validar rango).
+        """
+        self.client.login(email='testuser@example.com', password='testpassword123')
+        response = self.client.post(self.url, {'rating': 10})  # Valor fuera de rango, pero permitido por la vista actual
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'status': 'success', 'message': 'Calificación guardada correctamente', 'rating': 10})
+
+        # Verificar que la calificación fue registrada en la base de datos con el valor fuera de rango
+        rating = Rating.objects.get(user=self.user, content=self.content)
+        self.assertEqual(rating.rating, 10)
+
+        # Ensure that the mocked task was called
+        mock_update_rating_avg.assert_called_once_with(self.content.id)
+
+    @patch('rating.views.update_rating_avg.delay')  # Mock the Celery task
+    def test_missing_rating_value(self, mock_update_rating_avg):
         """
         Asegura que se devuelva un error si no se proporciona un valor de calificación.
         """
@@ -94,3 +110,4 @@ class RatingTestCase(TestCase):
         response = self.client.post(self.url)  # No se proporciona 'rating'
         self.assertEqual(response.status_code, 400)
         self.assertJSONEqual(response.content, {'status': 'error', 'message': 'No se proporcionó una calificación'})
+        mock_update_rating_avg.assert_not_called()

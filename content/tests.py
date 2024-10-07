@@ -7,6 +7,8 @@ from app.models import CustomUser
 from category.models import Category
 from content.forms import ContentForm
 from content.models import Content
+from unittest.mock import patch
+from content.tasks import update_reactions  # Import the Celery task
 
 class ContentCreateViewTest(TestCase):
     """
@@ -484,7 +486,8 @@ class ReactionTestCase(TestCase):
         # Iniciar sesión con el usuario
         self.client.login(email='testuser@example.com', password='testpassword123')
 
-    def test_like_content(self):
+    @patch('content.views.update_reactions.delay')  # Mock the Celery task
+    def test_like_content(self, mock_update_reactions):
         """
         Asegura que un usuario pueda dar like a un contenido y se registre el like.
         """
@@ -495,7 +498,11 @@ class ReactionTestCase(TestCase):
         # Verificar que el usuario ha dado like al contenido
         self.assertTrue(self.content.likes.filter(id=self.user.id).exists())
 
-    def test_dislike_content(self):
+        # Verificar que la tarea Celery fue llamada una vez
+        mock_update_reactions.assert_called_once_with(self.content.id)
+
+    @patch('content.views.update_reactions.delay')  # Mock the Celery task
+    def test_dislike_content(self, mock_update_reactions):
         """
         Asegura que un usuario pueda dar dislike a un contenido y se registre el dislike.
         """
@@ -506,7 +513,11 @@ class ReactionTestCase(TestCase):
         # Verificar que el usuario ha dado dislike al contenido
         self.assertTrue(self.content.dislikes.filter(id=self.user.id).exists())
 
-    def test_remove_like(self):
+        # Verificar que la tarea Celery fue llamada una vez
+        mock_update_reactions.assert_called_once_with(self.content.id)
+
+    @patch('content.views.update_reactions.delay')  # Mock the Celery task
+    def test_remove_like(self, mock_update_reactions):
         """
         Asegura que un usuario pueda quitar un like de un contenido.
         """
@@ -521,7 +532,11 @@ class ReactionTestCase(TestCase):
         # Verificar que el like ha sido eliminado
         self.assertFalse(self.content.likes.filter(id=self.user.id).exists())
 
-    def test_remove_dislike(self):
+        # Verificar que la tarea Celery fue llamada una vez
+        mock_update_reactions.assert_called_once_with(self.content.id)
+
+    @patch('content.views.update_reactions.delay')  # Mock the Celery task
+    def test_remove_dislike(self, mock_update_reactions):
         """
         Asegura que un usuario pueda quitar un dislike de un contenido.
         """
@@ -536,7 +551,11 @@ class ReactionTestCase(TestCase):
         # Verificar que el dislike ha sido eliminado
         self.assertFalse(self.content.dislikes.filter(id=self.user.id).exists())
 
-    def test_like_then_dislike(self):
+        # Verificar que la tarea Celery fue llamada una vez
+        mock_update_reactions.assert_called_once_with(self.content.id)
+
+    @patch('content.views.update_reactions.delay')  # Mock the Celery task
+    def test_like_then_dislike(self, mock_update_reactions):
         """
         Asegura que dar like a un contenido elimina un dislike existente.
         """
@@ -552,7 +571,11 @@ class ReactionTestCase(TestCase):
         self.assertFalse(self.content.dislikes.filter(id=self.user.id).exists())
         self.assertTrue(self.content.likes.filter(id=self.user.id).exists())
 
-    def test_dislike_then_like(self):
+        # Verificar que la tarea Celery fue llamada una vez
+        mock_update_reactions.assert_called_once_with(self.content.id)
+
+    @patch('content.views.update_reactions.delay')  # Mock the Celery task
+    def test_dislike_then_like(self, mock_update_reactions):
         """
         Asegura que dar dislike a un contenido elimina un like existente.
         """
@@ -567,3 +590,6 @@ class ReactionTestCase(TestCase):
         # Verificar que el like ha sido eliminado y el contenido tiene dislike
         self.assertFalse(self.content.likes.filter(id=self.user.id).exists())
         self.assertTrue(self.content.dislikes.filter(id=self.user.id).exists())
+
+        # Verificar que la tarea Celery fue llamada una vez
+        mock_update_reactions.assert_called_once_with(self.content.id)
