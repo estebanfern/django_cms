@@ -503,8 +503,9 @@ def view_content(request, id):
         messages.warning(request, 'Para poder acceder a contenidos de categorias de suscripción o pago debes estar registrado')
         return redirect('login')
 
-    if content.date_published > timezone.now() and not (user.has_perm('app.create_content') or user.has_perm('app.edit_content') or user.has_perm('app.publish_content') or user.has_perm('app.edit_is_active')):
-        raise Http404
+    if (not content.state == Content.StateChoices.publish) or (content.date_published and content.date_published > timezone.now()):
+        if not (user.has_perm('app.create_content') or user.has_perm('app.edit_content') or user.has_perm('app.publish_content') or user.has_perm('app.edit_is_active')):
+            raise Http404
 
     history = content.history.all().order_by('-history_date')
     # Obtener si el usuario ha dado like o dislike
