@@ -84,6 +84,15 @@ def validate_permission_kanban(user, content, newState, oldState):
     if newState == 'revision' and oldState == 'draft' and not user.has_perm('app.create_content'):
         return {'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}
 
+    if newState == 'revision' and oldState == 'draft' and user.has_perm('app.create_content') and not content.autor == user:
+        return {'status': 'error', 'message': 'No puedes cambiar al estado Edicion de un contenido que no creaste.'}
+
+    if newState == 'inactive' and oldState == 'publish' and user.has_perm('app.create_content') and not user.has_perm('app.edit_is_active') and not content.autor == user:
+        return {'status': 'error', 'message': 'No puedes cambiar al estado Inactivo de un contenido que no creaste.'}
+
+    if newState == 'publish' and oldState == 'draft' and user.has_perm('app.create_content') and not content.autor == user and not content.category.is_moderated:
+        return {'status': 'error', 'message': 'No puedes cambiar al estado Publicado de un contenido que no creaste.'}
+
     # Restricciones adicionales para cambios de estados bajando el flujo de estados
     if newState == 'draft' and oldState == 'revision' and not user.has_perm('app.edit_content'):
         return {'status': 'error', 'message': 'No tienes permiso para cambiar el estado.'}
