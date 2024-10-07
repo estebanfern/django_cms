@@ -207,6 +207,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
         # Filtrar las categorías con contenidos asociados
         categories_with_content = queryset.filter(content__isnull=False).distinct()
+        categories_without_content = queryset.exclude(content__isnull=False).distinct()
 
         if categories_with_content.exists():
             # Mostrar mensaje de error para categorías con contenidos asociados
@@ -215,14 +216,13 @@ class CategoryAdmin(admin.ModelAdmin):
                 f"No se pueden eliminar las siguientes categorías porque tienen contenidos asociados: {', '.join([str(cat) for cat in categories_with_content])}.",
                 level=messages.ERROR
             )
-        else:
-            # Guardar los nombres antes de eliminar
-            nombres = ', '.join([str(cat) for cat in queryset])
-            # Continuar con la eliminación solo si no hay categorías con contenidos
-            super().delete_queryset(request, queryset)
-            # Mostrar mensaje de éxito después de eliminar
-            self.message_user(request, f"Categorías eliminadas con éxito: {nombres}.", level=messages.SUCCESS)
+        if categories_without_content.exists():
+            deleted_categories_name = ', '.join([str(cat) for cat in categories_without_content])
+            queryset.filter(id__in=[category.id for category in categories_without_content]).delete()
+            self.message_user(request, f"Categorías eliminadas con éxito: {deleted_categories_name}.", level=messages.SUCCESS)
 
+        # Redirigir de vuelta a la lista de categorias
+        return HttpResponseRedirect(reverse('admin:category_category_changelist'))
 
     def delete_view (self, request, object_id, extra_context=None):
         """

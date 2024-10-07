@@ -285,7 +285,7 @@ class CustomGroupAdmin(BaseGroupAdmin):
         # Mostrar el mensaje de éxito
         messages.success(request, f'El rol "{obj_display}" se ha eliminado correctamente.')
 
-        # Redirigir a la lista de grupos después de la eliminación
+        # Redirigir a la lista de roles después de la eliminación
         return HttpResponseRedirect(reverse('admin:auth_group_changelist'))
 
     # Acción personalizada para eliminar roles seleccionados
@@ -300,19 +300,22 @@ class CustomGroupAdmin(BaseGroupAdmin):
             return
 
         roles_with_users = queryset.filter(user__isnull=False).distinct()
+        roles_without_users = queryset.filter(user__isnull=True).distinct()
 
         if roles_with_users:
             # Mostrar un mensaje de error si algunos roles tienen usuarios asociados
             roles_names = ', '.join([group.name for group in roles_with_users])
             messages.error(request,
                            f'No puedes eliminar los siguientes roles porque tienen usuarios asociados: {roles_names}')
-            # Redirigir de vuelta a la lista de roles
-            return HttpResponseRedirect(reverse('admin:auth_group_changelist'))
 
-        # Si ningún rol tiene usuarios asociados, proceder con la eliminación
-        roles = ', '.join([group.name for group in queryset])
-        super().delete_queryset(request, queryset)
-        self.message_user(request, f"Roles eliminadas con éxito: {roles}.", level=messages.SUCCESS)
+        # Eliminar los grupos que no tienen usuarios asociados
+        if roles_without_users:
+            deleted_roles_names = ', '.join([group.name for group in roles_without_users])
+            queryset.filter(id__in=[rol.id for rol in roles_without_users]).delete()
+            self.message_user(request, f"Roles eliminadas con éxito: {deleted_roles_names}.", level=messages.SUCCESS)
+
+        # Redirigir de vuelta a la lista de roles
+        return HttpResponseRedirect(reverse('admin:auth_group_changelist'))
 
     # Desactivar la acción predeterminada de eliminar
     def get_actions(self, request):
