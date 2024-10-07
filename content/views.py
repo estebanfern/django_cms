@@ -495,12 +495,16 @@ def view_content(request, id):
     if not content.is_active:
         raise Http404
 
+    user = request.user
     # Verificar que si el usuario esta registrado y esta queriendo ver un contenido de categoria de suscripcion o pago
     # en caso de que no, redirigirle al login con un mensaje
     # TODO: verificar que el usuario este suscripto y al dia si es un contenido de categoria de pago
-    if not request.user.is_authenticated and not content.category.type == Category.TypeChoices.public:
+    if not user.is_authenticated and not content.category.type == Category.TypeChoices.public:
         messages.warning(request, 'Para poder acceder a contenidos de categorias de suscripción o pago debes estar registrado')
         return redirect('login')
+
+    if content.date_published > timezone.now() and not (user.has_perm('app.create_content') or user.has_perm('app.edit_content') or user.has_perm('app.publish_content') or user.has_perm('app.edit_is_active')):
+        raise Http404
 
     history = content.history.all().order_by('-history_date')
     # Obtener si el usuario ha dado like o dislike
