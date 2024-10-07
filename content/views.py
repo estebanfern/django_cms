@@ -98,6 +98,9 @@ def update_content_state(request, content_id):
     :rtype: JsonResponse
     """
 
+    if not request.method == 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Método no permitido.'}, status=405)
+
     mappState = {
         'draft': 'Borrador',
         'revision': 'Edicion',
@@ -115,9 +118,6 @@ def update_content_state(request, content_id):
         user.has_perm('app.edit_is_active')
     ):
         raise PermissionDenied
-
-    if not request.method == 'POST':
-        return JsonResponse({'status': 'error', 'message': 'Método no permitido.'}, status=405)
 
     content = get_object_or_404(Content, id=content_id)
     oldState = content.state
