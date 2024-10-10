@@ -142,3 +142,4 @@ profile_pics/
 staticfiles/
 docs/_build/
 logs/
+.fleet/
