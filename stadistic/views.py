@@ -22,3 +22,18 @@ def top_liked(request):
                 data,
                 safe=False
             )
+
+@login_required
+def top_rating(request):
+    user = request.user
+    top_contents = Content.objects.filter(autor=user, state=Content.StateChoices.publish, date_published__lt=timezone.now()) \
+                                    .values('title', 'rating_avg', 'date_create', 'date_published') \
+                                    .order_by('-rating_avg')[:10]
+    data = {
+        'status': 'success',
+        'result': list(top_contents)
+    }
+    return JsonResponse(
+        data,
+        safe=False
+    )

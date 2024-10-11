@@ -40,8 +40,39 @@
 
       <div class="card">
         <div class="card-body">
-          <h5 class="card-title">Este es el modelo, aca pone tu titulo</h5>
-          <p>Y aca el contenido</p>
+          <h5 class="card-title text-center">Estadisticas de tus contenidos</h5>
+          <div class="row">
+            <div class="col-6">
+              <div class="card">
+                <div class="card-body">
+                  <canvas id="likesChart"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="card">
+                10 contenidos con más dislikes
+                <div class="card-body">
+
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="card">
+                10 contenidos con más visualizaciones
+                <div class="card-body">
+
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="card">
+                <div class="card-body">
+                  <canvas id="ratingChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -49,4 +80,118 @@
 
   </div>
 </section>
+
+<!-- Grafico de likes -->
+<script>
+  const likesChart = document.getElementById('likesChart');
+  let likesChartCtx = null
+  $.ajax({
+    url: '/stadistics/likes/',
+    type: 'GET',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    success: function(response) {
+      labels = response.result.map((item) => item.title);
+      data = response.result.map((item) => item.likes_count);
+      likesChartCtx = new Chart(likesChart, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Número de likes',
+            data: data,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            title: {
+              display: true,
+              text: 'Contenidos con más likes'
+            }
+          },
+          scales: {
+            x: {
+              display: false,
+            },
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    },
+    error: function(xhr, status, error) {
+      if (xhr.status === 403) {
+        modal.warning({
+          message: xhr.responseJSON.message,
+        });
+      }
+      console.error('Error en la solicitud AJAX:', error);
+    }
+  });
+</script>
+
+<!-- Grafico de rating -->
+<script>
+  const ratingChart = document.getElementById('ratingChart');
+  let ratingChartCtx = null
+  $.ajax({
+    url: '/stadistics/rating/',
+    type: 'GET',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    success: function(response) {
+      console.log(response.result);
+      labels = response.result.map((item) => item.title);
+      data = response.result.map((item) => item.rating_avg);
+      ratingChartCtx = new Chart(ratingChart, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Promedio de rating',
+            data: data,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            title: {
+              display: true,
+              text: 'Contenidos con mayor promedio de rating'
+            }
+          },
+          scales: {
+            x: {
+              display: false,
+            },
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    },
+    error: function(xhr, status, error) {
+      if (xhr.status === 403) {
+        modal.warning({
+          message: xhr.responseJSON.message,
+        });
+      }
+      console.error('Error en la solicitud AJAX:', error);
+    }
+  });
+</script>
+
 {% endblock content %}
