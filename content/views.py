@@ -23,7 +23,7 @@ from django.urls import reverse
 
 
 from .service import validate_permission_kanban
-from .tasks import update_reactions
+from .tasks import update_reactions, count_view
 
 
 @login_required
@@ -503,8 +503,9 @@ def view_content(request, id):
         messages.warning(request, 'Para poder acceder a contenidos de categorias de suscripción o pago debes estar registrado')
         return redirect('login')
 
-    if content.date_published > timezone.now() and not (user.has_perm('app.create_content') or user.has_perm('app.edit_content') or user.has_perm('app.publish_content') or user.has_perm('app.edit_is_active')):
-        raise Http404
+    if (not content.state == Content.StateChoices.publish) or (content.date_published and content.date_published > timezone.now()):
+        if not (user.has_perm('app.create_content') or user.has_perm('app.edit_content') or user.has_perm('app.publish_content') or user.has_perm('app.edit_is_active')):
+            raise Http404
 
     history = content.history.all().order_by('-history_date')
     # Obtener si el usuario ha dado like o dislike
@@ -521,6 +522,9 @@ def view_content(request, id):
             user_rating = Rating.objects.get(user=request.user, content=content).rating
         except Rating.DoesNotExist:
             user_rating = 0  # Si no ha dado ninguna calificación, usar 0
+
+    # Aumentar la cantidad de vistas del contenido
+    count_view.delay(content.id)
 
     # Pasar todos los datos necesarios al contexto
     return render(request, 'content/view.html', {

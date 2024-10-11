@@ -203,6 +203,54 @@
     {% endif %}
 
   </div>
+
+{% if user.id == content.autor_id%}
+  <div class="col-lg-12">
+      <div class="card">
+          <div class="card-header">Reportes relacionados</div>
+          <div class="card-body">
+              <table class="table table-striped mt-3">
+                  <thead>
+                      <tr>
+                          <th>ID</th>
+                          <th>Motivo</th>
+                          <th>Descripción</th>
+                          <th>Fecha de Creación</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      {% for report in content.report_set.all %}
+                      <tr>
+                          <td>{{ report.pk }}</td> 
+                          <td>
+                              {% if report.reason == 'spam' %}
+                              Spam
+                              {% elif report.reason == 'inappropriate' %}
+                              Contenido inapropiado
+                              {% elif report.reason == 'abuse' %}
+                              Abuso o acoso
+                              {% else %}
+                              Otro
+                              {% endif %}
+                          </td>
+                          <td style="max-width: 300px; white-space: normal; word-wrap: break-word; overflow: hidden;">
+                              <span class="short-description">{{ report.description|slice:":50" }}...</span> 
+                              <span class="full-description" style="display:none;">{{ report.description }}</span> 
+                              <a href="#" class="toggle-description btn btn-sm btn-link">Leer más</a> 
+                          </td>
+                          <td>{{ report.created_at }}</td> 
+                      </tr>
+                      {% empty %}
+                      <tr>
+                          <td colspan="5" class="text-center">No hay reportes disponibles para este contenido.</td>
+                      </tr>
+                      {% endfor %}
+                  </tbody>
+              </table>
+          </div>
+      </div>
+  </div>
+{% endif %}
 </section>
 
 
@@ -289,6 +337,30 @@
     });
 </script>
 
+<!-- Descripcion reportes -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const toggles = document.querySelectorAll('.toggle-description');
+
+    toggles.forEach(function(toggle) {
+        toggle.addEventListener('click', function(event) {
+            event.preventDefault();
+            const shortDescription = this.previousElementSibling.previousElementSibling;
+            const fullDescription = this.previousElementSibling;
+            
+            if (fullDescription.style.display === 'none') {
+                fullDescription.style.display = 'inline';
+                shortDescription.style.display = 'none';
+                this.textContent = 'Leer menos';
+            } else {
+                fullDescription.style.display = 'none';
+                shortDescription.style.display = 'inline';
+                this.textContent = 'Leer más';
+            }
+        });
+    });
+});
+</script>
 
 <!-- Reacciones -->
 <script>

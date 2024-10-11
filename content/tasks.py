@@ -3,6 +3,7 @@ from django.db.models import Avg
 from django.utils import timezone
 from content.models import Content
 from notification.service import expire_content
+from django.db.models import F
 
 @shared_task()
 def expire_contents():
@@ -75,3 +76,7 @@ def update_reactions(content_id):
     content.likes_count = content.likes.count() or 0
     content.dislikes_count = content.dislikes.count() or 0
     content.save_without_historical_record()
+
+@shared_task()
+def count_view(content_id):
+    Content.objects.filter(id=content_id).update(views_count=F('views_count') + 1)

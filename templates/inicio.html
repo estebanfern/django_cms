@@ -83,8 +83,13 @@
                   <h5 class="card-title text-center">{{ content.title }}</h5>
                   {{ content.summary }}<a href="/content/{{content.id}}">...ver más</a>
                 </div>
-                <div class="card-footer">
-                  {{ content.date_published|default:content.date_create }}
+                <div class="card-footer d-flex justify-content-between">
+                    <span>
+                        {{ content.date_published|default:content.date_create }}
+                    </span>
+                    <span>
+                        {{ content.views_count }} visualizaciones
+                    </span>
                 </div>
               </div>
             </div>
