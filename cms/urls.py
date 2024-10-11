@@ -36,7 +36,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from category.views import categories_by_type
 from rating import views as rating_views
-from stadistic.views import view_stadistics, top_liked, top_rating
+from stadistic.views import view_stadistics, top_liked, top_rating, top_disliked, top_view
 from suscription.views import suscribe_category, unsuscribe_category
 
 
@@ -88,7 +88,9 @@ urlpatterns = [
     #Stadistics
     path('stadistics/', view_stadistics, name='view_stadistics'),
     path('stadistics/likes/', top_liked, name='top_liked'),
+    path('stadistics/dislikes/', top_disliked, name='top_disliked'),
     path('stadistics/rating/', top_rating, name='top_rating'),
+    path('stadistics/views/', top_view, name='top_view'),
 
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

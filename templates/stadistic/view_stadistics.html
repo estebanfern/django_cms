@@ -51,17 +51,15 @@
             </div>
             <div class="col-6">
               <div class="card">
-                10 contenidos con más dislikes
                 <div class="card-body">
-
+                  <canvas id="dislikesChart"></canvas>
                 </div>
               </div>
             </div>
             <div class="col-6">
               <div class="card">
-                10 contenidos con más visualizaciones
                 <div class="card-body">
-
+                  <canvas id="viewsChart"></canvas>
                 </div>
               </div>
             </div>
@@ -85,6 +83,18 @@
 <script>
   const likesChart = document.getElementById('likesChart');
   let likesChartCtx = null
+  const colors = [
+    'rgba(0, 0, 255, 0.7)',    // Azul
+    'rgba(51, 51, 255, 0.7)',  // Azul intermedio
+    'rgba(102, 102, 255, 0.7)',// Azul claro
+    'rgba(153, 102, 255, 0.7)',// Azul-violeta
+    'rgba(204, 102, 255, 0.7)',// Violeta
+    'rgba(255, 102, 255, 0.7)',// Violeta-rosa
+    'rgba(255, 102, 204, 0.7)',// Rosa-violeta
+    'rgba(255, 102, 153, 0.7)',// Rosa fuerte
+    'rgba(255, 102, 102, 0.7)',// Rosa claro
+    'rgba(255, 153, 204, 0.7)' // Lila
+  ];
   $.ajax({
     url: '/stadistics/likes/',
     type: 'GET',
@@ -101,6 +111,7 @@
           datasets: [{
             label: 'Número de likes',
             data: data,
+            backgroundColor: colors,
             borderWidth: 1
           }]
         },
@@ -108,11 +119,68 @@
           responsive: true,
           plugins: {
             legend: {
-              position: 'top',
+              position: 'bottom',
             },
             title: {
               display: true,
               text: 'Contenidos con más likes'
+            }
+          },
+          scales: {
+            x: {
+              display: false,
+            },
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    },
+    error: function(xhr, status, error) {
+      if (xhr.status === 403) {
+        modal.warning({
+          message: xhr.responseJSON.message,
+        });
+      }
+      console.error('Error en la solicitud AJAX:', error);
+    }
+  });
+</script>
+
+<!-- Grafico de dislikes -->
+<script>
+  const dislikesChart = document.getElementById('dislikesChart');
+  let dislikesChartCtx = null
+  $.ajax({
+    url: '/stadistics/dislikes/',
+    type: 'GET',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    success: function(response) {
+      labels = response.result.map((item) => item.title);
+      data = response.result.map((item) => item.dislikes_count);
+      dislikesChartCtx = new Chart(dislikesChart, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Número de dislikes',
+            data: data,
+            backgroundColor: colors,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+            },
+            title: {
+              display: true,
+              text: 'Contenidos con más dislikes'
             }
           },
           scales: {
@@ -158,6 +226,7 @@
           datasets: [{
             label: 'Promedio de rating',
             data: data,
+            backgroundColor: colors,
             borderWidth: 1
           }]
         },
@@ -165,7 +234,7 @@
           responsive: true,
           plugins: {
             legend: {
-              position: 'top',
+              position: 'bottom',
             },
             title: {
               display: true,
@@ -194,4 +263,61 @@
   });
 </script>
 
+<!-- Grafico de views -->
+<script>
+  const viewsChart = document.getElementById('viewsChart');
+  let viewsChartCtx = null
+  $.ajax({
+    url: '/stadistics/views/',
+    type: 'GET',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    success: function(response) {
+      console.log(response.result);
+      labels = response.result.map((item) => item.title);
+      data = response.result.map((item) => item.views_count);
+      viewsChartCtx = new Chart(viewsChart, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Promedio de visualizaciones',
+            data: data,
+            backgroundColor: colors,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+            },
+            title: {
+              display: true,
+              text: 'Contenidos con mayor promedio de visualizaciones'
+            }
+          },
+          scales: {
+            x: {
+              display: false,
+            },
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    },
+    error: function(xhr, status, error) {
+      if (xhr.status === 403) {
+        modal.warning({
+          message: xhr.responseJSON.message,
+        });
+      }
+      console.error('Error en la solicitud AJAX:', error);
+    }
+  });
+</script>
 {% endblock content %}
