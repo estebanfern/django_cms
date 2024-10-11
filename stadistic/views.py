@@ -1,14 +1,16 @@
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
 from content.models import Content
 
 @login_required
+@permission_required('app.create_content', raise_exception=True)
 def view_stadistics(request):
     return render(request, 'stadistic/view_stadistics.html')
 
 @login_required
+@permission_required('app.create_content', raise_exception=True)
 def top_liked(request):
     """
     Devuelve los 10 contenidos con más "me gusta" del autor autenticado en formato JSON.
@@ -43,6 +45,7 @@ def top_liked(request):
             )
 
 @login_required
+@permission_required('app.create_content', raise_exception=True)
 def top_disliked(request):
     """
     Devuelve los 10 contenidos con más "no me gusta" del autor autenticado en formato JSON.
@@ -77,6 +80,7 @@ def top_disliked(request):
             )
 
 @login_required
+@permission_required('app.create_content', raise_exception=True)
 def top_rating(request):
     """
     Devuelve los 10 contenidos mejor valorados del autor autenticado en formato JSON.
@@ -111,6 +115,7 @@ def top_rating(request):
     )
 
 @login_required
+@permission_required('app.create_content', raise_exception=True)
 def top_view(request):
     """
     Devuelve los 10 contenidos más vistos del autor autenticado en formato JSON.
