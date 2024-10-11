@@ -57,12 +57,13 @@ class Content (models.Model):
     date_published = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de publicación')
     content = RichTextUploadingField(verbose_name='Contenido')  # Campo de texto enriquecido con CKEditor 5
     tags = TaggableManager()
-    history = HistoricalRecords(excluded_fields=['rating_avg', 'likes_count', 'dislikes_count'])
+    history = HistoricalRecords(excluded_fields=['rating_avg', 'likes_count', 'dislikes_count', 'views_count'])
     likes = models.ManyToManyField(get_user_model(), related_name='liked_content', blank=True)
     dislikes = models.ManyToManyField(get_user_model(), related_name='disliked_content', blank=True)
     rating_avg = models.FloatField(default = 0.0, verbose_name="Promedio de calificación")
     likes_count = models.IntegerField(default=0, verbose_name="Cantidad de likes")
     dislikes_count = models.IntegerField(default=0, verbose_name="Cantidad de dislikes")
+    views_count = models.IntegerField(default=0, verbose_name="Cantidad de visualizaciones")
 
     class StateChoices(models.TextChoices):
         """

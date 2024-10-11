@@ -23,7 +23,7 @@ from django.urls import reverse
 
 
 from .service import validate_permission_kanban
-from .tasks import update_reactions
+from .tasks import update_reactions, count_view
 
 
 @login_required
@@ -522,6 +522,9 @@ def view_content(request, id):
             user_rating = Rating.objects.get(user=request.user, content=content).rating
         except Rating.DoesNotExist:
             user_rating = 0  # Si no ha dado ninguna calificación, usar 0
+
+    # Aumentar la cantidad de vistas del contenido
+    count_view.delay(content.id)
 
     # Pasar todos los datos necesarios al contexto
     return render(request, 'content/view.html', {
