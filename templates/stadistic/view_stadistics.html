@@ -70,6 +70,13 @@
                 </div>
               </div>
             </div>
+            <div class="col-6">
+              <div class="card">
+                <div class="card-body">
+                  <canvas id="sharesChart"></canvas>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -320,4 +327,63 @@
     }
   });
 </script>
+
+<!-- Grafico de shares -->
+<script>
+  const sharesChart = document.getElementById('sharesChart');
+  let sharesChartCtx = null
+  $.ajax({
+    url: '/stadistics/shares/',
+    type: 'GET',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    success: function(response) {
+      console.log(response.result);
+      labels = response.result.map((item) => item.title);
+      data = response.result.map((item) => item.shares_count);
+      sharesChartCtx = new Chart(sharesChart, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Cantidad de compartidos',
+            data: data,
+            backgroundColor: colors,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+            },
+            title: {
+              display: true,
+              text: 'Contenidos con mayor cantidad de compartidos'
+            }
+          },
+          scales: {
+            x: {
+              display: false,
+            },
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    },
+    error: function(xhr, status, error) {
+      if (xhr.status === 403) {
+        modal.warning({
+          message: xhr.responseJSON.message,
+        });
+      }
+      console.error('Error en la solicitud AJAX:', error);
+    }
+  });
+</script>
+
 {% endblock content %}
