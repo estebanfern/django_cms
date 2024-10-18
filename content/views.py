@@ -22,11 +22,8 @@ from django.core.exceptions import PermissionDenied
 from simple_history.utils import update_change_reason
 from django.contrib import messages
 from django.urls import reverse
-
-
 from .service import validate_permission_kanban
-from .tasks import update_reactions, count_view
-
+from .tasks import update_reactions, count_view, count_share
 
 @login_required
 def kanban_board(request):
@@ -83,8 +80,6 @@ def kanban_board(request):
     }
     return render(request, 'kanban/kanban_board.html', context)
 
-
-# API para actualizar el estado
 @csrf_exempt
 @login_required
 def update_content_state(request, content_id):
@@ -161,7 +156,6 @@ def update_content_state(request, content_id):
     notification.service.changeState([content.autor.email], content, oldState)
     return JsonResponse({'status': 'success'})
 
-# API para validar los permisos de cambio de estado en el kanban
 @csrf_exempt
 @login_required
 def validate_permission_kanban_api(request):
@@ -765,3 +759,19 @@ def view_content_detail(request, content_id):
     )
     return TemplateResponse(request, 'admin/content/content/content_detail.html', context)
 
+def view_count_share(request, content_id):
+    """
+    Encola en el worker de Celery la tarea para incrementar el contador de compartidos de un contenido.
+
+    Parámetros:
+        request (HttpRequest): Objeto de solicitud HTTP.
+        contend_id (int): ID del contenido cuyo contador de compartidos se incrementará.
+
+    Comportamiento:
+        - Encola al worker de Celery la tarea `count_share` con el ID del contenido.
+
+    Retorna:
+        JsonResponse: Respuesta JSON con el estado de la operación.
+    """
+    count_share.delay(content_id)
+    return JsonResponse({'status': 'success', 'message': 'Enqueued task.'})

@@ -24,7 +24,8 @@ Rutas:
     - 'profile/<int:id>/': Ruta para la vista de perfil de otro usuario, utilizando `other_profile_view`.
     - 'change-password/': Ruta para cambiar la contraseña del usuario autenticado, utilizando `change_password`.
 """
-from content.views import kanban_board, report_post, update_content_state, view_version, validate_permission_kanban_api, like_content, dislike_content
+from content.views import kanban_board, report_post, update_content_state, view_version, validate_permission_kanban_api, \
+    like_content, dislike_content, view_count_share
 from django.contrib import admin
 from django.urls import include, path
 from app.auth.views import register_view, login_view, logout_view, reset_password_view, password_reset_confirm_view
@@ -36,7 +37,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from category.views import categories_by_type
 from rating import views as rating_views
-from stadistic.views import view_stadistics, top_liked, top_rating, top_disliked, top_view
+from stadistic.views import view_stadistics, top_liked, top_rating, top_disliked, top_view, top_shares
 from suscription.views import suscribe_category, unsuscribe_category, create_checkout_session, stripe_webhook, customer_portal
 
 urlpatterns = [
@@ -77,6 +78,8 @@ urlpatterns = [
     # Rating
     path('rate/<int:content_id>/', rating_views.rate_content, name='rate_content'),
 
+    # Share
+    path('share/<int:content_id>/', view_count_share, name='share_content'),
 
     # Category
     path('category/<str:type>/', categories_by_type, name='categories_by_type'),
@@ -93,8 +96,7 @@ urlpatterns = [
     path('stadistics/dislikes/', top_disliked, name='top_disliked'),
     path('stadistics/rating/', top_rating, name='top_rating'),
     path('stadistics/views/', top_view, name='top_view'),
-
-
+    path('stadistics/shares/', top_shares, name='top_shares'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

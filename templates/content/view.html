@@ -59,18 +59,22 @@
           </div>
         </div>
         <div class="card-body">
-          <h1 class="text-center mt-4 fw-bold">{{ content.title }}</h1>
-          <h4> {{content.summary}} </h4>
+          <h1 class="text-center mt-4 fw-bold" id="contentTitle">{{ content.title }}</h1>
+          <h4 id="contentSummary"> {{content.summary}} </h4>
           <section>
             {{ content.content|safe }}
           </section>
         </div>
         <div class="card-footer">
           <div class="row">
-            <div class="col-12 text-center">
-              {% for tag in content.tags.all %}
-              <span class="badge text-bg-secondary">{{ tag }}</span>
-              {% endfor %}
+            <div class="col-12 row">
+              <div class="col-2 text-start">{{ content.views_count }} visualizaciones</div>
+              <div class="col-8 text-center">
+                {% for tag in content.tags.all %}
+                <span class="badge text-bg-secondary">{{ tag }}</span>
+                {% endfor %}
+              </div>
+              <div class="col-2 text-end">{{ content.shares_count }} compartidos</div>
             </div>
             <div class="col-12 text-center mt-4">
               {% if reaction_status == 'liked' %}
@@ -100,6 +104,10 @@
                   ({{ content.dislikes_count }})
                 </button>
               {% endif %}
+              <button class="btn btn-outline-success" onclick="share('{{ content.id }}')">
+                <i class="bi bi-share"></i>
+                Compartir
+              </button>
             </div>
           
             <div class="col-12 text-center mt-4">
@@ -543,10 +551,46 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 </script>
 
+<script>
+  function share(contentId) {
+    const title = document.getElementById('contentTitle').innerText;
+    const summary = document.getElementById('contentSummary').innerText;
 
+    const message = `¡Mira este contenido de la web CMS!\n${title} - ${summary}\nEs increíble, échale un vistazo.\n${window.location.href}`;
 
+    const tempInput = document.createElement('textarea');
+    tempInput.value = message;
+    document.body.appendChild(tempInput);
 
+    tempInput.select();
+    document.execCommand('copy');
+    
+    document.body.removeChild(tempInput);
 
+    modal.info(
+      {
+        message: 'Contenido copiado al portapapeles!',
+        size: 'small'
+      }
+    );
+
+    $.ajax({
+        url: '/share/' + contentId + '/',
+        type: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+        },
+        success: function(response) {
+          console.log(response);
+        },
+        error: function(xhr, status, error) {
+          console.error("Error en la solicitud AJAX:", error);
+        }
+      });
+
+    return true;  
+  }
+</script>
     
     
 {% endblock content %}
