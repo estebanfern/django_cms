@@ -23,13 +23,16 @@ class Suscription(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     date_subscribed = models.DateTimeField(auto_now_add=True)
+    stripe_subscription_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='ID de Suscripción en Stripe')
 
     class SuscriptionState(models.TextChoices):
         active = 'active', ('Activo')
         pending_payment = 'pending_payment', ('Pendiente de pago')
         cancelled = 'cancelled', ('Cancelado')
+        pending_cancellation = 'pending_cancellation', ('Pendiente de cancelación')
+
     state = models.CharField(
-        max_length=15,
+        max_length=20,
         choices=SuscriptionState.choices,
         default=SuscriptionState.pending_payment,
         verbose_name=('Tipo')

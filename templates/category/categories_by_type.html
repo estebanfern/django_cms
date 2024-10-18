@@ -132,6 +132,9 @@
       },
       success: function(response) {
         if (response.status === 'success') {
+          if (response.checkout_url) {
+            window.location.href = response.checkout_url;
+          }
           modal.info({message: response.message});
           btn.attr('class', SUSCRIPTION_BTN.suscribed.btnClass);
           btn.html(SUSCRIPTION_BTN.suscribed.btnChildren);
@@ -180,6 +183,14 @@
         console.log(xhr);
       }
     });
+  });
+
+  $(document).ready(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const successPayment = urlParams.get('stripe_id');
+    if (successPayment) {
+      modal.info({message: 'Suscripción realizada con éxito!'});
+    }
   });
 
 </script>

@@ -37,8 +37,7 @@ from django.conf.urls.static import static
 from category.views import categories_by_type
 from rating import views as rating_views
 from stadistic.views import view_stadistics, top_liked, top_rating, top_disliked, top_view
-from suscription.views import suscribe_category, unsuscribe_category
-
+from suscription.views import suscribe_category, unsuscribe_category, create_checkout_session, stripe_webhook, customer_portal
 
 urlpatterns = [
 
@@ -83,7 +82,10 @@ urlpatterns = [
     path('category/<str:type>/', categories_by_type, name='categories_by_type'),
     # Category suscription
     path('category/<int:category_id>/suscribe/', suscribe_category, name='suscribe_category'),
-    path('category/<int:category_id>/unsuscribe/', unsuscribe_category, name='suscribe_category'),
+    path('category/<int:category_id>/unsuscribe/', unsuscribe_category, name='unsuscribe_category'),
+    path('create-checkout-session/<int:category_id>/', create_checkout_session, name='create_checkout_session'),
+    path('webhook/stripe/', stripe_webhook, name='stripe_webhook'),
+    path('subscriptions/', customer_portal, name='customer_portal'),
 
     #Stadistics
     path('stadistics/', view_stadistics, name='view_stadistics'),
@@ -91,6 +93,7 @@ urlpatterns = [
     path('stadistics/dislikes/', top_disliked, name='top_disliked'),
     path('stadistics/rating/', top_rating, name='top_rating'),
     path('stadistics/views/', top_view, name='top_view'),
+
 
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
