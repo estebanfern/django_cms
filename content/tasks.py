@@ -80,3 +80,8 @@ def update_reactions(content_id):
 @shared_task()
 def count_view(content_id):
     Content.objects.filter(id=content_id).update(views_count=F('views_count') + 1)
+
+@shared_task()
+def count_share(content_id):
+    print(content_id)
+    Content.objects.filter(id=content_id).update(shares_count=F('shares_count') + 1)
