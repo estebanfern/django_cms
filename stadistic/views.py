@@ -148,3 +148,19 @@ def top_view(request):
         data,
         safe=False
     )
+
+@login_required
+@permission_required('app.create_content', raise_exception=True)
+def top_shares(request):
+    user = request.user
+    top_contents = Content.objects.filter(autor=user, state=Content.StateChoices.publish, date_published__lt=timezone.now()) \
+                       .values('title', 'shares_count', 'date_create', 'date_published') \
+                       .order_by('-shares_count')[:10]
+    data = {
+        'status': 'success',
+        'result': list(top_contents)
+    }
+    return JsonResponse(
+        data,
+        safe=False
+    )
