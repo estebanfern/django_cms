@@ -365,7 +365,7 @@ def stripe_webhook(request):
             category_paid = metadata["category_paid"]
 
         #Si se cancela la suscripción al finalizar el periodo de facturación
-        if 'cancel_at_period_end' in previous_attributes and pending_cancellation:
+        if 'cancel_at_period_end' in previous_attributes and pending_cancellation and pending_cancellation != previous_attributes['cancel_at_period_end']:
             if category_paid:
                 subscription_id = subscription['id']
                 category_id = subscription["metadata"]["category_id"]
