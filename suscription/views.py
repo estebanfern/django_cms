@@ -307,14 +307,11 @@ def stripe_webhook(request):
             suscription = Suscription.objects.filter(user=user, category=category,stripe_subscription_id=subscription_id).first()
 
             if suscription:
-                suscription.strip_subscription_id = subscription_id
-                suscription.state = Suscription.SuscriptionState.pending_payment
-            else:
-                suscription = Suscription(user=user, category=category, state=Suscription.SuscriptionState.pending_payment, stripe_subscription_id=subscription_id)
+                suscription.state = Suscription.SuscriptionState.cancelled
+                stripe.Subscription.cancel(subscription_id)
+                suscription.save()
 
-            suscription.save()
-
-             # TODO: Enviar correo de pago fallido al usuario
+            # TODO: Enviar correo de pago fallido al usuario
 
         except CustomUser.DoesNotExist:
             return JsonResponse({'status': 'user not found'}, status=404)
