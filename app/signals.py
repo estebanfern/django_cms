@@ -20,34 +20,36 @@ def cache_previous_user(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=CustomUser)
 def post_save_user_handler(sender, instance, created, **kwargs):
 
-    # Si se desactivo un usuario
-    if instance.is_active != instance.__original_user.is_active and not instance.is_active:
-        # TODO: Notificar al usuario que su cuenta fue desactivada
-        # Desactivar todas las suscripciones activas en stripe
-        if instance.stripe_customer_id:
-            list_subscriptions = Suscription.objects.filter(user=instance, state=Suscription.SuscriptionState.active, stripe_subscription_id__isnull=False)
-            for subscription in list_subscriptions:
-                stripe.Subscription.modify(
-                    subscription.stripe_subscription_id,
-                    cancel_at_period_end=True,
+    # Si se modifico un usuario
+    if instance.__original_user:
+        # Si se desactivo un usuario
+        if instance.is_active != instance.__original_user.is_active and not instance.is_active:
+            # TODO: Notificar al usuario que su cuenta fue desactivada
+            # Desactivar todas las suscripciones activas en stripe
+            if instance.stripe_customer_id:
+                list_subscriptions = Suscription.objects.filter(user=instance, state=Suscription.SuscriptionState.active, stripe_subscription_id__isnull=False)
+                for subscription in list_subscriptions:
+                    stripe.Subscription.modify(
+                        subscription.stripe_subscription_id,
+                        cancel_at_period_end=True,
+                    )
+
+        # Si se cambio el nombre
+        if instance.name != instance.__original_user.name:
+            # Actualizar el nombre en Stripe
+            if instance.stripe_customer_id:
+                stripe.Customer.modify(
+                    instance.stripe_customer_id,
+                    name=instance.name,
                 )
 
-    # Si se cambio el nombre
-    if instance.name != instance.__original_user.name:
-        # Actualizar el nombre en Stripe
-        if instance.stripe_customer_id:
-            stripe.Customer.modify(
-                instance.stripe_customer_id,
-                name=instance.name,
-            )
-
-    # Si se cambio el email
-    if instance.email != instance.__original_user.email:
-        # TODO: Notificar al usuario que su email fue cambiado
-        # Actualizar el email en Stripe
-        if instance.stripe_customer_id:
-            stripe.Customer.modify(
-                instance.stripe_customer_id,
-                email=instance.email,
-            )
+        # Si se cambio el email
+        if instance.email != instance.__original_user.email:
+            # TODO: Notificar al usuario que su email fue cambiado
+            # Actualizar el email en Stripe
+            if instance.stripe_customer_id:
+                stripe.Customer.modify(
+                    instance.stripe_customer_id,
+                    email=instance.email,
+                )
 
