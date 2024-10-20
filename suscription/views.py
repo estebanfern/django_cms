@@ -88,6 +88,7 @@ def unsuscribe_category(request, category_id):
             )
             suscription.state = Suscription.SuscriptionState.pending_cancellation
             suscription.save()
+            # TODO: Enviar correo de cancelación de suscripción al usuario
             return JsonResponse({'status': 'success', 'message': f'Tu suscripción finalizará al final del ciclo de facturación actual.'})
             # stripe.Subscription.cancel(subscription_id)
         except Exception as e:
@@ -353,8 +354,10 @@ def stripe_webhook(request):
     if event['type'] == 'customer.subscription.updated':
         subscription = event['data']['object']
         pending_cancellation = subscription['cancel_at_period_end']
+        previous_attributes = event['data']['previous_attributes']
 
-        if pending_cancellation:
+        #Si se cancela la suscripción al finalizar el periodo de facturación
+        if 'cancel_at_period_end' in previous_attributes and pending_cancellation:
             subscription_id = subscription['id']
             category_id = subscription["metadata"]["category_id"]
             customer_id = subscription.get('customer')
