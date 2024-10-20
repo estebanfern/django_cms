@@ -330,38 +330,13 @@ def stripe_webhook(request):
         subscription_id = subscription['id']
         category_id = subscription["metadata"]["category_id"]
         customer_id = subscription.get('customer')
+        metadata = subscription['metadata']
+        category_paid = True
 
-        try:
-            customer = stripe.Customer.retrieve(customer_id)
-            customer_email = customer.email
-            user = CustomUser.objects.get(stripe_customer_id=customer_id)
-            category = Category.objects.get(id=category_id)
-            suscription = Suscription.objects.filter(user=user, category=category,stripe_subscription_id=subscription_id).first()
-            if not suscription:
-                return JsonResponse({'status': 'suscription not found'}, status=404)
-            suscription.state = Suscription.SuscriptionState.cancelled
-            suscription.save()
+        if "category_paid" in metadata:
+            category_paid = metadata["category_paid"]
 
-            # TODO: Enviar correo de cancelación de suscripción al usuario
-
-        except CustomUser.DoesNotExist:
-            return JsonResponse({'status': 'user not found'}, status=404)
-        except Category.DoesNotExist:
-            return JsonResponse({'status': 'category not found'}, status=404)
-        except Suscription.DoesNotExist:
-            return JsonResponse({'status': 'suscription not found'}, status=404)
-
-    if event['type'] == 'customer.subscription.updated':
-        subscription = event['data']['object']
-        pending_cancellation = subscription['cancel_at_period_end']
-        previous_attributes = event['data']['previous_attributes']
-
-        #Si se cancela la suscripción al finalizar el periodo de facturación
-        if 'cancel_at_period_end' in previous_attributes and pending_cancellation:
-            subscription_id = subscription['id']
-            category_id = subscription["metadata"]["category_id"]
-            customer_id = subscription.get('customer')
-
+        if category_paid:
             try:
                 customer = stripe.Customer.retrieve(customer_id)
                 customer_email = customer.email
@@ -370,19 +345,54 @@ def stripe_webhook(request):
                 suscription = Suscription.objects.filter(user=user, category=category,stripe_subscription_id=subscription_id).first()
                 if not suscription:
                     return JsonResponse({'status': 'suscription not found'}, status=404)
-                suscription.state = Suscription.SuscriptionState.pending_cancellation
+                suscription.state = Suscription.SuscriptionState.cancelled
                 suscription.save()
 
-                #TODO: Enviar correo de cancelación de suscripción al usuario
+                # TODO: Enviar correo de cancelación de suscripción al usuario
 
-
-            except Exception as e:
-                return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+            except CustomUser.DoesNotExist:
+                return JsonResponse({'status': 'user not found'}, status=404)
             except Category.DoesNotExist:
                 return JsonResponse({'status': 'category not found'}, status=404)
             except Suscription.DoesNotExist:
                 return JsonResponse({'status': 'suscription not found'}, status=404)
 
+    if event['type'] == 'customer.subscription.updated':
+        subscription = event['data']['object']
+        pending_cancellation = subscription['cancel_at_period_end']
+        previous_attributes = event['data']['previous_attributes']
+        metadata = subscription['metadata']
+        category_paid = True
+
+        if "category_paid" in metadata:
+            category_paid = metadata["category_paid"]
+
+        #Si se cancela la suscripción al finalizar el periodo de facturación
+        if 'cancel_at_period_end' in previous_attributes and pending_cancellation:
+            if category_paid:
+                subscription_id = subscription['id']
+                category_id = subscription["metadata"]["category_id"]
+                customer_id = subscription.get('customer')
+
+                try:
+                    customer = stripe.Customer.retrieve(customer_id)
+                    customer_email = customer.email
+                    user = CustomUser.objects.get(stripe_customer_id=customer_id)
+                    category = Category.objects.get(id=category_id)
+                    suscription = Suscription.objects.filter(user=user, category=category,stripe_subscription_id=subscription_id).first()
+                    if not suscription:
+                        return JsonResponse({'status': 'suscription not found'}, status=404)
+                    suscription.state = Suscription.SuscriptionState.pending_cancellation
+                    suscription.save()
+
+                except Exception as e:
+                    return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+                except Category.DoesNotExist:
+                    return JsonResponse({'status': 'category not found'}, status=404)
+                except Suscription.DoesNotExist:
+                    return JsonResponse({'status': 'suscription not found'}, status=404)
+
+            #TODO: Enviar correo de cancelación de suscripción al usuario
 
     return JsonResponse({'status': 'success'}, status=200)
 
