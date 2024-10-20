@@ -413,6 +413,44 @@ def stripe_webhook(request):
             except Exception as e:
                 return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
+    if event['type'] == 'price.updated':
+        price = event['data']['object']
+        price_id = price['id']
+        previous_attributes = event['data']['previous_attributes']
+        active = price['active']
+        metada = price['metadata']
+
+        if 'new_price' in metada:
+            new_price = metada['new_price']
+        else:
+            new_price = None
+
+
+        # Si se cambia de precio
+        if 'active' in previous_attributes and not active and active != previous_attributes['active'] and new_price and new_price != price['unit_amount']:
+            try:
+                category = Category.objects.get(stripe_price_id=price_id)
+                # Crear un nuevo precio en Stripe
+                new_price_stripe = stripe.Price.create(
+                    product=category.stripe_product_id,
+                    unit_amount=new_price,
+                    currency='PYG',
+                    recurring={"interval": "month"},
+                )
+                # Guardar el nuevo ID del precio en el modelo de categoría
+                category.stripe_price_id = new_price_stripe.id
+                category.save()
+
+                # Cancelar las suscripciones activas al finalizar el periodo de facturación actual
+                list_subscriptions = Suscription.objects.filter(category=category, stripe_subscription_id__isnull=False, state=Suscription.SuscriptionState.active)
+                for suscription in list_subscriptions:
+                    stripe.Subscription.modify(
+                        suscription.stripe_subscription_id,
+                        cancel_at_period_end=True,
+                    )
+            except Exception as e:
+                return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
 
     return JsonResponse({'status': 'success'}, status=200)
 
