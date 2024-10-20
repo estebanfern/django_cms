@@ -391,5 +391,28 @@ def stripe_webhook(request):
 
             #TODO: Enviar correo de cancelación de suscripción al usuario
 
+    if event['type'] == 'product.updated':
+        product = event['data']['object']
+        product_id = product['id']
+        previous_attributes = event['data']['previous_attributes']
+        active = product['active']
+
+        # Si se desactiva el producto
+        if 'active' in previous_attributes and not active and active != previous_attributes['active']:
+            try:
+                category = Category.objects.get(stripe_product_id=product_id)
+                list_subscriptions = Suscription.objects.filter(category=category, stripe_subscription_id__isnull=False).exclude(state=Suscription.SuscriptionState.cancelled)
+                for suscription in list_subscriptions:
+                    subscription_id = suscription.stripe_subscription_id
+                    stripe.Subscription.modify(
+                        subscription_id,
+                        cancel_at_period_end=True,
+                    )
+                    suscription.state = Suscription.SuscriptionState.pending_cancellation
+                    suscription.save()
+            except Exception as e:
+                return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
     return JsonResponse({'status': 'success'}, status=200)
 
