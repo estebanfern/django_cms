@@ -75,23 +75,23 @@ def post_save_category_handler(sender, instance, created, **kwargs):
             # TODO: Desactivar las suscripciones de los usuarios que no pagaron
             # TODO: Poner metadata en las suscripciones category = paid para cuando se cancele la suscripcion  en el werbhok se envie notifacion de cancelacion a los usuarios y se cancele la suscripcion en la base de datos
 
-            list_subscriptions = stripe.Subscription.list(product=instance.stripe_product_id)
+            list_subscriptions = Suscription.objects.filter(category=instance)
             for subscription in list_subscriptions:
                 if subscription.stripe_subscription_id:
                     suscription_stripe = stripe.Subscription.retrieve(subscription.stripe_subscription_id)
                     if suscription_stripe.status == 'active':
-                        subscription.status = Suscription.SuscriptionState.pending_cancellation
+                        subscription.state = Suscription.SuscriptionState.pending_cancellation
                         subscription.save()
                         stripe.Subscription.modify(
                             subscription.stripe_subscription_id,
                             metadata={'category_paid': True},
                         )
                     else:
-                        subscription.status = Suscription.SuscriptionState.cancelled
+                        subscription.state = Suscription.SuscriptionState.cancelled
                         subscription.save()
                 else:
-                    if subscription.status == 'active':
-                        subscription.status = Suscription.SuscriptionState.cancelled
+                    if subscription.state == 'active':
+                        subscription.state = Suscription.SuscriptionState.cancelled
                         subscription.save()
 
 
@@ -106,23 +106,16 @@ def post_save_category_handler(sender, instance, created, **kwargs):
             # TODO: Cancelar las suscripciones de los usuarios en el webhook de Stripe (pending_cancellation)
             # TODO: Poner metadata en las suscripciones category = not_paid para cuando se cancele la suscripcion no se envie notifacion de cancelacion a los usuarios y no se ponga cancelado en la suscripcion en la base de datos
 
-            list_subscriptions = stripe.Subscription.list(product=instance.stripe_product_id)
+            list_subscriptions = Suscription.objects.filter(category=instance)
             for subscription in list_subscriptions:
                 if subscription.stripe_subscription_id:
                     suscription_stripe = stripe.Subscription.retrieve(subscription.stripe_subscription_id)
-                    if suscription_stripe.status == 'active' and subscription.status != Suscription.SuscriptionState.pending_cancellation:
-                        subscription.status = Suscription.SuscriptionState.active
-                        subscription.save()
+                    if suscription_stripe.status == 'active' and subscription.state != Suscription.SuscriptionState.pending_cancellation:
                         stripe.Subscription.modify(
                             subscription.stripe_subscription_id,
                             cancel_at_period_end=True,
                             metadata={'category_paid': False},
                         )
-                else:
-                    if subscription.status != Suscription.SuscriptionState.cancelled and subscription.status != Suscription.SuscriptionState.pending_cancellation and subscription.status != Suscription.SuscriptionState.active:
-                        subscription.status = Suscription.SuscriptionState.active
-                        subscription.save()
-
 
 
         # Si se cambio el precio
