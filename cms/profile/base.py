@@ -256,3 +256,6 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # Configuración de Stripe
 STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
+
+# Configuracion para escuchar eventos de Stripe
+ENDPOINT_SECRET = config('ENDPOINT_SECRET')

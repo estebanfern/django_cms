@@ -8,6 +8,8 @@ from app.models import CustomUser
 from category.models import Category
 from suscription.models import Suscription
 from django.contrib.auth.decorators import login_required
+from cms.profile import base
+
 
 # Create your views here.
 
@@ -181,7 +183,7 @@ def customer_portal(request):
 def stripe_webhook(request):
     payload = request.body
     sig_header = request.META['HTTP_STRIPE_SIGNATURE']
-    endpoint_secret = 'whsec_753712c60d4ebc1c92196d5bd7bc92a7c571009f91d0e0f8a24109c542ad2e8d'
+    endpoint_secret = base.ENDPOINT_SECRET
 
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
