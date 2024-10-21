@@ -236,10 +236,35 @@ def category_changed_to_paid(category):
         message = f"""
         Queremos informarte que la categoría {category.name}, a la que estás suscrito, ahora es de pago.
 
-        Para seguir disfrutando del contenido de esta categoría, será necesario que te suscribas con una suscripción de pago..
+        Para seguir disfrutando del contenido de esta categoría, será necesario que te suscribas con una suscripción de pago.
         """
         context = {
             "message": message,
         }
         send_notification_task.delay(subject, [user.email], context, template)
 
+
+def category_changed_to_not_paid(category):
+    template = "email/notification.html"
+    type = category.type
+    typeMapped = {
+        "paid": "de Pago",
+        "public": "Pública",
+        "suscription": "para Suscriptores"
+    }
+    subject = f"La categoría {category.name} ahora es {typeMapped[type]}"
+    list_subscriptions = Suscription.objects.filter(category=category, state=Suscription.SuscriptionState.active, stripe_subscription_id__isnull=False)
+    for subscription in list_subscriptions:
+        user = subscription.user
+        # TODO: El mensaje debe respetar los saltos de lineas al enviar el correo
+        message = f"""
+        Nos complace informarte que la categoría {category.name}, a la que estabas suscrito, ahora es {typeMapped[type]}. 
+
+        A partir de este cambio, ya no se te seguirá facturando por esta categoría. Podrás seguir disfrutando de todos sus contenidos sin necesidad de realizar pagos adicionales.
+
+        Agradecemos tu apoyo continuo y esperamos que sigas disfrutando de los contenido.
+        """
+        context = {
+            "message": message,
+        }
+        send_notification_task.delay(subject, [user.email], context, template)

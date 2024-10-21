@@ -100,11 +100,13 @@ def post_save_category_handler(sender, instance, created, **kwargs):
 
         # Si la categoría se cambio de pago a tipo a no pago
         if instance.type != instance.__original_category.type and instance.__original_category.type == Category.TypeChoices.paid:
+
+            notification.service.category_changed_to_not_paid(instance)
+
             stripe.Product.modify(
                 instance.stripe_product_id,
                 active=False,
             )
-            # TODO: Enviar notificación a los suscriptores de la categoría
             # TODO: Activar todas las suscripciones de los usuarios que no esten cancelados
             # TODO: Cancelar las suscripciones de los usuarios en el webhook de Stripe (pending_cancellation)
             # TODO: Poner metadata en las suscripciones category = not_paid para cuando se cancele la suscripcion no se envie notifacion de cancelacion a los usuarios y no se ponga cancelado en la suscripcion en la base de datos
