@@ -184,4 +184,17 @@ def payment_failed(user, category, invoice):
     send_notification_task.delay(subject, [user.email], context, template)
 
 
+def subscription_cancelled(user, category):
+    category_name = category.name
+    template = "email/notification.html"
+    subject = "Suscripción cancelada"
+    # TODO: El mensaje debe respetar los saltos de lineas al enviar el correo
+    message = f"""
+    Queremos informarte que tu suscripción a la categoría {category_name} ha sido cancelada satisfactoriamente. A partir de ahora, ya no tendrás acceso a los contenidos de esta categoría.
 
+    Si fue un error o si deseas reactivar tu suscripción en el futuro, puedes volver a suscribirte en cualquier momento a través de nuestro sitio web.
+    """
+    context = {
+        "message": message,
+    }
+    send_notification_task.delay(subject, [user.email], context, template)
