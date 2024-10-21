@@ -4,6 +4,8 @@ from datetime import datetime
 from notification.tasks import send_notification_task
 from django.utils.timezone import make_aware
 
+from suscription.models import Suscription
+
 
 def changeState (recipient_list, content, oldState):
     """
@@ -222,3 +224,22 @@ def subscription_pending_cancellation(user, category,subscription):
         "message": message,
     }
     send_notification_task.delay(subject, [user.email], context, template)
+
+
+def category_changed_to_paid(category):
+    template = "email/notification.html"
+    subject = f"La categoría {category.name} ahora es de pago"
+    list_subscriptions = Suscription.objects.filter(category=category, state=Suscription.SuscriptionState.active)
+    for subscription in list_subscriptions:
+        user = subscription.user
+        # TODO: El mensaje debe respetar los saltos de lineas al enviar el correo
+        message = f"""
+        Queremos informarte que la categoría {category.name}, a la que estás suscrito, ahora es de pago.
+
+        Para seguir disfrutando del contenido de esta categoría, será necesario que te suscribas con una suscripción de pago..
+        """
+        context = {
+            "message": message,
+        }
+        send_notification_task.delay(subject, [user.email], context, template)
+

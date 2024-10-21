@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from category.models import Category
 from cms.profile import base
 from suscription.models import Suscription
+import notification.service
 
 stripe.api_key = base.STRIPE_SECRET_KEY
 
@@ -46,6 +47,9 @@ def post_save_category_handler(sender, instance, created, **kwargs):
     if instance.__original_category:
         # Si la categoría se cambio de tipo a pago
         if instance.type != instance.__original_category.type and instance.type == Category.TypeChoices.paid:
+
+            notification.service.category_changed_to_paid(instance)
+
             # Si la categoria no tiene un producto en Stripe
             if not instance.stripe_product_id:
                 # Crear el producto en Stripe
@@ -71,7 +75,6 @@ def post_save_category_handler(sender, instance, created, **kwargs):
                     active=instance.is_active,
                 )
 
-            # TODO: Enviar notificación a los suscriptores de la categoría que ahora es de pago si esta activo
             # TODO: Desactivar las suscripciones de los usuarios que no pagaron
             # TODO: Poner metadata en las suscripciones category = paid para cuando se cancele la suscripcion  en el werbhok se envie notifacion de cancelacion a los usuarios y se cancele la suscripcion en la base de datos
 
