@@ -175,6 +175,10 @@ def post_save_category_handler(sender, instance, created, **kwargs):
 
         # Si se cambio el nombre o la descripción de la categoría
         if instance.name != instance.__original_category.name or instance.description != instance.__original_category.description:
+
+            if instance.name != instance.__original_category.name:
+                notification.service.category_name_changed(instance, instance.__original_category.name)
+
             # Si la categoría es de pago se modifica en Stripe
             if instance.type == Category.TypeChoices.paid:
                 stripe.Product.modify(
@@ -182,7 +186,6 @@ def post_save_category_handler(sender, instance, created, **kwargs):
                     name=instance.name,
                     description=instance.description,
                 )
-            # TODO: Enviar notificación a los suscriptores de la categoría
 
 
 

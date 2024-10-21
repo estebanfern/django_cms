@@ -344,3 +344,17 @@ def category_state_changed(category):
             }
             send_notification_task.delay(subject, [user.email], context, template)
 
+
+def category_name_changed(category, old_name):
+    template = "email/notification.html"
+    subject = f"El nombre de la categoría {old_name} ha sido cambiado"
+    list_subscriptions = Suscription.objects.filter(category=category, state=Suscription.SuscriptionState.active)
+    message = f"""
+    Te informamos que el nombre de la categoría {old_name} ha sido cambiado a {category.name}.
+    """
+    for subscription in list_subscriptions:
+        user = subscription.user
+        context = {
+            "message": message,
+        }
+        send_notification_task.delay(subject, [user.email], context, template)
