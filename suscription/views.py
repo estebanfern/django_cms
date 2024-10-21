@@ -362,6 +362,15 @@ def stripe_webhook(request):
         previous_attributes = event['data']['previous_attributes']
         metadata = subscription['metadata']
         category_paid = True
+        status = subscription['status']
+
+        # Si cambio al estado 'incomplete_expired' se cancela la suscripción sin enviar notificación
+        if 'status' in previous_attributes and status != previous_attributes['status'] and status == 'incomplete_expired':
+            stripe.Subscription.modify(
+                subscription.id,
+                category_paid=False,
+            )
+            stripe.Subscription.delete(subscription.id)
 
         if "category_paid" in metadata:
             category_paid = metadata["category_paid"]
