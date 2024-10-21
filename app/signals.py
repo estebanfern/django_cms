@@ -46,7 +46,7 @@ def post_save_user_handler(sender, instance, created, **kwargs):
 
         # Si se cambio el email
         if instance.email != instance.__original_user.email:
-            # TODO: Notificar al usuario que su email fue cambiado
+            notification.service.user_email_changed(instance, instance.__original_user.email)
             # Actualizar el email en Stripe
             if instance.stripe_customer_id:
                 stripe.Customer.modify(

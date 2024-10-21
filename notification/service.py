@@ -370,3 +370,16 @@ def user_deactivated(user):
         "message": message,
     }
     send_notification_task.delay(subject, [user.email], context, template)
+
+
+def user_email_changed(user, old_email):
+    template = "email/notification.html"
+    subject = "Tu dirección de correo electrónico ha sido cambiada"
+    message = f"""
+    Te informamos que tu dirección de correo electrónico ha sido cambiada de {old_email} a {user.email}.
+    """
+    context = {
+        "message": message,
+    }
+    send_notification_task.delay(subject, [user.email], context, template)
+    send_notification_task.delay(subject, [old_email], context, template)
