@@ -198,3 +198,27 @@ def subscription_cancelled(user, category):
         "message": message,
     }
     send_notification_task.delay(subject, [user.email], context, template)
+
+
+def subscription_pending_cancellation(user, category,subscription):
+    category_name = category.name
+    current_period_end = subscription.current_period_end
+
+    # Convertir Unix timestamp a objetos datetime
+    dt_period_end = make_aware(datetime.fromtimestamp(current_period_end))
+
+    # Conversión horaria (%d/%m/%Y %H:%M:%S %Z)
+    formatted_period_end = dt_period_end.strftime('%d/%m/%Y %H:%M:%S')
+
+    template = "email/notification.html"
+    subject = "Tu suscripción será cancelada al final del ciclo de facturación"
+    # TODO: El mensaje debe respetar los saltos de lineas al enviar el correo
+    message = f"""
+    Te informamos que tu suscripción a la categoría {category_name} se cancelará automáticamente al final de tu ciclo de facturación actual.
+    
+    Podrás seguir disfrutando del contenido hasta la fecha de finalización: {formatted_period_end}. Después de esa fecha, perderás el acceso a esta categoría y para volver a disfrutar de los contenidos, deberás suscribirte nuevamente.
+    """
+    context = {
+        "message": message,
+    }
+    send_notification_task.delay(subject, [user.email], context, template)

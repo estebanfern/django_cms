@@ -381,8 +381,6 @@ def stripe_webhook(request):
                 customer_id = subscription.get('customer')
 
                 try:
-                    customer = stripe.Customer.retrieve(customer_id)
-                    customer_email = customer.email
                     user = CustomUser.objects.get(stripe_customer_id=customer_id)
                     category = Category.objects.get(id=category_id)
                     suscription = Suscription.objects.filter(user=user, category=category,stripe_subscription_id=subscription_id).first()
@@ -391,6 +389,8 @@ def stripe_webhook(request):
                     suscription.state = Suscription.SuscriptionState.pending_cancellation
                     suscription.save()
 
+                    notification.service.subscription_pending_cancellation(user, category, subscription)
+
                 except Exception as e:
                     return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
                 except Category.DoesNotExist:
@@ -398,7 +398,6 @@ def stripe_webhook(request):
                 except Suscription.DoesNotExist:
                     return JsonResponse({'status': 'suscription not found'}, status=404)
 
-            #TODO: Enviar correo de cancelación de suscripción al usuario
 
     if event['type'] == 'product.updated':
         product = event['data']['object']
