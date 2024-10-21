@@ -1,6 +1,8 @@
 from datetime import datetime
 
+import stripe
 
+from cms.profile import base
 from notification.tasks import send_notification_task
 from django.utils.timezone import make_aware
 
@@ -268,3 +270,38 @@ def category_changed_to_not_paid(category):
             "message": message,
         }
         send_notification_task.delay(subject, [user.email], context, template)
+
+
+def category_price_changed(category):
+    stripe.api_key = base.STRIPE_SECRET_KEY
+
+    template = "email/notification.html"
+    subject = f"El precio de la categoría {category.name} ha cambiado"
+    list_subscriptions = Suscription.objects.filter(category=category, state=Suscription.SuscriptionState.active, stripe_subscription_id__isnull=False)
+    new_price = category.price
+
+
+    for subscription in list_subscriptions:
+        user = subscription.user
+
+        stripe_subscription = stripe.Subscription.retrieve(subscription.stripe_subscription_id)
+        current_period_end = stripe_subscription.current_period_end
+
+        # Convertir Unix timestamp a objetos datetime
+        dt_period_end = make_aware(datetime.fromtimestamp(current_period_end))
+
+        # Conversión horaria (%d/%m/%Y %H:%M:%S %Z)
+        formatted_period_end = dt_period_end.strftime('%d/%m/%Y %H:%M:%S')
+
+        message = f"""
+        Te informamos que el precio de la categoría {category.name} ha sido actualizado a {new_price} PYS mensuales.
+
+        Tu suscripción actual continuará activa hasta el {formatted_period_end}, fecha en la cual se cancelará automáticamente. Hasta ese momento, seguirás disfrutando de todos los beneficios de esta categoría.
+
+        Si deseas continuar accediendo al contenido de {category.name} después de esa fecha, podrás suscribirte nuevamente con el nuevo precio.
+        """
+        context = {
+            "message": message,
+        }
+        send_notification_task.delay(subject, [user.email], context, template)
+

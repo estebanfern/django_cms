@@ -127,6 +127,9 @@ def post_save_category_handler(sender, instance, created, **kwargs):
         if instance.price != instance.__original_category.price:
             # Si la categoría es de pago se modifica en Stripe
             if instance.type == Category.TypeChoices.paid:
+
+                notification.service.category_price_changed(instance)
+
                 # Desactivar el precio anterior
                 old_proce_stripe = stripe.Price.modify(
                     instance.stripe_price_id,
