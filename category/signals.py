@@ -152,6 +152,9 @@ def post_save_category_handler(sender, instance, created, **kwargs):
 
         # Si se cambio el estado de la categoría
         if instance.is_active != instance.__original_category.is_active:
+
+            notification.service.category_state_changed(instance)
+
             # Si la categoría es de pago se modifica en Stripe
             if instance.type == Category.TypeChoices.paid:
                 stripe.Product.modify(
@@ -168,7 +171,6 @@ def post_save_category_handler(sender, instance, created, **kwargs):
                 #     # TODO: Activar las suscripciones de los usuarios que no esten cancelados
 
 
-            # TODO: Enviar notificación a los suscriptores de la categoría
 
 
         # Si se cambio el nombre o la descripción de la categoría

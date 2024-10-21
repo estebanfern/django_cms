@@ -2,6 +2,7 @@ from datetime import datetime
 
 import stripe
 
+from category.models import Category
 from cms.profile import base
 from notification.tasks import send_notification_task
 from django.utils.timezone import make_aware
@@ -304,4 +305,42 @@ def category_price_changed(category):
             "message": message,
         }
         send_notification_task.delay(subject, [user.email], context, template)
+
+
+def category_state_changed(category):
+    template = "email/notification.html"
+    list_subscriptions = Suscription.objects.filter(category=category, state=Suscription.SuscriptionState.active)
+
+    if category.is_active:
+        subject = f"La categoría {category.name} ha sido activada: Acceso habilitado"
+        message = f"""
+        Nos complace informarte que la categoría {category.name} ha sido activada. A partir de ahora, puedes acceder a todos los contenidos de esta categoría nuevamente.
+        """
+        for subscription in list_subscriptions:
+            user = subscription.user
+            context = {
+                "message": message,
+            }
+            send_notification_task.delay(subject, [user.email], context, template)
+    else:
+        if category.type == Category.TypeChoices.paid:
+            subject = f"La categoría {category.name} ha sido desactivada: Acceso suspendido"
+            message = f"""
+            Queremos informarte que la categoría {category.name} ha sido desactivada y ya no estará disponible para acceder a sus contenidos.
+    
+            Tu suscripción será cancelada al final de tu ciclo de facturación actual. A partir de esa fecha, no se te realizará ningún cargo adicional, y no tendrás que pagar más por esta categoría.
+    
+            Lamentamos cualquier inconveniente que esto pueda causarte y agradecemos tu confianza en nosotros.
+            """
+        else:
+            subject = f"La categoría {category.name} ha sido desactivada: Acceso suspendido"
+            message = f"""
+            Queremos informarte que la categoría {category.name} ha sido desactivada. A partir de ahora, ya no podrás acceder a los contenidos de esta categoría.
+            """
+        for subscription in list_subscriptions:
+            user = subscription.user
+            context = {
+                "message": message,
+            }
+            send_notification_task.delay(subject, [user.email], context, template)
 
