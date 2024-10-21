@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from app.models import CustomUser
 from cms.profile import base
 from suscription.models import Suscription
+import notification.service
 
 stripe.api_key = base.STRIPE_SECRET_KEY
 
@@ -24,7 +25,7 @@ def post_save_user_handler(sender, instance, created, **kwargs):
     if instance.__original_user:
         # Si se desactivo un usuario
         if instance.is_active != instance.__original_user.is_active and not instance.is_active:
-            # TODO: Notificar al usuario que su cuenta fue desactivada
+            notification.service.user_deactivated(instance)
             # Desactivar todas las suscripciones activas en stripe
             if instance.stripe_customer_id:
                 list_subscriptions = Suscription.objects.filter(user=instance, state=Suscription.SuscriptionState.active, stripe_subscription_id__isnull=False)

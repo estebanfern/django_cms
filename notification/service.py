@@ -358,3 +358,15 @@ def category_name_changed(category, old_name):
             "message": message,
         }
         send_notification_task.delay(subject, [user.email], context, template)
+
+
+def user_deactivated(user):
+    template = "email/notification.html"
+    subject = "Tu cuenta ha sido desactivada"
+    message = f"""
+    Lamentamos informarte que tu cuenta ha sido desactivada. A partir de ahora, ya no podrás acceder al sitio web.
+    """
+    context = {
+        "message": message,
+    }
+    send_notification_task.delay(subject, [user.email], context, template)
