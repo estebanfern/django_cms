@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+import notification.service
 from app.models import CustomUser
 from category.models import Category
 from suscription.models import Suscription
@@ -279,7 +280,7 @@ def stripe_webhook(request):
 
             suscription.save()
 
-            # TODO: Enviar correo de pago exitoso al usuario
+            notification.service.payment_success(user, category, invoice)
 
         except CustomUser.DoesNotExist:
             return JsonResponse({'status': 'user not found'}, status=404)
