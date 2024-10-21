@@ -302,7 +302,6 @@ def stripe_webhook(request):
         # Obtener datos de la sesión
         customer_id = invoice.get('customer')
         subscription_id = invoice.get('subscription')
-        customer_email = invoice.get('customer_email')
 
         try:
             user = CustomUser.objects.get(stripe_customer_id=customer_id)
@@ -314,7 +313,7 @@ def stripe_webhook(request):
                 stripe.Subscription.cancel(subscription_id)
                 suscription.save()
 
-            # TODO: Enviar correo de pago fallido al usuario
+            notification.service.payment_failed(user, category, invoice)
 
         except CustomUser.DoesNotExist:
             return JsonResponse({'status': 'user not found'}, status=404)

@@ -156,4 +156,32 @@ def payment_success(user, category, invoice):
     send_notification_task.delay(subject, [user.email], context, template)
 
 
+def payment_failed(user, category, invoice):
+    category_name = category.name
+    amount = invoice.amount_due
+    currency = invoice.currency
+    period_start = invoice.effective_at
+
+    # Convertir Unix timestamp a objetos datetime
+    dt_period_start = make_aware(datetime.fromtimestamp(period_start))
+
+    # Conversión horaria (%d/%m/%Y %H:%M:%S %Z)
+    formatted_paid_at = dt_period_start.strftime('%d/%m/%Y %H:%M:%S')
+
+    template = "email/notification.html"
+    subject = "Pago fallido"
+    # TODO: El mensaje debe respetar los saltos de lineas al enviar el correo
+    message = f"""
+        Lamentamos informarte que el intento de pago de tu suscripción a la categoría {category_name} por un monto de {amount} {currency} el dia {formatted_paid_at} ha fallado.
+    
+        Debido a este fallo en el pago, tu suscripción ha sido cancelada automáticamente. Si deseas reactivar tu suscripción, te invitamos a actualizar tu método de pago y suscribirte nuevamente.
+    
+        Gracias por tu comprensión y lamentamos los inconvenientes.
+        """
+    context = {
+        "message": message,
+    }
+    send_notification_task.delay(subject, [user.email], context, template)
+
+
 
