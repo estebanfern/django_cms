@@ -189,8 +189,8 @@ def post_save_category_handler(sender, instance, created, **kwargs):
             if instance.name != instance.__original_category.name:
                 notification.service.category_name_changed(instance, instance.__original_category.name)
 
-            # Si la categoría es de pago se modifica en Stripe
-            if instance.type == Category.TypeChoices.paid:
+            # Si la categoría existe en stripe se modifica el producto
+            if instance.stripe_product_id:
                 stripe.Product.modify(
                     instance.stripe_product_id,
                     name=instance.name,
