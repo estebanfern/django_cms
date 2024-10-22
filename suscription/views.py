@@ -205,22 +205,20 @@ def stripe_webhook(request):
         except CustomUser.DoesNotExist:
             return JsonResponse({'status': 'user not found'}, status=404)
 
-        customer_id = session.get('customer')  # El cliente se crea automáticamente por Stripe al completar el checkout
+        customer_id = session.get('customer')
 
-        # Solo creamos un cliente en Stripe si el usuario no tiene uno asociado
         if not user.stripe_customer_id:
             user.stripe_customer_id = customer_id
             user.save()
 
-            # Actualizar el nombre del cliente en Stripe con el nombre del usuario de tu sistema
-            try:
-                stripe.Customer.modify(
-                    customer_id,
-                    name=user.name,  # Nombre del usuario en tu sistema
-                )
-            except Exception as e:
-                return JsonResponse({'status': f'Error al actualizar el cliente en Stripe: {e}'}, status=500)
-
+        # Actualizar el nombre del cliente en Stripe con el nombre del usuario de tu sistema
+        try:
+            stripe.Customer.modify(
+                customer_id,
+                name=user.name,  # Nombre del usuario en tu sistema
+            )
+        except Exception as e:
+            return JsonResponse({'status': f'Error al actualizar el cliente en Stripe: {e}'}, status=500)
 
         invoice_id = session.get('invoice')
         invoice = stripe.Invoice.retrieve(invoice_id)
