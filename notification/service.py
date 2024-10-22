@@ -273,7 +273,7 @@ def category_changed_to_not_paid(category):
         send_notification_task.delay(subject, [user.email], context, template)
 
 
-def category_price_changed(category):
+def category_price_changed(category, old_category_paid=None):
     stripe.api_key = base.STRIPE_SECRET_KEY
 
     template = "email/notification.html"
@@ -281,6 +281,8 @@ def category_price_changed(category):
     list_subscriptions = Suscription.objects.filter(category=category, state=Suscription.SuscriptionState.active, stripe_subscription_id__isnull=False)
     new_price = category.price
 
+    if old_category_paid is None:
+        old_category_paid = True
 
     for subscription in list_subscriptions:
         user = subscription.user
@@ -294,13 +296,18 @@ def category_price_changed(category):
         # Conversión horaria (%d/%m/%Y %H:%M:%S %Z)
         formatted_period_end = dt_period_end.strftime('%d/%m/%Y %H:%M:%S')
 
-        message = f"""
-        Te informamos que el precio de la categoría {category.name} ha sido actualizado a {new_price} PYS mensuales.
-
-        Tu suscripción actual continuará activa hasta el {formatted_period_end}, fecha en la cual se cancelará automáticamente. Hasta ese momento, seguirás disfrutando de todos los beneficios de esta categoría.
-
-        Si deseas continuar accediendo al contenido de {category.name} después de esa fecha, podrás suscribirte nuevamente con el nuevo precio.
-        """
+        if old_category_paid:
+            message = f"""
+            Te informamos que el precio de la categoría {category.name} ha sido actualizado a {new_price} PYS mensuales.
+    
+            Tu suscripción actual continuará activa hasta el {formatted_period_end}, fecha en la cual se cancelará automáticamente. Hasta ese momento, seguirás disfrutando de todos los beneficios de esta categoría.
+    
+            Si deseas continuar accediendo al contenido de {category.name} después de esa fecha, podrás suscribirte nuevamente con el nuevo precio.
+            """
+        else:
+            message = f"""
+            Te informamos que el precio de la categoría {category.name} ha sido actualizado a {new_price} PYS mensuales.
+            """
         context = {
             "message": message,
         }

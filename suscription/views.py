@@ -47,7 +47,7 @@ def suscribe_category(request, category_id):
         checkout_session = create_checkout_session(request, category_id)
         return JsonResponse({'status': 'success', 'checkout_url': checkout_session.url})
     else:
-        suscription = Suscription(user=user, category=category, state='active')
+        suscription.state = Suscription.SuscriptionState.active
         suscription.save()
 
     return JsonResponse({'status': 'success', 'message': f'Te has suscrito correctamente a la categoría {category.name}'})
@@ -91,7 +91,6 @@ def unsuscribe_category(request, category_id):
             )
             suscription.state = Suscription.SuscriptionState.pending_cancellation
             suscription.save()
-            # TODO: Enviar correo de cancelación de suscripción al usuario
             return JsonResponse({'status': 'success', 'message': f'Tu suscripción finalizará al final del ciclo de facturación actual.'})
             # stripe.Subscription.cancel(subscription_id)
         except Exception as e:
@@ -328,7 +327,7 @@ def stripe_webhook(request):
         if "category_paid" in metadata:
             category_paid = metadata["category_paid"]
 
-        if category_paid:
+        if category_paid != 'False':
             try:
                 user = CustomUser.objects.get(stripe_customer_id=customer_id)
                 category = Category.objects.get(id=category_id)
@@ -368,7 +367,7 @@ def stripe_webhook(request):
 
         #Si se cancela la suscripción al finalizar el periodo de facturación
         if 'cancel_at_period_end' in previous_attributes and pending_cancellation and pending_cancellation != previous_attributes['cancel_at_period_end']:
-            if category_paid:
+            if category_paid != 'False':
                 subscription_id = subscription['id']
                 category_id = subscription["metadata"]["category_id"]
                 customer_id = subscription.get('customer')
@@ -396,22 +395,31 @@ def stripe_webhook(request):
         product_id = product['id']
         previous_attributes = event['data']['previous_attributes']
         active = product['active']
+        metadata = product['metadata']
+        category_paid = True
+
+        if "category_paid" in metadata:
+            category_paid = metadata["category_paid"]
 
         # Si se desactiva el producto
         if 'active' in previous_attributes and not active and active != previous_attributes['active']:
-            try:
-                category = Category.objects.get(stripe_product_id=product_id)
-                list_subscriptions = Suscription.objects.filter(category=category, stripe_subscription_id__isnull=False).exclude(state=Suscription.SuscriptionState.cancelled)
-                for suscription in list_subscriptions:
-                    subscription_id = suscription.stripe_subscription_id
-                    stripe.Subscription.modify(
-                        subscription_id,
-                        cancel_at_period_end=True,
-                    )
-                    suscription.state = Suscription.SuscriptionState.pending_cancellation
-                    suscription.save()
-            except Exception as e:
-                return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+            if category_paid != 'False':
+                try:
+                    category = Category.objects.get(stripe_product_id=product_id)
+                    list_subscriptions = Suscription.objects.filter(category=category, stripe_subscription_id__isnull=False).exclude(state=Suscription.SuscriptionState.cancelled)
+                    for suscription in list_subscriptions:
+                        subscription_id = suscription.stripe_subscription_id
+                        stripe.Subscription.modify(
+                            subscription_id,
+                            cancel_at_period_end=True,
+                        )
+                        # suscription.state = Suscription.SuscriptionState.pending_cancellation
+                        # suscription.save()
+                except Exception as e:
+                    return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+            else:
+                pass
+                # TODO: Archivar precio
 
     if event['type'] == 'price.updated':
         price = event['data']['object']

@@ -73,6 +73,7 @@ def post_save_category_handler(sender, instance, created, **kwargs):
                 stripe.Product.modify(
                     instance.stripe_product_id,
                     active=instance.is_active,
+                    metadata={'category_paid': True},
                 )
 
             # TODO: Desactivar las suscripciones de los usuarios que no pagaron
@@ -105,6 +106,7 @@ def post_save_category_handler(sender, instance, created, **kwargs):
 
             stripe.Product.modify(
                 instance.stripe_product_id,
+                metadata={'category_paid': False},
                 active=False,
             )
             # TODO: Activar todas las suscripciones de los usuarios que no esten cancelados
@@ -124,30 +126,38 @@ def post_save_category_handler(sender, instance, created, **kwargs):
 
 
         # Si se cambio el precio
-        if instance.price != instance.__original_category.price:
-            # Si la categoría es de pago se modifica en Stripe
-            if instance.type == Category.TypeChoices.paid:
+        if instance.price != instance.__original_category.price and instance.type == Category.TypeChoices.paid:
 
-                notification.service.category_price_changed(instance)
-
-                # Desactivar el precio anterior
-                old_proce_stripe = stripe.Price.modify(
+            if instance.stripe_price_id:
+                old_price_stripe = stripe.Price.retrieve(
                     instance.stripe_price_id,
-                    active=False,
-                    metadata={'new_price': instance.price},
                 )
+                old_price = old_price_stripe.unit_amount
 
-                # TODO: Migrar las suscripciones a este nuevo precio en el webhook de Stripe y notificar a los usuarios
-                # # Crear el precio del producto en Stripe
-                # new_price_stripe = stripe.Price.create(
-                #     product=instance.stripe_product_id,
-                #     unit_amount=instance.price,
-                #     currency='PYG',
-                #     recurring={"interval": "month"},
-                # )
-                # # Guardar el nuevo ID del precio en el modelo de categoría
-                # instance.stripe_price_id = new_price_stripe.id
-                # instance.save()
+                if old_price != instance.price:
+
+                    # SI la categoria vieja es una categoria no de pago
+                    if not instance.__original_category.price:
+                        notification.service.category_price_changed(instance, False)
+
+                    # Desactivar el precio anterior
+                    stripe.Price.modify(
+                        instance.stripe_price_id,
+                        active=False,
+                        metadata={'new_price': instance.price},
+                    )
+
+            # TODO: Migrar las suscripciones a este nuevo precio en el webhook de Stripe y notificar a los usuarios
+            # # Crear el precio del producto en Stripe
+            # new_price_stripe = stripe.Price.create(
+            #     product=instance.stripe_product_id,
+            #     unit_amount=instance.price,
+            #     currency='PYG',
+            #     recurring={"interval": "month"},
+            # )
+            # # Guardar el nuevo ID del precio en el modelo de categoría
+            # instance.stripe_price_id = new_price_stripe.id
+            # instance.save()
 
 
         # Si se cambio el estado de la categoría
