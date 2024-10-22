@@ -27,14 +27,13 @@ class Suscription(models.Model):
 
     class SuscriptionState(models.TextChoices):
         active = 'active', ('Activo')
-        pending_payment = 'pending_payment', ('Pendiente de pago')
         cancelled = 'cancelled', ('Cancelado')
         pending_cancellation = 'pending_cancellation', ('Pendiente de cancelación')
 
     state = models.CharField(
         max_length=20,
         choices=SuscriptionState.choices,
-        default=SuscriptionState.pending_payment,
+        default=SuscriptionState.active,
         verbose_name=('Estado de la Suscripción')
     )
 
