@@ -105,6 +105,12 @@ BEGIN
 		(SELECT id FROM public.auth_permission WHERE codename = 'view_reports')
 	);
 
+    --ver estadisticas a administrador
+	INSERT INTO public.auth_group_permissions (group_id, permission_id) VALUES (
+		(SELECT id FROM public.auth_group WHERE name = 'Administrador'),
+		(SELECT id FROM public.auth_permission WHERE codename = 'view_stadistics')
+	);
+
     --bloquear contenidos a administrador
 	INSERT INTO public.auth_group_permissions (group_id, permission_id) VALUES (
 		(SELECT id FROM public.auth_group WHERE name = 'Administrador'),

@@ -37,10 +37,35 @@
 <section class="section">
   <div class="row">
     <div class="col-lg-12">
-
       <div class="card">
         <div class="card-body">
           <h5 class="card-title text-center">Estadisticas de tus contenidos</h5>
+          <div class="col-12 my-3">
+            <div class="col-6 row">
+              {% if perms.app.view_stadistics %}
+              <div class="col">
+                <select name="users" class="form-select" id="users">
+                  <option value="">Todos los autores</option>
+                  {% for user in users %}
+                  <option value="{{ user.id }}" {% if user.id == usr %} selected {% endif %}>{{ user.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              {% elif perms.app.create_content %}
+              <select name="users" id="users" hidden>
+                <option value="{{ users.0.id }}" selected>{{ users.0.name }}</option>
+              </select>
+              {% endif %}
+              <div class="col">
+                <select name="categories" class="form-select" id="categories">
+                  <option value="">Todas las categorias</option>
+                  {% for category in categories %}
+                  <option value="{{ category.id }}" {% if category.id == cat %} selected {% endif %} >{{ category.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
           <div class="row">
             <div class="col-6">
               <div class="card">
@@ -86,6 +111,18 @@
   </div>
 </section>
 
+<!-- Filtros -->
+<script>
+  const user = document.getElementById('users').value;
+  const category = document.getElementById('categories').value;
+
+  $('#users, #categories').change(function(e) {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set(e.target.name, e.target.value);
+    window.location.href = `${window.location.pathname}?${urlParams.toString()}`;
+  });
+</script>
+
 <!-- Grafico de likes -->
 <script>
   const likesChart = document.getElementById('likesChart');
@@ -103,7 +140,7 @@
     'rgba(255, 153, 204, 0.7)' // Lila
   ];
   $.ajax({
-    url: '/stadistics/likes/',
+    url: '/stadistics/likes?users=' + user + '&categories=' + category,
     type: 'GET',
     headers: {
       'X-CSRFToken': '{{ csrf_token }}'
@@ -160,7 +197,7 @@
   const dislikesChart = document.getElementById('dislikesChart');
   let dislikesChartCtx = null
   $.ajax({
-    url: '/stadistics/dislikes/',
+    url: '/stadistics/dislikes?users=' + user + '&categories=' + category,
     type: 'GET',
     headers: {
       'X-CSRFToken': '{{ csrf_token }}'
@@ -217,13 +254,12 @@
   const ratingChart = document.getElementById('ratingChart');
   let ratingChartCtx = null
   $.ajax({
-    url: '/stadistics/rating/',
+    url: '/stadistics/rating?users=' + user + '&categories=' + category,
     type: 'GET',
     headers: {
       'X-CSRFToken': '{{ csrf_token }}'
     },
     success: function(response) {
-      console.log(response.result);
       labels = response.result.map((item) => item.title);
       data = response.result.map((item) => item.rating_avg);
       ratingChartCtx = new Chart(ratingChart, {
@@ -275,13 +311,12 @@
   const viewsChart = document.getElementById('viewsChart');
   let viewsChartCtx = null
   $.ajax({
-    url: '/stadistics/views/',
+    url: '/stadistics/views?users=' + user + '&categories=' + category,
     type: 'GET',
     headers: {
       'X-CSRFToken': '{{ csrf_token }}'
     },
     success: function(response) {
-      console.log(response.result);
       labels = response.result.map((item) => item.title);
       data = response.result.map((item) => item.views_count);
       viewsChartCtx = new Chart(viewsChart, {
@@ -333,13 +368,12 @@
   const sharesChart = document.getElementById('sharesChart');
   let sharesChartCtx = null
   $.ajax({
-    url: '/stadistics/shares/',
+    url: '/stadistics/shares?users=' + user + '&categories=' + category,
     type: 'GET',
     headers: {
       'X-CSRFToken': '{{ csrf_token }}'
     },
     success: function(response) {
-      console.log(response.result);
       labels = response.result.map((item) => item.title);
       data = response.result.map((item) => item.shares_count);
       sharesChartCtx = new Chart(sharesChart, {
