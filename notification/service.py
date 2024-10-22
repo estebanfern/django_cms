@@ -251,9 +251,9 @@ def category_changed_to_not_paid(category):
     template = "email/notification.html"
     type = category.type
     typeMapped = {
-        "paid": "de Pago",
-        "public": "Pública",
-        "suscription": "para Suscriptores"
+        "Pago": "de Pago",
+        "Publico": "Pública",
+        "Suscriptor": "para Suscriptores"
     }
     subject = f"La categoría {category.name} ahora es {typeMapped[type]}"
     list_subscriptions = Suscription.objects.filter(category=category, state=Suscription.SuscriptionState.active, stripe_subscription_id__isnull=False)
