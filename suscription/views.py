@@ -248,8 +248,6 @@ def stripe_webhook(request):
                 stripe.PaymentMethod.detach(payment_method['id'])
                 count_duplicate -= 1
 
-
-    # Manejar diferentes tipos de eventos
     if event['type'] == 'invoice.paid':
         invoice = event['data']['object']
 
@@ -289,7 +287,6 @@ def stripe_webhook(request):
         except Suscription.DoesNotExist:
             return JsonResponse({'status': 'suscription not found'}, status=404)
 
-
     if event['type'] == 'invoice.payment_failed':
         invoice = event['data']['object']
 
@@ -321,8 +318,6 @@ def stripe_webhook(request):
             return JsonResponse({'status': 'category not found'}, status=404)
         except Suscription.DoesNotExist:
             return JsonResponse({'status': 'suscription not found'}, status=404)
-
-
 
     if event['type'] == 'customer.subscription.deleted':
         subscription = event['data']['object']
@@ -398,7 +393,6 @@ def stripe_webhook(request):
                 except Suscription.DoesNotExist:
                     return JsonResponse({'status': 'suscription not found'}, status=404)
 
-
     if event['type'] == 'product.updated':
         product = event['data']['object']
         product_id = product['id']
@@ -458,6 +452,21 @@ def stripe_webhook(request):
                     )
             except Exception as e:
                 return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+    if event['type'] == 'customer.created':
+        customer = event['data']['object']
+        customer_id = customer['id']
+        email = customer['email']
+        user = CustomUser.objects.filter(email=email).first()
+
+        if user:
+            if not user.stripe_customer_id:
+                user.stripe_customer_id = customer_id
+                user.save()
+                stripe.Customer.modify(
+                    customer_id,
+                    name=user.name,
+                )
 
 
     return JsonResponse({'status': 'success'}, status=200)
