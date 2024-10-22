@@ -306,8 +306,12 @@ def stripe_webhook(request):
                 suscription.state = Suscription.SuscriptionState.cancelled
                 stripe.Subscription.cancel(subscription_id)
                 suscription.save()
-
-            notification.service.payment_failed(user, category, invoice)
+                if suscription.state == Suscription.SuscriptionState.cancelled:
+                    notification.service.payment_failed(user, category, invoice, True)
+                else:
+                    notification.service.payment_failed(user, category, invoice, False)
+            else:
+                notification.service.payment_failed(user, category, invoice, True)
 
         except CustomUser.DoesNotExist:
             return JsonResponse({'status': 'user not found'}, status=404)

@@ -145,7 +145,6 @@ def payment_success(user, category, invoice):
     formatted_paid_at = dt_period_start.strftime('%d/%m/%Y %H:%M:%S' )
     template = "email/notification.html"
     subject = "Pago exitoso"
-    # TODO: El mensaje debe respetar los saltos de lineas al enviar el correo
     message = f"""
         Nos complace informarte que tu pago por la categoría {category_name} ha sido procesado exitosamente.
 
@@ -161,7 +160,7 @@ def payment_success(user, category, invoice):
     send_notification_task.delay(subject, [user.email], context, template)
 
 
-def payment_failed(user, category, invoice):
+def payment_failed(user, category, invoice,first_payment = None):
     category_name = category.name
     amount = invoice.amount_due
     currency = invoice.currency
@@ -175,14 +174,22 @@ def payment_failed(user, category, invoice):
 
     template = "email/notification.html"
     subject = "Pago fallido"
-    # TODO: El mensaje debe respetar los saltos de lineas al enviar el correo
-    message = f"""
-        Lamentamos informarte que el intento de pago de tu suscripción a la categoría {category_name} por un monto de {amount} {currency} el dia {formatted_paid_at} ha fallado.
-    
-        Debido a este fallo en el pago, tu suscripción ha sido cancelada automáticamente. Si deseas reactivar tu suscripción, te invitamos a actualizar tu método de pago y suscribirte nuevamente.
-    
-        Gracias por tu comprensión y lamentamos los inconvenientes.
-        """
+    if first_payment:
+        message = f"""
+            Lamentamos informarte que el intento de pago de tu suscripción a la categoría {category_name} por un monto de {amount} {currency} el dia {formatted_paid_at} ha fallado.
+
+            Te invitamos a actualizar tu método de pago para suscribirte.
+
+            Gracias por tu comprensión y lamentamos los inconvenientes.
+            """
+    else:
+        message = f"""
+            Lamentamos informarte que el intento de pago de tu suscripción a la categoría {category_name} por un monto de {amount} {currency} el dia {formatted_paid_at} ha fallado.
+        
+            Debido a este fallo en el pago, tu suscripción ha sido cancelada automáticamente. Si deseas reactivar tu suscripción, te invitamos a actualizar tu método de pago y suscribirte nuevamente.
+        
+            Gracias por tu comprensión y lamentamos los inconvenientes.
+            """
     context = {
         "message": message,
     }
@@ -193,7 +200,6 @@ def subscription_cancelled(user, category):
     category_name = category.name
     template = "email/notification.html"
     subject = "Suscripción cancelada"
-    # TODO: El mensaje debe respetar los saltos de lineas al enviar el correo
     message = f"""
     Queremos informarte que tu suscripción a la categoría {category_name} ha sido cancelada satisfactoriamente. A partir de ahora, ya no tendrás acceso a los contenidos de esta categoría.
 
@@ -217,7 +223,6 @@ def subscription_pending_cancellation(user, category,subscription):
 
     template = "email/notification.html"
     subject = "Tu suscripción será cancelada al final del ciclo de facturación"
-    # TODO: El mensaje debe respetar los saltos de lineas al enviar el correo
     message = f"""
     Te informamos que tu suscripción a la categoría {category_name} se cancelará automáticamente al final de tu ciclo de facturación actual.
     
@@ -235,7 +240,6 @@ def category_changed_to_paid(category):
     list_subscriptions = Suscription.objects.filter(category=category, state=Suscription.SuscriptionState.active)
     for subscription in list_subscriptions:
         user = subscription.user
-        # TODO: El mensaje debe respetar los saltos de lineas al enviar el correo
         message = f"""
         Queremos informarte que la categoría {category.name}, a la que estás suscrito, ahora es de pago.
 
@@ -259,7 +263,6 @@ def category_changed_to_not_paid(category):
     list_subscriptions = Suscription.objects.filter(category=category, state=Suscription.SuscriptionState.active, stripe_subscription_id__isnull=False)
     for subscription in list_subscriptions:
         user = subscription.user
-        # TODO: El mensaje debe respetar los saltos de lineas al enviar el correo
         message = f"""
         Nos complace informarte que la categoría {category.name}, a la que estabas suscrito, ahora es {typeMapped[type]}. 
 
