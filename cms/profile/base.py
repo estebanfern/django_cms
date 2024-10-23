@@ -255,7 +255,7 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # Configuración de Stripe
-STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default="stripe-secret-key")
 
 # Configuracion para escuchar eventos de Stripe
-ENDPOINT_SECRET = config('ENDPOINT_SECRET')
+ENDPOINT_SECRET = config('ENDPOINT_SECRET', default="stripe-endpoint-secret")
