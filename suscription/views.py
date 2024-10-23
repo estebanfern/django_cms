@@ -1,9 +1,8 @@
 import stripe
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-
 import notification.service
 from app.models import CustomUser
 from category.models import Category
@@ -13,6 +12,11 @@ from cms.profile import base
 
 
 # Create your views here.
+
+def my_subscriptions(request):
+    user = request.user
+    suscriptions = Suscription.objects.filter(user=user)
+    return render(request, "subscription/subscriptions.html", {'subscriptions': suscriptions})
 
 def suscribe_category(request, category_id):
     """
@@ -40,15 +44,19 @@ def suscribe_category(request, category_id):
 
     suscription = Suscription.objects.filter(user=user, category=category).first()
 
-    if suscription and suscription.state != Suscription.SuscriptionState.cancelled:
+    if suscription and suscription.state == Suscription.SuscriptionState.active:
         return JsonResponse({'status': 'error', 'message': 'Ya estás suscrito a esta categoría'}, status=400)
     
     if category.type == Category.TypeChoices.paid:
         checkout_session = create_checkout_session(request, category_id)
         return JsonResponse({'status': 'success', 'checkout_url': checkout_session.url})
     else:
-        suscription.state = Suscription.SuscriptionState.active
-        suscription.save()
+        if suscription:
+            suscription.state = Suscription.SuscriptionState.active
+            suscription.save()
+        else:
+            suscription = Suscription(user=user, category=category, state=Suscription.SuscriptionState.active)
+            suscription.save()
 
     return JsonResponse({'status': 'success', 'message': f'Te has suscrito correctamente a la categoría {category.name}'})
 
@@ -95,8 +103,7 @@ def unsuscribe_category(request, category_id):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     else:
-        suscription.state = Suscription.SuscriptionState.cancelled
-        suscription.save()
+        Suscription.objects.filter(user=user, category=category).delete()
 
     return JsonResponse({'status': 'success', 'message': f'Te has desuscrito correctamente a la categoría {category.name}'})
 
@@ -109,7 +116,7 @@ def create_checkout_session(request, category_id):
     if not category.stripe_price_id:
         return JsonResponse("La categoría no tiene un precio de Stripe asociado.", 400)
 
-    YOUR_DOMAIN = "http://localhost:8000"
+    base_url = f"{request.scheme}://{request.get_host()}"
 
     customer_id = request.user.stripe_customer_id
     customer_email = request.user.email
@@ -136,8 +143,8 @@ def create_checkout_session(request, category_id):
                 "user_id": request.user.id,
             },
             mode='subscription',
-            success_url=YOUR_DOMAIN + '/category/Pago/?stripe_id={CHECKOUT_SESSION_ID}',
-            cancel_url=YOUR_DOMAIN + '/category/Pago/',
+            success_url= base_url + '/category/Pago/?stripe_id={CHECKOUT_SESSION_ID}',
+            cancel_url= base_url + '/category/Pago/',
             customer=customer_id,
             customer_email=customer_email,
             saved_payment_method_options={
