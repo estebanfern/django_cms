@@ -92,11 +92,8 @@ def unsuscribe_category(request, category_id):
             suscription.state = Suscription.SuscriptionState.pending_cancellation
             suscription.save()
             return JsonResponse({'status': 'success', 'message': f'Tu suscripción finalizará al final del ciclo de facturación actual.'})
-            # stripe.Subscription.cancel(subscription_id)
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-        # suscription.state = Suscription.SuscriptionState.cancelled
-        # suscription.save()
     else:
         suscription.state = Suscription.SuscriptionState.cancelled
         suscription.save()
@@ -134,29 +131,18 @@ def create_checkout_session(request, category_id):
                 "metadata": {
                     "category_id": category_id
                 },
-                # "billing_cycle_anchor": "now",
             },
             metadata={
                 "user_id": request.user.id,
             },
             mode='subscription',
             success_url=YOUR_DOMAIN + '/category/Pago/?stripe_id={CHECKOUT_SESSION_ID}',
-            # success_url=YOUR_DOMAIN + '/category/Pago/?paymentSuccess=true',
             cancel_url=YOUR_DOMAIN + '/category/Pago/',
             customer=customer_id,
             customer_email=customer_email,
             saved_payment_method_options={
                 "payment_method_save": "enabled"
             },
-            # phone_number_collection={
-            #     "enabled": False
-            # },
-            # allow_redisplay="always",
-            # payment_method_options={
-            #     "card": {
-            #         "setup_future_usage": "on_session"
-            #     }
-            # },
         )
         return checkout_session
     except Exception as e:
@@ -417,13 +403,8 @@ def stripe_webhook(request):
                             subscription_id,
                             cancel_at_period_end=True,
                         )
-                        # suscription.state = Suscription.SuscriptionState.pending_cancellation
-                        # suscription.save()
                 except Exception as e:
                     return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-            else:
-                pass
-                # TODO: Archivar precio
 
     if event['type'] == 'price.updated':
         price = event['data']['object']
@@ -436,7 +417,6 @@ def stripe_webhook(request):
             new_price = metada['new_price']
         else:
             new_price = None
-
 
         # Si se cambia de precio
         if 'active' in previous_attributes and not active and active != previous_attributes['active'] and new_price and new_price != price['unit_amount']:

@@ -43,8 +43,11 @@ def post_save_category_handler(sender, instance, created, **kwargs):
         instance.stripe_price_id = price.id
         instance.save()
 
+
+
     # Si se modifico una categoría
     if instance.__original_category:
+
         # Si la categoría se cambio de tipo a pago
         if instance.type != instance.__original_category.type and instance.type == Category.TypeChoices.paid:
 
@@ -76,9 +79,6 @@ def post_save_category_handler(sender, instance, created, **kwargs):
                     metadata={'category_paid': True},
                 )
 
-            # TODO: Desactivar las suscripciones de los usuarios que no pagaron
-            # TODO: Poner metadata en las suscripciones category = paid para cuando se cancele la suscripcion  en el werbhok se envie notifacion de cancelacion a los usuarios y se cancele la suscripcion en la base de datos
-
             list_subscriptions = Suscription.objects.filter(category=instance)
             for subscription in list_subscriptions:
                 if subscription.stripe_subscription_id:
@@ -88,7 +88,7 @@ def post_save_category_handler(sender, instance, created, **kwargs):
                         subscription.save()
                         stripe.Subscription.modify(
                             subscription.stripe_subscription_id,
-                            metadata={'category_paid': True},
+                            metadata={'category_paid': True}, #  Poner metadata en las suscripciones category_paid = True para que cuando se cancele la suscripcion  en el werbhok se envie notifacion de cancelacion a los usuarios y se cancele la suscripcion en la base de datos
                         )
                     else:
                         subscription.state = Suscription.SuscriptionState.cancelled
@@ -109,9 +109,6 @@ def post_save_category_handler(sender, instance, created, **kwargs):
                 metadata={'category_paid': False},
                 active=False,
             )
-            # TODO: Activar todas las suscripciones de los usuarios que no esten cancelados
-            # TODO: Cancelar las suscripciones de los usuarios en el webhook de Stripe (pending_cancellation)
-            # TODO: Poner metadata en las suscripciones category = not_paid para cuando se cancele la suscripcion no se envie notifacion de cancelacion a los usuarios y no se ponga cancelado en la suscripcion en la base de datos
 
             list_subscriptions = Suscription.objects.filter(category=instance)
             for subscription in list_subscriptions:
@@ -121,7 +118,7 @@ def post_save_category_handler(sender, instance, created, **kwargs):
                         stripe.Subscription.modify(
                             subscription.stripe_subscription_id,
                             cancel_at_period_end=True,
-                            metadata={'category_paid': False},
+                            metadata={'category_paid': False}, # Poner metadata en las suscripciones category_paid = False para cuando se cancele la suscripcion no se envie notifacion de cancelacion a los usuarios y no se ponga cancelado en la suscripcion en la base de datos
                         )
 
 
@@ -147,18 +144,6 @@ def post_save_category_handler(sender, instance, created, **kwargs):
                         metadata={'new_price': instance.price},
                     )
 
-            # TODO: Migrar las suscripciones a este nuevo precio en el webhook de Stripe y notificar a los usuarios
-            # # Crear el precio del producto en Stripe
-            # new_price_stripe = stripe.Price.create(
-            #     product=instance.stripe_product_id,
-            #     unit_amount=instance.price,
-            #     currency='PYG',
-            #     recurring={"interval": "month"},
-            # )
-            # # Guardar el nuevo ID del precio en el modelo de categoría
-            # instance.stripe_price_id = new_price_stripe.id
-            # instance.save()
-
 
         # Si se cambio el estado de la categoría
         if instance.is_active != instance.__original_category.is_active:
@@ -171,16 +156,6 @@ def post_save_category_handler(sender, instance, created, **kwargs):
                     instance.stripe_product_id,
                     active=instance.is_active,
                 )
-
-                # TODO: En el webhook de Stripe, manejar las suscripciones de los usuarios, si se activa o desactiva la categoría
-                # if not instance.is_active:
-                #     pass
-                #     # TODO: Cancelar las suscripciones al finalizar el ciclo actual de facturación en Stripe (pending_cancellation)
-                # else:
-                #     pass
-                #     # TODO: Activar las suscripciones de los usuarios que no esten cancelados
-
-
 
 
         # Si se cambio el nombre o la descripción de la categoría
@@ -196,7 +171,6 @@ def post_save_category_handler(sender, instance, created, **kwargs):
                     name=instance.name,
                     description=instance.description,
                 )
-
 
 
 # Signal para manejar antes de eliminar la categoría
@@ -225,9 +199,3 @@ def handle_category_after_delete(sender, instance, **kwargs):
             original_category.stripe_product_id,
             active=False,
         )
-        # TODO: En el webhook de Stripe, cancelar las suscripciones de los usuarios (pending_cancellation)
-        # if not instance.is_active:
-        #     pass
-        #     # TODO: Cancelar las suscripciones al finalizar el ciclo actual de facturación en Stripe (pending_cancellation)
-
-        # TODO: Notificar a los suscriptores de la categoría
