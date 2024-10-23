@@ -1,7 +1,11 @@
+from datetime import timedelta
+
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
+from django.utils.datetime_safe import datetime
+
 from app.models import CustomUser
 from category.models import Category
 from content.models import Content
@@ -22,13 +26,11 @@ def view_stadistics(request):
     else:
         raise PermissionError('No tiene permisos para acceder a esta vista')
     categories = Category.objects.all()
-    usr = 0
-    cat = 0
-    if request.GET.get('users'):
-        usr = int(request.GET.get('users'))
-    if request.GET.get('categories'):
-        cat = int(request.GET.get('categories'))
-    return render(request, 'stadistic/view_stadistics.html',{'users': users, 'categories': categories, 'usr': usr, 'cat': cat})
+    usr = int(request.GET.get('users')) if request.GET.get('users') else 0
+    cat = int(request.GET.get('categories')) if request.GET.get('categories') else 0
+    date_begin = request.GET.get('date_begin') if request.GET.get('date_begin') else None
+    date_end = request.GET.get('date_end') if request.GET.get('date_end') else None
+    return render(request, 'stadistic/view_stadistics.html',{'users': users, 'categories': categories, 'usr': usr, 'cat': cat, 'date_begin': date_begin, 'date_end': date_end})
 
 @login_required
 # @permission_required('app.create_content', raise_exception=True)
@@ -61,8 +63,18 @@ def top_liked(request):
 
     if request.GET.get('categories'):
         top_contents = top_contents.filter(category_id=int(request.GET.get('categories')))
-    else:
-        top_contents = top_contents
+
+    if request.GET.get('date_begin'):
+        date_begin_str = request.GET.get('date_begin')  # Por ejemplo, '2024-10-17'
+        date_begin = datetime.strptime(date_begin_str, '%Y-%m-%dT%H:%M')
+        date_begin = timezone.make_aware(date_begin, timezone.get_current_timezone())
+        top_contents = top_contents.filter(date_published__gte=date_begin)
+
+    if request.GET.get('date_end'):
+        date_end_str = request.GET.get('date_end')  # Por ejemplo, '2024-10-22'
+        date_end = datetime.strptime(date_end_str, '%Y-%m-%dT%H:%M')
+        date_end = timezone.make_aware(date_end, timezone.get_current_timezone())
+        top_contents = top_contents.filter(date_published__lte=date_end)
 
     top_contents = top_contents.filter(state=Content.StateChoices.publish, date_published__lt=timezone.now())\
                                     .values('title', 'likes_count', 'date_create', 'date_published')\
@@ -110,6 +122,18 @@ def top_disliked(request):
     else:
         top_contents = top_contents
 
+    if request.GET.get('date_begin'):
+        date_begin_str = request.GET.get('date_begin')  # Por ejemplo, '2024-10-17'
+        date_begin = datetime.strptime(date_begin_str, '%Y-%m-%dT%H:%M')
+        date_begin = timezone.make_aware(date_begin, timezone.get_current_timezone())
+        top_contents = top_contents.filter(date_published__gte=date_begin)
+
+    if request.GET.get('date_end'):
+        date_end_str = request.GET.get('date_end')  # Por ejemplo, '2024-10-22'
+        date_end = datetime.strptime(date_end_str, '%Y-%m-%dT%H:%M')
+        date_end = timezone.make_aware(date_end, timezone.get_current_timezone())
+        top_contents = top_contents.filter(date_published__lte=date_end)
+
     top_contents = top_contents.filter(state=Content.StateChoices.publish, date_published__lt=timezone.now())\
                                     .values('title', 'dislikes_count', 'date_create', 'date_published')\
                                     .order_by('-dislikes_count')[:10]
@@ -155,6 +179,18 @@ def top_rating(request):
         top_contents = top_contents.filter(category_id=int(request.GET.get('categories')))
     else:
         top_contents = top_contents
+
+    if request.GET.get('date_begin'):
+        date_begin_str = request.GET.get('date_begin')  # Por ejemplo, '2024-10-17'
+        date_begin = datetime.strptime(date_begin_str, '%Y-%m-%dT%H:%M')
+        date_begin = timezone.make_aware(date_begin, timezone.get_current_timezone())
+        top_contents = top_contents.filter(date_published__gte=date_begin)
+
+    if request.GET.get('date_end'):
+        date_end_str = request.GET.get('date_end')  # Por ejemplo, '2024-10-22'
+        date_end = datetime.strptime(date_end_str, '%Y-%m-%dT%H:%M')
+        date_end = timezone.make_aware(date_end, timezone.get_current_timezone())
+        top_contents = top_contents.filter(date_published__lte=date_end)
 
     top_contents = top_contents.filter(state=Content.StateChoices.publish, date_published__lt=timezone.now()) \
                                     .values('title', 'rating_avg', 'date_create', 'date_published') \
@@ -202,6 +238,18 @@ def top_view(request):
     else:
         top_contents = top_contents
 
+    if request.GET.get('date_begin'):
+        date_begin_str = request.GET.get('date_begin')  # Por ejemplo, '2024-10-17'
+        date_begin = datetime.strptime(date_begin_str, '%Y-%m-%dT%H:%M')
+        date_begin = timezone.make_aware(date_begin, timezone.get_current_timezone())
+        top_contents = top_contents.filter(date_published__gte=date_begin)
+
+    if request.GET.get('date_end'):
+        date_end_str = request.GET.get('date_end')  # Por ejemplo, '2024-10-22'
+        date_end = datetime.strptime(date_end_str, '%Y-%m-%dT%H:%M')
+        date_end = timezone.make_aware(date_end, timezone.get_current_timezone())
+        top_contents = top_contents.filter(date_published__lte=date_end)
+
     top_contents = top_contents.filter(state=Content.StateChoices.publish, date_published__lt=timezone.now()) \
                                     .values('title', 'views_count', 'date_create', 'date_published') \
                                     .order_by('-views_count')[:10]
@@ -246,6 +294,18 @@ def top_shares(request):
         top_contents = top_contents.filter(category_id=int(request.GET.get('categories')))
     else:
         top_contents = top_contents
+
+    if request.GET.get('date_begin'):
+        date_begin_str = request.GET.get('date_begin')  # Por ejemplo, '2024-10-17'
+        date_begin = datetime.strptime(date_begin_str, '%Y-%m-%dT%H:%M')
+        date_begin = timezone.make_aware(date_begin, timezone.get_current_timezone())
+        top_contents = top_contents.filter(date_published__gte=date_begin)
+
+    if request.GET.get('date_end'):
+        date_end_str = request.GET.get('date_end')  # Por ejemplo, '2024-10-22'
+        date_end = datetime.strptime(date_end_str, '%Y-%m-%dT%H:%M')
+        date_end = timezone.make_aware(date_end, timezone.get_current_timezone())
+        top_contents = top_contents.filter(date_published__lte=date_end)
 
     top_contents = top_contents.filter(state=Content.StateChoices.publish, date_published__lt=timezone.now()) \
                        .values('title', 'shares_count', 'date_create', 'date_published') \

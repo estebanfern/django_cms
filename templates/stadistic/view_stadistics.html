@@ -41,7 +41,7 @@
         <div class="card-body">
           <h5 class="card-title text-center">Estadisticas de tus contenidos</h5>
           <div class="col-12 my-3">
-            <div class="col-6 row">
+            <div class="col-8 row">
               {% if perms.app.view_stadistics %}
               <div class="col">
                 <select name="users" class="form-select" id="users">
@@ -63,6 +63,12 @@
                   <option value="{{ category.id }}" {% if category.id == cat %} selected {% endif %} >{{ category.name }}</option>
                   {% endfor %}
                 </select>
+              </div>
+              <div class="col">
+                <input type="datetime-local" class="form-control" name="date_begin" id="date_begin" placeholder="Fecha desde" {% if date_begin %} value="{{date_begin}}" {% endif %} />
+              </div>
+              <div class="col">
+                <input type="datetime-local" class="form-control" name="date_end" id="date_end" placeholder="Fecha hasta" {% if date_end %} value="{{date_end}}" {%endif%} />
               </div>
             </div>
           </div>
@@ -115,8 +121,12 @@
 <script>
   const user = document.getElementById('users').value;
   const category = document.getElementById('categories').value;
+  const date_begin = document.getElementById('date_begin').value;
+  const date_end = document.getElementById('date_end').value;
 
-  $('#users, #categories').change(function(e) {
+  const params = `?users=${user}&categories=${category}&date_begin=${date_begin}&date_end=${date_end}`;
+
+  $('#users, #categories, #date_begin, #date_end').change(function(e) {
     const urlParams = new URLSearchParams(window.location.search);
     urlParams.set(e.target.name, e.target.value);
     window.location.href = `${window.location.pathname}?${urlParams.toString()}`;
@@ -140,7 +150,7 @@
     'rgba(255, 153, 204, 0.7)' // Lila
   ];
   $.ajax({
-    url: '/stadistics/likes?users=' + user + '&categories=' + category,
+    url: '/stadistics/likes' + params,
     type: 'GET',
     headers: {
       'X-CSRFToken': '{{ csrf_token }}'
@@ -197,7 +207,7 @@
   const dislikesChart = document.getElementById('dislikesChart');
   let dislikesChartCtx = null
   $.ajax({
-    url: '/stadistics/dislikes?users=' + user + '&categories=' + category,
+    url: '/stadistics/dislikes' + params,
     type: 'GET',
     headers: {
       'X-CSRFToken': '{{ csrf_token }}'
@@ -254,7 +264,7 @@
   const ratingChart = document.getElementById('ratingChart');
   let ratingChartCtx = null
   $.ajax({
-    url: '/stadistics/rating?users=' + user + '&categories=' + category,
+    url: '/stadistics/rating' + params,
     type: 'GET',
     headers: {
       'X-CSRFToken': '{{ csrf_token }}'
@@ -311,7 +321,7 @@
   const viewsChart = document.getElementById('viewsChart');
   let viewsChartCtx = null
   $.ajax({
-    url: '/stadistics/views?users=' + user + '&categories=' + category,
+    url: '/stadistics/views' + params,
     type: 'GET',
     headers: {
       'X-CSRFToken': '{{ csrf_token }}'
@@ -368,7 +378,7 @@
   const sharesChart = document.getElementById('sharesChart');
   let sharesChartCtx = null
   $.ajax({
-    url: '/stadistics/shares?users=' + user + '&categories=' + category,
+    url: '/stadistics/shares' + params,
     type: 'GET',
     headers: {
       'X-CSRFToken': '{{ csrf_token }}'
