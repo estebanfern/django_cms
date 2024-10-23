@@ -141,8 +141,8 @@ def payment_success(user, category, invoice):
     dt_period_start = make_aware(datetime.fromtimestamp(period_start))
 
     #Conversión horaria (%d/%m/%Y %H:%M:%S %Z)
-    formatted_period_end = dt_period_end.strftime('%d/%m/%Y %H:%M:%S' )
-    formatted_paid_at = dt_period_start.strftime('%d/%m/%Y %H:%M:%S' )
+    formatted_period_end = dt_period_end.strftime('%d/%m/%Y a las %H:%M' )
+    formatted_paid_at = dt_period_start.strftime('%d/%m/%Y a las %H:%M' )
     template = "email/notification.html"
     subject = "Pago exitoso"
     message = f"""
@@ -170,7 +170,7 @@ def payment_failed(user, category, invoice,first_payment = None):
     dt_period_start = make_aware(datetime.fromtimestamp(period_start))
 
     # Conversión horaria (%d/%m/%Y %H:%M:%S %Z)
-    formatted_paid_at = dt_period_start.strftime('%d/%m/%Y %H:%M:%S')
+    formatted_paid_at = dt_period_start.strftime('%d/%m/%Y a las %H:%M')
 
     template = "email/notification.html"
     subject = "Pago fallido"
@@ -219,7 +219,7 @@ def subscription_pending_cancellation(user, category,subscription):
     dt_period_end = make_aware(datetime.fromtimestamp(current_period_end))
 
     # Conversión horaria (%d/%m/%Y %H:%M:%S %Z)
-    formatted_period_end = dt_period_end.strftime('%d/%m/%Y %H:%M:%S')
+    formatted_period_end = dt_period_end.strftime('%d/%m/%Y a las %H:%M')
 
     template = "email/notification.html"
     subject = "Tu suscripción será cancelada al final del ciclo de facturación"
@@ -237,14 +237,19 @@ def subscription_pending_cancellation(user, category,subscription):
 def category_changed_to_paid(category):
     template = "email/notification.html"
     subject = f"La categoría {category.name} ahora es de pago"
-    list_subscriptions = Suscription.objects.filter(category=category, state=Suscription.SuscriptionState.active)
+    list_subscriptions = Suscription.objects.filter(category=category).exclude(state=Suscription.SuscriptionState.cancelled)
     for subscription in list_subscriptions:
         user = subscription.user
-        message = f"""
-        Queremos informarte que la categoría {category.name}, a la que estás suscrito, ahora es de pago.
-
-        Para seguir disfrutando del contenido de esta categoría, será necesario que te suscribas con una suscripción de pago.
-        """
+        if subscription.state == Suscription.SuscriptionState.active:
+            message = f"""
+            Queremos informarte que la categoría {category.name}, a la que estás suscrito, ahora es de pago.
+    
+            Para seguir disfrutando del contenido de esta categoría, será necesario que te suscribas con una suscripción de pago.
+            """
+        else:
+            message = f"""
+            Queremos informarte que la categoría {category.name} ahora es de pago.
+            """
         context = {
             "message": message,
         }
@@ -260,16 +265,21 @@ def category_changed_to_not_paid(category):
         "Suscriptor": "para Suscriptores"
     }
     subject = f"La categoría {category.name} ahora es {typeMapped[type]}"
-    list_subscriptions = Suscription.objects.filter(category=category, state=Suscription.SuscriptionState.active, stripe_subscription_id__isnull=False)
+    list_subscriptions = Suscription.objects.filter(category=category, stripe_subscription_id__isnull=False).exclude(state=Suscription.SuscriptionState.cancelled)
     for subscription in list_subscriptions:
         user = subscription.user
-        message = f"""
-        Nos complace informarte que la categoría {category.name}, a la que estabas suscrito, ahora es {typeMapped[type]}. 
-
-        A partir de este cambio, ya no se te seguirá facturando por esta categoría. Podrás seguir disfrutando de todos sus contenidos sin necesidad de realizar pagos adicionales.
-
-        Agradecemos tu apoyo continuo y esperamos que sigas disfrutando de los contenido.
-        """
+        if subscription.state == Suscription.SuscriptionState.active:
+            message = f"""
+            Nos complace informarte que la categoría {category.name}, a la que estabas suscrito, ahora es {typeMapped[type]}. 
+    
+            A partir de este cambio, ya no se te seguirá facturando por esta categoría. Podrás seguir disfrutando de todos sus contenidos sin necesidad de realizar pagos adicionales.
+    
+            Agradecemos tu apoyo continuo y esperamos que sigas disfrutando de los contenido.
+            """
+        else:
+            message = f"""
+            Nos complace informarte que la categoría {category.name} ahora es {typeMapped[type]}.
+            """
         context = {
             "message": message,
         }
@@ -281,7 +291,7 @@ def category_price_changed(category, old_category_paid=None):
 
     template = "email/notification.html"
     subject = f"El precio de la categoría {category.name} ha cambiado"
-    list_subscriptions = Suscription.objects.filter(category=category, state=Suscription.SuscriptionState.active, stripe_subscription_id__isnull=False)
+    list_subscriptions = Suscription.objects.filter(category=category, stripe_subscription_id__isnull=False).exclude(state=Suscription.SuscriptionState.cancelled)
     new_price = category.price
 
     if old_category_paid is None:
@@ -297,9 +307,9 @@ def category_price_changed(category, old_category_paid=None):
         dt_period_end = make_aware(datetime.fromtimestamp(current_period_end))
 
         # Conversión horaria (%d/%m/%Y %H:%M:%S %Z)
-        formatted_period_end = dt_period_end.strftime('%d/%m/%Y %H:%M:%S')
+        formatted_period_end = dt_period_end.strftime('%d/%m/%Y a las %H:%M')
 
-        if old_category_paid:
+        if old_category_paid and subscription.state == Suscription.SuscriptionState.active:
             message = f"""
             Te informamos que el precio de la categoría {category.name} ha sido actualizado a {new_price} PYS mensuales.
     
@@ -319,7 +329,7 @@ def category_price_changed(category, old_category_paid=None):
 
 def category_state_changed(category):
     template = "email/notification.html"
-    list_subscriptions = Suscription.objects.filter(category=category, state=Suscription.SuscriptionState.active)
+    list_subscriptions = Suscription.objects.filter(category=category).exclude(state=Suscription.SuscriptionState.cancelled)
 
     if category.is_active:
         subject = f"La categoría {category.name} ha sido activada: Acceso habilitado"
@@ -333,21 +343,21 @@ def category_state_changed(category):
             }
             send_notification_task.delay(subject, [user.email], context, template)
     else:
-        if category.type == Category.TypeChoices.paid:
-            subject = f"La categoría {category.name} ha sido desactivada: Acceso suspendido"
-            message = f"""
-            Queremos informarte que la categoría {category.name} ha sido desactivada y ya no estará disponible para acceder a sus contenidos.
-    
-            Tu suscripción será cancelada al final de tu ciclo de facturación actual. A partir de esa fecha, no se te realizará ningún cargo adicional, y no tendrás que pagar más por esta categoría.
-    
-            Lamentamos cualquier inconveniente que esto pueda causarte y agradecemos tu confianza en nosotros.
-            """
-        else:
-            subject = f"La categoría {category.name} ha sido desactivada: Acceso suspendido"
-            message = f"""
-            Queremos informarte que la categoría {category.name} ha sido desactivada. A partir de ahora, ya no podrás acceder a los contenidos de esta categoría.
-            """
         for subscription in list_subscriptions:
+            if category.type == Category.TypeChoices.paid and subscription.state == Suscription.SuscriptionState.active:
+                subject = f"La categoría {category.name} ha sido desactivada: Acceso suspendido"
+                message = f"""
+                Queremos informarte que la categoría {category.name} ha sido desactivada y ya no estará disponible para acceder a sus contenidos.
+
+                Tu suscripción será cancelada al final de tu ciclo de facturación actual. A partir de esa fecha, no se te realizará ningún cargo adicional, y no tendrás que pagar más por esta categoría.
+
+                Lamentamos cualquier inconveniente que esto pueda causarte y agradecemos tu confianza en nosotros.
+                """
+            else:
+                subject = f"La categoría {category.name} ha sido desactivada: Acceso suspendido"
+                message = f"""
+                Queremos informarte que la categoría {category.name} ha sido desactivada. A partir de ahora, ya no podrás acceder a los contenidos de esta categoría.
+                """
             user = subscription.user
             context = {
                 "message": message,
@@ -358,7 +368,7 @@ def category_state_changed(category):
 def category_name_changed(category, old_name):
     template = "email/notification.html"
     subject = f"El nombre de la categoría {old_name} ha sido cambiado"
-    list_subscriptions = Suscription.objects.filter(category=category, state=Suscription.SuscriptionState.active)
+    list_subscriptions = Suscription.objects.filter(category=category).exclude(state=Suscription.SuscriptionState.cancelled)
     message = f"""
     Te informamos que el nombre de la categoría {old_name} ha sido cambiado a {category.name}.
     """

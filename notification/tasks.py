@@ -60,10 +60,7 @@ def notify_new_content_suscription(content_id):
 
     content = Content.objects.get(id=content_id)
     category_id = content.category
-    suscriptions = Suscription.objects.filter(
-        state=Suscription.SuscriptionState.active,
-        category_id=category_id
-    )
+    suscriptions = Suscription.objects.filter(category_id=category_id).exclude(state=Suscription.SuscriptionState.cancelled)
     template = "email/notification.html"
     subject = "Nuevo contenido en una categoría de tu interés"
     message = f"Se ha publicado el contenido {content.title} en la categoría {content.category.name} que podría interesarte."
