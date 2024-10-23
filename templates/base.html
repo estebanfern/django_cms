@@ -292,7 +292,7 @@
         </li>
         {% endif %}
         
-        {% if perms.app.create_content %}
+        {% if perms.app.create_content or perms.app.view_stadistics %}
         <li class="nav-item">
           <a class="nav-link collapsed" href="/stadistics">
             <i class="bi bi-bar-chart-line"></i>
