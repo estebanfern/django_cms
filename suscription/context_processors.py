@@ -1,5 +1,7 @@
 from django.apps import apps
 
+from suscription.models import Suscription
+
 
 def suscriptions(request):
     """
@@ -17,7 +19,7 @@ def suscriptions(request):
     suscription_model = apps.get_model('suscription', 'Suscription')
 
     if request.user.is_authenticated:
-        user_suscriptions = suscription_model.objects.filter(user=request.user, state='active').values_list('category_id', flat=True)
+        user_suscriptions = suscription_model.objects.filter(user=request.user, state=Suscription.SuscriptionState.active).values_list('category_id', flat=True)
     else:
         user_suscriptions = []
 
