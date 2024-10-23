@@ -149,22 +149,6 @@ def create_checkout_session(request, category_id):
         print(e)
         return "Server error", 500
 
-
-def customer_portal(request):
-    YOUR_DOMAIN = "http://localhost:8000"
-
-    customer_id = request.user.stripe_customer_id
-
-    return_url = YOUR_DOMAIN
-
-    portalSession = stripe.billing_portal.Session.create(
-        customer=customer_id,
-        return_url=return_url,
-    )
-    return redirect(portalSession.url, code=303)
-
-
-
 @csrf_exempt
 def stripe_webhook(request):
     payload = request.body

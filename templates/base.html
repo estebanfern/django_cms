@@ -218,9 +218,8 @@
             <li>
               <hr class="dropdown-divider">
             </li>
-            {% if user.stripe_customer_id %}
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="/subscriptions">
+              <a class="dropdown-item d-flex align-items-center" href="">
                 <i class="bi bi-credit-card"></i>
                 <span>Mis suscripciones</span>
               </a>
@@ -228,13 +227,6 @@
             <li>
               <hr class="dropdown-divider">
             </li>
-            {% else %}
-            <li>
-              <a class="dropdown-item d-flex align-items-center subscription-link" href="#">
-                <i class="bi bi-credit-card"></i>
-                <span>Mis suscripciones</span>
-              </a>
-            {% endif %}
             <li>
               <a class="dropdown-item d-flex align-items-center" href="/logout">
                 <i class="bi bi-box-arrow-right"></i>
@@ -365,12 +357,6 @@
         document.getElementById('searchBtn').click();
       }
     }
-
-    $(document).on('click', '.subscription-link', function() {
-      modal.info({message: 'No tienes ninguna suscripcion de pago'});
-    });
-
-
   </script>
 
 
