@@ -486,7 +486,7 @@ def view_content(request, id):
     :rtype: HttpResponse
     """
     content = get_object_or_404(Content, id=id)
-    if not content.is_active:
+    if not content.is_active or not content.category.is_active:
         raise Http404
 
     user = request.user
