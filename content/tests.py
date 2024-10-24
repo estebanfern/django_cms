@@ -1,6 +1,4 @@
 import json
-
-from django.core.exceptions import PermissionDenied
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.test import TestCase
 from django.urls import reverse
@@ -8,9 +6,9 @@ from django.utils import timezone
 from django.contrib.auth.models import Permission
 from django.contrib.auth import get_user_model
 from app.models import CustomUser
+from app.signals import cache_previous_user, post_save_user_handler
 from category.models import Category
-from category.signals import cache_previous_category, post_save_category_handler, cache_category_before_delete, \
-    handle_category_after_delete
+from category.signals import cache_previous_category, post_save_category_handler, cache_category_before_delete, handle_category_after_delete
 from content.forms import ContentForm
 from content.models import Content
 from unittest.mock import patch
@@ -44,6 +42,8 @@ class ContentCreateViewTest(TestCase):
             - Crea una categoría de prueba para asociar con el contenido.
 
         """
+        pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        post_save.disconnect(post_save_user_handler, sender=CustomUser)
         pre_save.disconnect(cache_previous_category, sender=Category)
         post_save.disconnect(post_save_category_handler, sender=Category)
         pre_delete.disconnect(cache_category_before_delete, sender=Category)
@@ -69,6 +69,8 @@ class ContentCreateViewTest(TestCase):
         self.category = Category.objects.create(name='Test Category')
 
     def tearDown(self):
+        pre_save.connect(cache_previous_user, sender=CustomUser)
+        post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
         post_save.connect(post_save_category_handler, sender=Category)
         pre_delete.connect(cache_category_before_delete, sender=Category)
@@ -187,6 +189,8 @@ class ContentUpdateViewTest(TestCase):
             - Crea una categoría de prueba.
             - Crea un contenido de prueba asociado al usuario y la categoría.
         """
+        pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        post_save.disconnect(post_save_user_handler, sender=CustomUser)
         pre_save.disconnect(cache_previous_category, sender=Category)
         post_save.disconnect(post_save_category_handler, sender=Category)
         pre_delete.disconnect(cache_category_before_delete, sender=Category)
@@ -218,6 +222,8 @@ class ContentUpdateViewTest(TestCase):
         )
 
     def tearDown(self):
+        pre_save.connect(cache_previous_user, sender=CustomUser)
+        post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
         post_save.connect(post_save_category_handler, sender=Category)
         pre_delete.connect(cache_category_before_delete, sender=Category)
@@ -314,7 +320,8 @@ class ContentUpdateViewEditorTest(TestCase):
             - Crea una categoría de prueba.
             - Crea un contenido de prueba en estado de revisión asociado al usuario editor.
         """
-
+        pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        post_save.disconnect(post_save_user_handler, sender=CustomUser)
         pre_save.disconnect(cache_previous_category, sender=Category)
         post_save.disconnect(post_save_category_handler, sender=Category)
         pre_delete.disconnect(cache_category_before_delete, sender=Category)
@@ -348,6 +355,8 @@ class ContentUpdateViewEditorTest(TestCase):
         self.client.login(email='editor@example.com', password='testpassword123')
 
     def tearDown(self):
+        pre_save.connect(cache_previous_user, sender=CustomUser)
+        post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
         post_save.connect(post_save_category_handler, sender=Category)
         pre_delete.connect(cache_category_before_delete, sender=Category)
@@ -444,7 +453,8 @@ class ContentFormTest(TestCase):
             - Crea un usuario de prueba con un correo electrónico, nombre y contraseña.
             - Crea una categoría de prueba para asociar al contenido en los tests.
         """
-
+        pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        post_save.disconnect(post_save_user_handler, sender=CustomUser)
         pre_save.disconnect(cache_previous_category, sender=Category)
         post_save.disconnect(post_save_category_handler, sender=Category)
         pre_delete.disconnect(cache_category_before_delete, sender=Category)
@@ -459,6 +469,8 @@ class ContentFormTest(TestCase):
         self.category = Category.objects.create(name='Test Category')
 
     def tearDown(self):
+        pre_save.connect(cache_previous_user, sender=CustomUser)
+        post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
         post_save.connect(post_save_category_handler, sender=Category)
         pre_delete.connect(cache_category_before_delete, sender=Category)
@@ -520,7 +532,8 @@ class ReactionTestCase(TestCase):
         """
         Configura los datos necesarios para las pruebas, incluyendo un usuario y contenido de prueba.
         """
-
+        pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        post_save.disconnect(post_save_user_handler, sender=CustomUser)
         pre_save.disconnect(cache_previous_category, sender=Category)
         post_save.disconnect(post_save_category_handler, sender=Category)
         pre_delete.disconnect(cache_category_before_delete, sender=Category)
@@ -548,6 +561,8 @@ class ReactionTestCase(TestCase):
         self.client.login(email='testuser@example.com', password='testpassword123')
 
     def tearDown(self):
+        pre_save.connect(cache_previous_user, sender=CustomUser)
+        post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
         post_save.connect(post_save_category_handler, sender=Category)
         pre_delete.connect(cache_category_before_delete, sender=Category)
@@ -665,7 +680,8 @@ class ReactionTestCase(TestCase):
 
 class KanbanBoardTest(TestCase):
     def setUp(self):
-
+        pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        post_save.disconnect(post_save_user_handler, sender=CustomUser)
         pre_save.disconnect(cache_previous_category, sender=Category)
         post_save.disconnect(post_save_category_handler, sender=Category)
         pre_delete.disconnect(cache_category_before_delete, sender=Category)
@@ -729,6 +745,8 @@ class KanbanBoardTest(TestCase):
         )
 
     def tearDown(self):
+        pre_save.connect(cache_previous_user, sender=CustomUser)
+        post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
         post_save.connect(post_save_category_handler, sender=Category)
         pre_delete.connect(cache_category_before_delete, sender=Category)

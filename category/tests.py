@@ -1,10 +1,10 @@
 from django.test import TestCase
+from app.models import CustomUser
+from app.signals import cache_previous_user, post_save_user_handler
 from .models import Category
 from django.db import IntegrityError
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
-
-from .signals import cache_previous_category, post_save_category_handler, cache_category_before_delete, \
-    handle_category_after_delete
+from .signals import cache_previous_category, post_save_category_handler, cache_category_before_delete, handle_category_after_delete
 
 
 class CategoryModelTests(TestCase):
@@ -35,6 +35,8 @@ class CategoryModelTests(TestCase):
         incluyendo nombre, descripción, estado, moderación, precio y tipo de categoría.
         """
         # Configuración inicial para todas las pruebas
+        pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        post_save.disconnect(post_save_user_handler, sender=CustomUser)
         pre_save.disconnect(cache_previous_category, sender=Category)
         post_save.disconnect(post_save_category_handler, sender=Category)
         pre_delete.disconnect(cache_category_before_delete, sender=Category)
@@ -49,6 +51,8 @@ class CategoryModelTests(TestCase):
         }
 
     def tearDown(self):
+        pre_save.connect(cache_previous_user, sender=CustomUser)
+        post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
         post_save.connect(post_save_category_handler, sender=Category)
         pre_delete.connect(cache_category_before_delete, sender=Category)
