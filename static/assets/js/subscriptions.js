@@ -48,29 +48,44 @@ const SUSCRIPTION_BTN = {
     btn = $(this);
     var category_id = parseInt(btn.attr('category-id'));
 
-    $.ajax({
-      url: `/category/${category_id}/unsuscribe/`,
-      type: 'POST',
-      headers: {
-        'X-CSRFToken': csrfToken,
-      },
-      success: function(response) {
-        if (response.status === 'success') {
-          modal.info({message: response.message});
-          btn.attr('class', SUSCRIPTION_BTN.unsuscribed.btnClass);
-          btn.html(SUSCRIPTION_BTN.unsuscribed.btnChildren);
-        } else {
-          console.error("Error en la respuesta del servidor: " + response.message);
+    modal.warning({
+      message: 'Estas seguro que deseas desuscribirte a esta categoria?',
+      buttons: {
+        confirm: {
+          label: '<span class="fas fa-trash"></span> Confirmar',
+          className: 'btn btn-primary',
+          callback: function() {
+            $.ajax({
+              url: `/category/${category_id}/unsuscribe/`,
+              type: 'POST',
+              headers: {
+                'X-CSRFToken': csrfToken,
+              },
+              success: function(response) {
+                if (response.status === 'success') {
+                  modal.info({message: response.message});
+                  btn.attr('class', SUSCRIPTION_BTN.unsuscribed.btnClass);
+                  btn.html(SUSCRIPTION_BTN.unsuscribed.btnChildren);
+                } else {
+                  console.error("Error en la respuesta del servidor: " + response.message);
+                }
+              },
+              error: function(xhr, status, error) {
+                if (xhr.status === 403) {
+                  modal.warning({
+                    message: xhr.responseJSON.message,
+                  });
+                }
+                console.error("Error en la solicitud AJAX:", error);
+                console.log(xhr);
+              }
+            });
+          }
+        },
+        cancel: {
+          label: 'Cancelar',
+          className: 'btn btn-danger',
         }
-      },
-      error: function(xhr, status, error) {
-        if (xhr.status === 403) {
-          modal.warning({
-            message: xhr.responseJSON.message,
-          });
-        }
-        console.error("Error en la solicitud AJAX:", error);
-        console.log(xhr);
       }
     });
   });
