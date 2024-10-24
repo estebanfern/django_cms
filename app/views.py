@@ -35,6 +35,7 @@ def home_view(request):
     # Filtra los contenidos activos y publicados, y los ordena por fecha de publicación
     contents = Content.objects.filter(
         is_active=True,
+        category__is_active=True,
         state=Content.StateChoices.publish,
         date_published__lt=timezone.now()
     ).select_related('category', 'autor').order_by('-date_published')
