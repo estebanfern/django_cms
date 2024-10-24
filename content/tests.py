@@ -1,6 +1,7 @@
 import json
 
 from django.core.exceptions import PermissionDenied
+from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -8,6 +9,8 @@ from django.contrib.auth.models import Permission
 from django.contrib.auth import get_user_model
 from app.models import CustomUser
 from category.models import Category
+from category.signals import cache_previous_category, post_save_category_handler, cache_category_before_delete, \
+    handle_category_after_delete
 from content.forms import ContentForm
 from content.models import Content
 from unittest.mock import patch
@@ -41,6 +44,11 @@ class ContentCreateViewTest(TestCase):
             - Crea una categoría de prueba para asociar con el contenido.
 
         """
+        pre_save.disconnect(cache_previous_category, sender=Category)
+        post_save.disconnect(post_save_category_handler, sender=Category)
+        pre_delete.disconnect(cache_category_before_delete, sender=Category)
+        post_delete.disconnect(handle_category_after_delete, sender=Category)
+
         # Crear un usuario de prueba
         self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
@@ -59,6 +67,13 @@ class ContentCreateViewTest(TestCase):
 
         # Crear una categoría para los tests
         self.category = Category.objects.create(name='Test Category')
+
+    def tearDown(self):
+        pre_save.connect(cache_previous_category, sender=Category)
+        post_save.connect(post_save_category_handler, sender=Category)
+        pre_delete.connect(cache_category_before_delete, sender=Category)
+        post_delete.connect(handle_category_after_delete, sender=Category)
+        super().tearDown()
 
     def test_access_create_content_with_permission(self):
         """
@@ -172,6 +187,11 @@ class ContentUpdateViewTest(TestCase):
             - Crea una categoría de prueba.
             - Crea un contenido de prueba asociado al usuario y la categoría.
         """
+        pre_save.disconnect(cache_previous_category, sender=Category)
+        post_save.disconnect(post_save_category_handler, sender=Category)
+        pre_delete.disconnect(cache_category_before_delete, sender=Category)
+        post_delete.disconnect(handle_category_after_delete, sender=Category)
+
         # Crear un usuario de prueba
         self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
@@ -196,6 +216,13 @@ class ContentUpdateViewTest(TestCase):
             state='draft',
             content='Existing content',
         )
+
+    def tearDown(self):
+        pre_save.connect(cache_previous_category, sender=Category)
+        post_save.connect(post_save_category_handler, sender=Category)
+        pre_delete.connect(cache_category_before_delete, sender=Category)
+        post_delete.connect(handle_category_after_delete, sender=Category)
+        super().tearDown()
 
     def test_update_content_view(self):
         """
@@ -287,6 +314,12 @@ class ContentUpdateViewEditorTest(TestCase):
             - Crea una categoría de prueba.
             - Crea un contenido de prueba en estado de revisión asociado al usuario editor.
         """
+
+        pre_save.disconnect(cache_previous_category, sender=Category)
+        post_save.disconnect(post_save_category_handler, sender=Category)
+        pre_delete.disconnect(cache_category_before_delete, sender=Category)
+        post_delete.disconnect(handle_category_after_delete, sender=Category)
+
         # Crear un usuario con permiso de editor
         self.editor = get_user_model().objects.create_user(
             email='editor@example.com',
@@ -313,6 +346,13 @@ class ContentUpdateViewEditorTest(TestCase):
 
         # Iniciar sesión con el usuario editor para las pruebas
         self.client.login(email='editor@example.com', password='testpassword123')
+
+    def tearDown(self):
+        pre_save.connect(cache_previous_category, sender=Category)
+        post_save.connect(post_save_category_handler, sender=Category)
+        pre_delete.connect(cache_category_before_delete, sender=Category)
+        post_delete.connect(handle_category_after_delete, sender=Category)
+        super().tearDown()
 
     def test_update_content_view_for_editor(self):
         """
@@ -404,6 +444,12 @@ class ContentFormTest(TestCase):
             - Crea un usuario de prueba con un correo electrónico, nombre y contraseña.
             - Crea una categoría de prueba para asociar al contenido en los tests.
         """
+
+        pre_save.disconnect(cache_previous_category, sender=Category)
+        post_save.disconnect(post_save_category_handler, sender=Category)
+        pre_delete.disconnect(cache_category_before_delete, sender=Category)
+        post_delete.disconnect(handle_category_after_delete, sender=Category)
+
         # Crear usuario y categoría de prueba
         self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
@@ -411,6 +457,13 @@ class ContentFormTest(TestCase):
             password='testpassword123'
         )
         self.category = Category.objects.create(name='Test Category')
+
+    def tearDown(self):
+        pre_save.connect(cache_previous_category, sender=Category)
+        post_save.connect(post_save_category_handler, sender=Category)
+        pre_delete.connect(cache_category_before_delete, sender=Category)
+        post_delete.connect(handle_category_after_delete, sender=Category)
+        super().tearDown()
 
     def test_content_form_creation_valid(self):
         """
@@ -467,6 +520,12 @@ class ReactionTestCase(TestCase):
         """
         Configura los datos necesarios para las pruebas, incluyendo un usuario y contenido de prueba.
         """
+
+        pre_save.disconnect(cache_previous_category, sender=Category)
+        post_save.disconnect(post_save_category_handler, sender=Category)
+        pre_delete.disconnect(cache_category_before_delete, sender=Category)
+        post_delete.disconnect(handle_category_after_delete, sender=Category)
+
         # Crear un usuario de prueba
         self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
@@ -487,6 +546,13 @@ class ReactionTestCase(TestCase):
 
         # Iniciar sesión con el usuario
         self.client.login(email='testuser@example.com', password='testpassword123')
+
+    def tearDown(self):
+        pre_save.connect(cache_previous_category, sender=Category)
+        post_save.connect(post_save_category_handler, sender=Category)
+        pre_delete.connect(cache_category_before_delete, sender=Category)
+        post_delete.connect(handle_category_after_delete, sender=Category)
+        super().tearDown()
 
     @patch('content.views.update_reactions.delay')  # Mock the Celery task
     def test_like_content(self, mock_update_reactions):
@@ -599,6 +665,12 @@ class ReactionTestCase(TestCase):
 
 class KanbanBoardTest(TestCase):
     def setUp(self):
+
+        pre_save.disconnect(cache_previous_category, sender=Category)
+        post_save.disconnect(post_save_category_handler, sender=Category)
+        pre_delete.disconnect(cache_category_before_delete, sender=Category)
+        post_delete.disconnect(handle_category_after_delete, sender=Category)
+
         self.user = CustomUser.objects.create_user(email='user@mail.com', password='testpassword',
                                                    name='Test User')
         self.user_creator = CustomUser.objects.create_user(email='creator@example.com', password='password123',
@@ -655,6 +727,13 @@ class KanbanBoardTest(TestCase):
             date_published=timezone.now() - timezone.timedelta(days=2),
             date_expire=timezone.now() - timezone.timedelta(days=1),
         )
+
+    def tearDown(self):
+        pre_save.connect(cache_previous_category, sender=Category)
+        post_save.connect(post_save_category_handler, sender=Category)
+        pre_delete.connect(cache_category_before_delete, sender=Category)
+        post_delete.connect(handle_category_after_delete, sender=Category)
+        super().tearDown()
 
     # Pruebas para la vista kanban_board
     def test_user_without_permissions(self):

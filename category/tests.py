@@ -1,6 +1,11 @@
 from django.test import TestCase
 from .models import Category
 from django.db import IntegrityError
+from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
+
+from .signals import cache_previous_category, post_save_category_handler, cache_category_before_delete, \
+    handle_category_after_delete
+
 
 class CategoryModelTests(TestCase):
     """
@@ -30,6 +35,10 @@ class CategoryModelTests(TestCase):
         incluyendo nombre, descripción, estado, moderación, precio y tipo de categoría.
         """
         # Configuración inicial para todas las pruebas
+        pre_save.disconnect(cache_previous_category, sender=Category)
+        post_save.disconnect(post_save_category_handler, sender=Category)
+        pre_delete.disconnect(cache_category_before_delete, sender=Category)
+        post_delete.disconnect(handle_category_after_delete, sender=Category)
         self.category_data = {
             'name': 'Tecnología',
             'description': 'Categoría sobre tecnología y gadgets',
@@ -38,6 +47,13 @@ class CategoryModelTests(TestCase):
             'price': 49,
             'type': Category.TypeChoices.paid
         }
+
+    def tearDown(self):
+        pre_save.connect(cache_previous_category, sender=Category)
+        post_save.connect(post_save_category_handler, sender=Category)
+        pre_delete.connect(cache_category_before_delete, sender=Category)
+        post_delete.connect(handle_category_after_delete, sender=Category)
+        super().tearDown()
 
     def test_create_category(self):
         """
