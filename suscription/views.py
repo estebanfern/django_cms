@@ -314,7 +314,7 @@ def stripe_webhook(request):
                 category = Category.objects.get(id=category_id)
                 suscription = Suscription.objects.filter(user=user, category=category,stripe_subscription_id=subscription_id).first()
                 if not suscription:
-                    return JsonResponse({'status': 'suscription not found'}, status=404)
+                    return JsonResponse({'status': 'suscription already deleted'}, status=200)
                 suscription.state = Suscription.SuscriptionState.cancelled
                 suscription.save()
 
@@ -324,8 +324,6 @@ def stripe_webhook(request):
                 return JsonResponse({'status': 'user not found'}, status=404)
             except Category.DoesNotExist:
                 return JsonResponse({'status': 'category not found'}, status=404)
-            except Suscription.DoesNotExist:
-                return JsonResponse({'status': 'suscription not found'}, status=404)
 
     if event['type'] == 'customer.subscription.updated':
         subscription = event['data']['object']
@@ -400,7 +398,6 @@ def stripe_webhook(request):
     if event['type'] == 'price.updated':
         price = event['data']['object']
         price_id = price['id']
-        previous_attributes = event['data']['previous_attributes']
         active = price['active']
         metada = price['metadata']
 
@@ -410,7 +407,7 @@ def stripe_webhook(request):
             new_price = None
 
         # Si se cambia de precio
-        if 'active' in previous_attributes and not active and active != previous_attributes['active'] and new_price and new_price != price['unit_amount']:
+        if not active and new_price and new_price != price['unit_amount']:
             try:
                 category = Category.objects.get(stripe_price_id=price_id)
                 # Crear un nuevo precio en Stripe
