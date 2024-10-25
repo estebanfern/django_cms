@@ -5,6 +5,8 @@ from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonRespon
 from django.views.decorators.csrf import csrf_exempt
 from rating.models import Rating
 from notification.tasks import notify_new_content_suscription
+from suscription.models import Suscription
+from suscription.views import suscribe_category
 from . import service
 from .forms import ReportForm
 from django.contrib.admin import site as admin_site
@@ -501,6 +503,23 @@ def view_content(request, id):
     if not user.is_authenticated and not content.category.type == Category.TypeChoices.public:
         messages.warning(request, 'Para poder acceder a contenidos de categorias de suscripción o pago debes estar registrado')
         return redirect('login')
+
+    if content.category.type == Category.TypeChoices.paid and not user.is_creator():
+        # Verificar si el usuario esta suscripto a la categoria
+        subscription = Suscription.objects.filter(user=user, category=content.category).first()
+
+        if not subscription:
+            messages.warning(request, 'Para poder acceder a contenidos de categorias de pago debes pagar la suscripción')
+            response = suscribe_category(request, content.category.id)
+            respose_data = json.loads(response.content)
+            return redirect(respose_data["checkout_url"])
+
+        else:
+            if subscription.state != 'active' and subscription.state != 'pending_cancellation':
+                messages.warning(request, 'Para poder acceder a contenidos de categorias de pago debes tener una suscripción activa')
+                response = suscribe_category(request, content.category.id)
+                respose_data = json.loads(response.content)
+                return redirect(respose_data["checkout_url"])
 
     if (not content.state == Content.StateChoices.publish) or (content.date_published and content.date_published > timezone.now()):
         if not (user.has_perm('app.create_content') or user.has_perm('app.edit_content') or user.has_perm('app.publish_content') or user.has_perm('app.edit_is_active')):

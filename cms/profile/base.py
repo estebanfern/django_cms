@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = 'django-insecure-onb703_t0zi+l^vm#(rn2-tdh4uef2ub4y7gvzy@g8*zc1)1zb'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost').split(',')
+ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='is2equipo10.me,www.is2equipo10.me').split(',')
 
 # Application definition
 
@@ -253,3 +253,9 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # CELERY BEAT SCHEDULER
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# Configuración de Stripe
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default="stripe-secret-key")
+
+# Configuracion para escuchar eventos de Stripe
+ENDPOINT_SECRET = config('ENDPOINT_SECRET', default="stripe-endpoint-secret")

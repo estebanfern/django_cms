@@ -1,11 +1,15 @@
+from django.db.models.signals import pre_save, post_save
 from django.test import TestCase, override_settings
-from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 from app.forms import ChangePasswordForm, CustomUserCreationForm, ProfileUpdateForm
 from django.contrib.auth import get_user_model
 from app.forms import CustomAuthenticationForm
 import os
+
+from app.models import CustomUser
+from app.signals import cache_previous_user, post_save_user_handler
+
 
 @override_settings(DEFAULT_FILE_STORAGE='storages.backends.s3boto3.S3Boto3Storage')
 class ProfilePictureUploadTest(TestCase):
@@ -27,13 +31,19 @@ class ProfilePictureUploadTest(TestCase):
         Acciones:
             - Crea un usuario con un correo electrónico, nombre y contraseña específicos.
         """
-
+        pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        post_save.disconnect(post_save_user_handler, sender=CustomUser)
         # Crea un usuario de prueba
         self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
             name='Test User',
             password='testpassword123'
         )
+
+    def tearDown(self):
+        pre_save.connect(cache_previous_user, sender=CustomUser)
+        post_save.connect(post_save_user_handler, sender=CustomUser)
+        super().tearDown()
 
     @override_settings(DEFAULT_FILE_STORAGE='storages.backends.s3boto3.S3Boto3Storage')
     def test_profile_picture_upload(self):
@@ -71,6 +81,15 @@ class CustomUserCreationFormTest(TestCase):
         test_valid_form: Verifica que el formulario sea válido con datos correctos.
         test_invalid_password_confirmation: Verifica que el formulario sea inválido si las contraseñas no coinciden.
     """
+
+    def setUp(self):
+        pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        post_save.disconnect(post_save_user_handler, sender=CustomUser)
+
+    def tearDown(self):
+        pre_save.connect(cache_previous_user, sender=CustomUser)
+        post_save.connect(post_save_user_handler, sender=CustomUser)
+        super().tearDown()
 
     def test_valid_form(self):
         """
@@ -136,13 +155,19 @@ class CustomAuthenticationFormTest(TestCase):
         Acciones:
             - Crea un usuario con un correo electrónico, nombre y contraseña específicos.
         """
-
+        pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        post_save.disconnect(post_save_user_handler, sender=CustomUser)
         # Crear un usuario de prueba
         self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
             name='Test User',
             password='testpassword123'
         )
+
+    def tearDown(self):
+        pre_save.connect(cache_previous_user, sender=CustomUser)
+        post_save.connect(post_save_user_handler, sender=CustomUser)
+        super().tearDown()
 
     def test_valid_form(self):
         """
@@ -251,13 +276,19 @@ class ProfileUpdateFormTest(TestCase):
         Acciones:
             - Crea un usuario con un correo electrónico, nombre, contraseña y descripción específicos.
         """
-
+        pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        post_save.disconnect(post_save_user_handler, sender=CustomUser)
         self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
             name='Test User',
             password='testpassword123',
             about='Old about me',
         )
+
+    def tearDown(self):
+        pre_save.connect(cache_previous_user, sender=CustomUser)
+        post_save.connect(post_save_user_handler, sender=CustomUser)
+        super().tearDown()
 
     def test_update_name_and_about(self):
         """
@@ -304,12 +335,18 @@ class ChangePasswordFormTest(TestCase):
         Acciones:
             - Crea un usuario con un correo electrónico, nombre y contraseña específicos.
         """
-
+        pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        post_save.disconnect(post_save_user_handler, sender=CustomUser)
         self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
             name='Test User',
             password='oldpassword123'
         )
+
+    def tearDown(self):
+        pre_save.connect(cache_previous_user, sender=CustomUser)
+        post_save.connect(post_save_user_handler, sender=CustomUser)
+        super().tearDown()
 
     def test_valid_password_change(self):
         """

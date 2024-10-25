@@ -6,3 +6,6 @@ class AppConfig(AppConfig):
     name = 'app'
     verbose_name = _("Gestión de Usuarios")
 
+    def ready(self):
+        import app.signals
+

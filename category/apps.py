@@ -20,3 +20,6 @@ class CategoryConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'category'
     verbose_name = _("Gestión de Categorías")
+
+    def ready(self):
+        import category.signals

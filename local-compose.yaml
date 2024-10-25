@@ -8,3 +8,9 @@ services:
       - REDIS_PASSWORD=local-dev
       - REDIS_PORT=6379
       - REDIS_DATABASES=16
+  cms-stripe:
+    image: stripe/stripe-cli:latest
+    container_name: cms-stripe
+    env_file:
+      - .env
+    command: "listen --api-key ${STRIPE_SECRET_KEY} --forward-to ${DOCKER_HOST}:8000/webhook/stripe/"
