@@ -35,11 +35,3 @@ suscription.views module
    :members:
    :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: suscription
-   :members:
-   :undoc-members:
-   :show-inheritance:

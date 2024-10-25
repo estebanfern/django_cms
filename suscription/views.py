@@ -110,6 +110,22 @@ def unsuscribe_category(request, category_id):
 
 @login_required()
 def create_checkout_session(request, category_id):
+    """
+    Crea una sesión de pago en Stripe para una categoría de suscripción.
+
+    :param request: Objeto de solicitud HTTP del usuario autenticado.
+    :type request: HttpRequest
+    :param category_id: ID de la categoría para la cual se crea la sesión de pago.
+    :type category_id: int
+
+    :comportamiento:
+        - Verifica que la categoría tenga un precio asociado en Stripe.
+        - Define el cliente en Stripe con el ID o correo del usuario autenticado.
+        - Crea una sesión de pago con la categoría seleccionada, modo de suscripción, URL de éxito y URL de cancelación.
+
+    :return: Objeto de sesión de pago de Stripe o un mensaje de error en caso de excepción.
+    :rtype: dict or tuple
+    """
 
     category = get_object_or_404(Category, id=category_id)
 
@@ -158,6 +174,28 @@ def create_checkout_session(request, category_id):
 
 @csrf_exempt
 def stripe_webhook(request):
+    """
+    Maneja eventos de webhook provenientes de Stripe y realiza acciones según el tipo de evento.
+
+    :param request: Objeto de solicitud HTTP.
+    :type request: HttpRequest
+
+    :comportamiento:
+        - Verifica la firma del webhook y construye el evento de Stripe.
+        - Realiza acciones específicas según el tipo de evento:
+          - `checkout.session.completed`: Guarda el ID del cliente de Stripe en el usuario del sistema.
+          - `invoice.paid`: Activa o crea una suscripción en la categoría correspondiente.
+          - `invoice.payment_failed`: Marca la suscripción como cancelada y notifica el fallo de pago.
+          - `customer.subscription.deleted`: Cancela la suscripción en el sistema.
+          - `customer.subscription.updated`: Marca la suscripción como pendiente de cancelación.
+          - `product.updated`: Desactiva las suscripciones si el producto ha sido desactivado.
+          - `price.updated`: Actualiza el precio de la categoría y cancela las suscripciones activas.
+          - `customer.created`: Guarda el ID del cliente de Stripe en el usuario del sistema.
+
+    :return: Respuesta JSON indicando el estado de la operación.
+    :rtype: JsonResponse
+    """
+
     payload = request.body
     sig_header = request.META['HTTP_STRIPE_SIGNATURE']
     endpoint_secret = base.ENDPOINT_SECRET

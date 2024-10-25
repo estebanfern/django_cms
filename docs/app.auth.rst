@@ -11,11 +11,3 @@ app.auth.views module
    :members:
    :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: app.auth
-   :members:
-   :undoc-members:
-   :show-inheritance:

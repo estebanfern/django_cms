@@ -12,4 +12,4 @@ django_cms
    notification
    rating
    suscription
-   gunicorn
+   stadistic
