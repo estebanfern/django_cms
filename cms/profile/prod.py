@@ -4,7 +4,7 @@ DEBUG=False
 AWS_STATIC_LOCATION = 'static'
 STATIC_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com/{AWS_STATIC_LOCATION}/"
 STATICFILES_STORAGE = 'cms.store_backends.StaticStorage'
-CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default=['https://is2equipo10.me', 'https://www.is2equipo10.me', 'https://stripe.com'])
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='https://is2equipo10.me,https://www.is2equipo10.me,https://stripe.com').split(',')
 # CSRF_TRUSTED_ORIGINS = config('DJANGO_ALLOWED_HOSTS', default='localhost').split(',')
 # Logging
 LOGGING = {
@@ -22,13 +22,13 @@ LOGGING = {
     },
     'handlers': {
         'file': {
-            'level': 'DEBUG',
+            'level': 'TRACE',
             'class': 'logging.FileHandler',
             'filename': os.getenv('CMS_LOG_FILENAME', '/app/logs/app.log'),
             'formatter': 'verbose',
         },
         'console': {
-            'level': 'DEBUG',
+            'level': 'TRACE',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
@@ -51,6 +51,11 @@ LOGGING = {
         },
         # Este logger captura todos los mensajes no capturados por loggers específicos
         '': {
+            'level': 'INFO',
+            'handlers': ['file', 'console'],
+            'propagate': False,
+        },
+        'default': {
             'level': 'INFO',
             'handlers': ['file', 'console'],
             'propagate': False,
