@@ -79,6 +79,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     about = models.CharField(max_length=255, null=True, blank=True, default='', verbose_name=('Acerca de'))
     is_active = models.BooleanField(default=True, verbose_name='Activo')
     date_joined = models.DateTimeField(default=timezone.now, verbose_name=('Fecha de registro'))
+    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='ID de Cliente en Stripe')
 
     objects = CustomUserManager()
 
@@ -168,6 +169,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
             # Permisos para reportes
             ("view_reports", "Ver reportes"),
+
+            # Permisos para ver estadisticas como admin
+            ("view_stadistics", "Ver estadisticas"),
+
         ]
 
     @property
@@ -207,6 +212,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         "app.block_users",
         "app.unblock_users",
         "app.view_users",
+        "app.view_stadistics",
     }
     def is_creator(self):
         """

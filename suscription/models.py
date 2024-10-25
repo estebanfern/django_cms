@@ -20,21 +20,27 @@ class Suscription(models.Model):
         unique_together: Define una restricción única para evitar que un usuario esté suscrito más de una vez a la misma categoría.
     """
 
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    date_subscribed = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name='Usuario')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name='Categoría')
+    date_subscribed = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de Suscripción')
+    stripe_subscription_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='ID de Suscripción en Stripe')
 
     class SuscriptionState(models.TextChoices):
         active = 'active', ('Activo')
-        pending_payment = 'pending_payment', ('Pendiente de pago')
         cancelled = 'cancelled', ('Cancelado')
+        pending_cancellation = 'pending_cancellation', ('Pendiente de cancelación')
+
     state = models.CharField(
-        max_length=15,
+        max_length=20,
         choices=SuscriptionState.choices,
-        default=SuscriptionState.pending_payment,
-        verbose_name=('Tipo')
+        default=SuscriptionState.active,
+        verbose_name=('Estado de la Suscripción')
     )
 
     class Meta:
         unique_together = ("user", "category")
-    
+        verbose_name = 'Suscripción'
+        verbose_name_plural = 'Suscripciones'
+
+    def __str__(self):
+        return f'Suscripción de {self.user}'

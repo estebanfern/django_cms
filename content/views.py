@@ -5,6 +5,8 @@ from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonRespon
 from django.views.decorators.csrf import csrf_exempt
 from rating.models import Rating
 from notification.tasks import notify_new_content_suscription
+from suscription.models import Suscription
+from suscription.views import suscribe_category
 from . import service
 from .forms import ReportForm
 from django.contrib.admin import site as admin_site
@@ -55,18 +57,18 @@ def kanban_board(request):
     # Filtrar contenidos según los permisos del usuario y que estén activos
     if user.has_perm('app.edit_content') or user.has_perm('app.publish_content') or user.has_perm('app.edit_is_active'):
         # Los editores y publicadores ven todos los contenidos activos sin importar el autor
-        contents['Borrador'] = Content.objects.filter(state='draft', is_active=True)
-        contents['Edicion'] = Content.objects.filter(state='revision', is_active=True)
-        contents['A publicar'] = Content.objects.filter(state='to_publish', is_active=True)
-        contents['Publicado'] = Content.objects.filter(state='publish', is_active=True)
-        contents['Inactivo'] = Content.objects.filter(state='inactive', is_active=True)
+        contents['Borrador'] = Content.objects.filter(state='draft', is_active=True, category__is_active=True)
+        contents['Edicion'] = Content.objects.filter(state='revision', is_active=True, category__is_active=True)
+        contents['A publicar'] = Content.objects.filter(state='to_publish', is_active=True, category__is_active=True)
+        contents['Publicado'] = Content.objects.filter(state='publish', is_active=True, category__is_active=True)
+        contents['Inactivo'] = Content.objects.filter(state='inactive', is_active=True, category__is_active=True)
     elif user.has_perm('app.create_content'):
         # Los autores ven solo sus contenidos activos en cualquier estado
-        contents['Borrador'] = Content.objects.filter(state='draft', autor=user, is_active=True)
-        contents['Edicion'] = Content.objects.filter(state='revision', autor=user, is_active=True)
-        contents['A publicar'] = Content.objects.filter(state='to_publish', autor=user, is_active=True)
-        contents['Publicado'] = Content.objects.filter(state='publish', autor=user, is_active=True)
-        contents['Inactivo'] = Content.objects.filter(state='inactive', autor=user, is_active=True)
+        contents['Borrador'] = Content.objects.filter(state='draft', autor=user, is_active=True, category__is_active=True)
+        contents['Edicion'] = Content.objects.filter(state='revision', autor=user, is_active=True, category__is_active=True)
+        contents['A publicar'] = Content.objects.filter(state='to_publish', autor=user, is_active=True, category__is_active=True)
+        contents['Publicado'] = Content.objects.filter(state='publish', autor=user, is_active=True, category__is_active=True)
+        contents['Inactivo'] = Content.objects.filter(state='inactive', autor=user, is_active=True, category__is_active=True)
 
     # Pasar permisos al contexto de la plantilla
     context = {
@@ -115,6 +117,8 @@ def update_content_state(request, content_id):
         raise PermissionDenied
 
     content = get_object_or_404(Content, id=content_id)
+    if not content.is_active or not content.category.is_active:
+        raise Http404
     oldState = content.state
     data = json.loads(request.body)
     new_state = data.get('state')
@@ -330,6 +334,9 @@ class ContentUpdateView(LoginRequiredMixin, UpdateView):
         if not any(request.user.has_perm(perm) for perm in self.required_permissions):
             raise PermissionDenied
 
+        if not self.get_object().is_active or not self.get_object().category.is_active:
+            raise Http404
+
         # Verifica que solo el autor del contenido edite su contenido en borrador
         # o que si sos editor el cotenido este en revision para poder editar/
         if self.request.user.has_perm('app.edit_content') and self.get_object().state == Content.StateChoices.revision:
@@ -486,7 +493,7 @@ def view_content(request, id):
     :rtype: HttpResponse
     """
     content = get_object_or_404(Content, id=id)
-    if not content.is_active:
+    if not content.is_active or not content.category.is_active:
         raise Http404
 
     user = request.user
@@ -496,6 +503,23 @@ def view_content(request, id):
     if not user.is_authenticated and not content.category.type == Category.TypeChoices.public:
         messages.warning(request, 'Para poder acceder a contenidos de categorias de suscripción o pago debes estar registrado')
         return redirect('login')
+
+    if content.category.type == Category.TypeChoices.paid and not user.is_creator():
+        # Verificar si el usuario esta suscripto a la categoria
+        subscription = Suscription.objects.filter(user=user, category=content.category).first()
+
+        if not subscription:
+            messages.warning(request, 'Para poder acceder a contenidos de categorias de pago debes pagar la suscripción')
+            response = suscribe_category(request, content.category.id)
+            respose_data = json.loads(response.content)
+            return redirect(respose_data["checkout_url"])
+
+        else:
+            if subscription.state != 'active' and subscription.state != 'pending_cancellation':
+                messages.warning(request, 'Para poder acceder a contenidos de categorias de pago debes tener una suscripción activa')
+                response = suscribe_category(request, content.category.id)
+                respose_data = json.loads(response.content)
+                return redirect(respose_data["checkout_url"])
 
     if (not content.state == Content.StateChoices.publish) or (content.date_published and content.date_published > timezone.now()):
         if not (user.has_perm('app.create_content') or user.has_perm('app.edit_content') or user.has_perm('app.publish_content') or user.has_perm('app.edit_is_active')):
