@@ -12,10 +12,3 @@ app.profile.views module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
-
-.. automodule:: app.profile
-   :members:
-   :undoc-members:
-   :show-inheritance:

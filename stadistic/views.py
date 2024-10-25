@@ -14,6 +14,22 @@ from django.db.models import Q
 
 @login_required
 def view_stadistics(request):
+    """
+    Muestra la vista de estadísticas con opciones para filtrar usuarios y categorías.
+
+    :param request: Objeto de solicitud HTTP.
+    :type request: HttpRequest
+
+    :comportamiento:
+        - Verifica los permisos del usuario para acceder a las estadísticas.
+        - Filtra los usuarios según los permisos y el usuario autenticado.
+        - Obtiene todas las categorías.
+        - Establece los filtros de usuario, categoría y fechas de inicio y fin basados en los parámetros de la solicitud.
+
+    :return: Respuesta renderizada con la plantilla de estadísticas y datos de filtros.
+    :rtype: HttpResponse
+    """
+
     user = request.user
     users = []
     if user.has_perm('app.view_stadistics'):
@@ -38,22 +54,19 @@ def top_liked(request):
     """
     Devuelve los 10 contenidos con más "me gusta" del autor autenticado en formato JSON.
 
-    Requiere:
-        El usuario debe estar autenticado.
 
-    Parámetros:
-        request (HttpRequest): Objeto de solicitud HTTP realizado por el usuario autenticado.
+    :param request: Objeto de solicitud HTTP realizado por el usuario autenticado.
+    :type request: HttpRequest
 
-    Comportamiento:
+    :comportamiento:
         - Filtra los contenidos publicados creados por el usuario autenticado.
         - Obtiene los 10 contenidos con más "me gusta", incluyendo los campos: título, número de "me gusta", fecha de creación y fecha de publicación.
         - Ordena los resultados por el número de "me gusta" en orden descendente.
         - Retorna los datos en formato JSON con el estado de éxito.
 
-    Retorna:
-        JsonResponse: Respuesta con los datos de los contenidos más valorados en formato JSON.
+    :return: Respuesta con los datos de los contenidos más valorados en formato JSON.
+    :rtype: JsonResponse
     """
-
     user = request.user
 
     if request.GET.get('users'):
@@ -94,20 +107,17 @@ def top_disliked(request):
     """
     Devuelve los 10 contenidos con más "no me gusta" del autor autenticado en formato JSON.
 
-    Requiere:
-        El usuario debe estar autenticado.
+    :param request: Objeto de solicitud HTTP realizado por el usuario autenticado.
+    :type request: HttpRequest
 
-    Parámetros:
-        request (HttpRequest): Objeto de solicitud HTTP realizado por el usuario autenticado.
-
-    Comportamiento:
+    :comportamiento:
         - Filtra los contenidos publicados creados por el usuario autenticado.
         - Obtiene los 10 contenidos con más "no me gusta", incluyendo los campos: título, número de "no me gusta", fecha de creación y fecha de publicación.
         - Ordena los resultados por el número de "no me gusta" en orden descendente.
         - Retorna los datos en formato JSON con el estado de éxito.
 
-    Retorna:
-        JsonResponse: Respuesta con los datos de los contenidos más rechazados en formato JSON.
+    :return: Respuesta con los datos de los contenidos más rechazados en formato JSON.
+    :rtype: JsonResponse
     """
 
     user = request.user
@@ -152,20 +162,17 @@ def top_rating(request):
     """
     Devuelve los 10 contenidos mejor valorados del autor autenticado en formato JSON.
 
-    Requiere:
-        El usuario debe estar autenticado.
+    :param request: Objeto de solicitud HTTP realizado por el usuario autenticado.
+    :type request: HttpRequest
 
-    Parámetros:
-        request (HttpRequest): Objeto de solicitud HTTP realizado por el usuario autenticado.
-
-    Comportamiento:
+    :comportamiento:
         - Filtra los contenidos publicados creados por el usuario autenticado.
         - Obtiene los 10 contenidos con el promedio de calificaciones más alto, incluyendo los campos: título, promedio de calificaciones, fecha de creación y fecha de publicación.
         - Ordena los resultados por el promedio de calificaciones en orden descendente.
         - Retorna los datos en formato JSON con el estado de éxito.
 
-    Retorna:
-        JsonResponse: Respuesta con los datos de los contenidos mejor valorados en formato JSON.
+    :return: Respuesta con los datos de los contenidos mejor valorados en formato JSON.
+    :rtype: JsonResponse
     """
 
     user = request.user
@@ -210,20 +217,17 @@ def top_view(request):
     """
     Devuelve los 10 contenidos más vistos del autor autenticado en formato JSON.
 
-    Requiere:
-        El usuario debe estar autenticado.
+    :param request: Objeto de solicitud HTTP realizado por el usuario autenticado.
+    :type request: HttpRequest
 
-    Parámetros:
-        request (HttpRequest): Objeto de solicitud HTTP realizado por el usuario autenticado.
-
-    Comportamiento:
+    :comportamiento:
         - Filtra los contenidos publicados creados por el usuario autenticado.
         - Obtiene los 10 contenidos con más vistas, incluyendo los campos: título, número de vistas, fecha de creación y fecha de publicación.
         - Ordena los resultados por el número de vistas en orden descendente.
         - Retorna los datos en formato JSON con el estado de éxito.
 
-    Retorna:
-        JsonResponse: Respuesta con los datos de los contenidos más vistos en formato JSON.
+    :return: Respuesta con los datos de los contenidos más vistos en formato JSON.
+    :rtype: JsonResponse
     """
 
     user = request.user
@@ -268,20 +272,17 @@ def top_shares(request):
     """
         Devuelve los 10 contenidos más compartidos del autor autenticado en formato JSON.
 
-        Requiere:
-            El usuario debe estar autenticado.
+        :param request: Objeto de solicitud HTTP realizado por el usuario autenticado.
+        :type request: HttpRequest
 
-        Parámetros:
-            request (HttpRequest): Objeto de solicitud HTTP realizado por el usuario autenticado.
-
-        Comportamiento:
+        :comportamiento:
             - Filtra los contenidos publicados creados por el usuario autenticado.
             - Obtiene los 10 contenidos con más compartidos, incluyendo los campos: título, número de compartidos, fecha de creación y fecha de publicación.
             - Ordena los resultados por el número de compartidos en orden descendente.
             - Retorna los datos en formato JSON con el estado de éxito.
 
-        Retorna:
-            JsonResponse: Respuesta con los datos de los contenidos más compartidos en formato JSON.
+        :return: Respuesta con los datos de los contenidos más compartidos en formato JSON.
+        :rtype: JsonResponse
         """
     user = request.user
 

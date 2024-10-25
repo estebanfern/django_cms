@@ -130,6 +130,18 @@ def expire_content(autor, content):
     send_notification_task.delay(subject, [autor.email], context, template)
 
 def payment_success(user, category, invoice):
+    """
+    Envía una notificación de éxito de pago al usuario.
+
+    :param user: El usuario que realizó el pago.
+    :type user: CustomUser
+    :param category: La categoría asociada al pago.
+    :type category: Category
+    :param invoice: Detalles de la factura de pago.
+    :type invoice: Invoice
+
+    :return: None
+    """
     category_name = category.name
     amount = invoice.amount_paid
     currency = invoice.currency
@@ -161,6 +173,21 @@ def payment_success(user, category, invoice):
 
 
 def payment_failed(user, category, invoice,first_payment = None):
+    """
+    Envía una notificación de fallo de pago al usuario.
+
+    :param user: El usuario al que se le notifica el fallo de pago.
+    :type user: CustomUser
+    :param category: La categoría asociada al intento de pago fallido.
+    :type category: Category
+    :param invoice: Detalles de la factura fallida.
+    :type invoice: Invoice
+    :param first_payment: Indica si es el primer pago, opcional.
+    :type first_payment: bool, optional
+
+    :return: None
+    """
+
     category_name = category.name
     amount = invoice.amount_due
     currency = invoice.currency
@@ -197,6 +224,17 @@ def payment_failed(user, category, invoice,first_payment = None):
 
 
 def subscription_cancelled(user, category):
+    """
+    Envía una notificación al usuario de la cancelación de su suscripción.
+
+    :param user: El usuario cuya suscripción ha sido cancelada.
+    :type user: CustomUser
+    :param category: La categoría de la suscripción cancelada.
+    :type category: Category
+
+    :return: None
+    """
+
     category_name = category.name
     template = "email/notification.html"
     subject = "Suscripción cancelada"
@@ -212,6 +250,19 @@ def subscription_cancelled(user, category):
 
 
 def subscription_pending_cancellation(user, category,subscription):
+    """
+    Informa al usuario que su suscripción se cancelará al final del ciclo de facturación.
+
+    :param user: El usuario cuya suscripción será cancelada.
+    :type user: CustomUser
+    :param category: La categoría de la suscripción.
+    :type category: Category
+    :param subscription: Suscripción pendiente de cancelación.
+    :type subscription: Suscription
+
+    :return: None
+    """
+
     category_name = category.name
     current_period_end = subscription.current_period_end
 
@@ -235,6 +286,15 @@ def subscription_pending_cancellation(user, category,subscription):
 
 
 def category_changed_to_paid(category):
+    """
+    Notifica a los usuarios que la categoría ahora es de pago.
+
+    :param category: La categoría que ha cambiado a ser de pago.
+    :type category: Category
+
+    :return: None
+    """
+
     template = "email/notification.html"
     subject = f"La categoría {category.name} ahora es de pago"
     list_subscriptions = Suscription.objects.filter(category=category).exclude(state=Suscription.SuscriptionState.cancelled)
@@ -257,6 +317,15 @@ def category_changed_to_paid(category):
 
 
 def category_changed_to_not_paid(category):
+    """
+    Notifica a los usuarios que la categoría ha cambiado a gratuita o accesible sin pago.
+
+    :param category: La categoría que ha cambiado su estado de pago.
+    :type category: Category
+
+    :return: None
+    """
+
     template = "email/notification.html"
     type = category.type
     typeMapped = {
@@ -287,6 +356,17 @@ def category_changed_to_not_paid(category):
 
 
 def category_price_changed(category, old_category_paid=None):
+    """
+    Notifica a los usuarios que el precio de la categoría ha cambiado.
+
+    :param category: La categoría cuyo precio ha sido actualizado.
+    :type category: Category
+    :param old_category_paid: Indica si la categoría era paga anteriormente.
+    :type old_category_paid: bool, optional
+
+    :return: None
+    """
+
     stripe.api_key = base.STRIPE_SECRET_KEY
 
     template = "email/notification.html"
@@ -328,6 +408,15 @@ def category_price_changed(category, old_category_paid=None):
 
 
 def category_state_changed(category):
+    """
+    Notifica a los usuarios cuando el estado de la categoría ha cambiado (activada o desactivada).
+
+    :param category: La categoría cuyo estado ha cambiado.
+    :type category: Category
+
+    :return: None
+    """
+
     template = "email/notification.html"
     list_subscriptions = Suscription.objects.filter(category=category).exclude(state=Suscription.SuscriptionState.cancelled)
 
@@ -366,6 +455,17 @@ def category_state_changed(category):
 
 
 def category_name_changed(category, old_name):
+    """
+    Informa a los usuarios que el nombre de la categoría ha cambiado.
+
+    :param category: La categoría cuyo nombre ha cambiado.
+    :type category: Category
+    :param old_name: El nombre anterior de la categoría.
+    :type old_name: str
+
+    :return: None
+    """
+
     template = "email/notification.html"
     subject = f"El nombre de la categoría {old_name} ha sido cambiado"
     list_subscriptions = Suscription.objects.filter(category=category).exclude(state=Suscription.SuscriptionState.cancelled)
@@ -381,6 +481,15 @@ def category_name_changed(category, old_name):
 
 
 def user_deactivated(user):
+    """
+    Envía una notificación al usuario cuando su cuenta ha sido desactivada.
+
+    :param user: El usuario cuya cuenta ha sido desactivada.
+    :type user: CustomUser
+
+    :return: None
+    """
+
     template = "email/notification.html"
     subject = "Tu cuenta ha sido desactivada"
     message = f"""
@@ -393,6 +502,17 @@ def user_deactivated(user):
 
 
 def user_email_changed(user, old_email):
+    """
+    Informa al usuario sobre el cambio de su dirección de correo electrónico.
+
+    :param user: El usuario que ha cambiado su dirección de correo.
+    :type user: CustomUser
+    :param old_email: La dirección de correo electrónico anterior del usuario.
+    :type old_email: str
+
+    :return: None
+    """
+
     template = "email/notification.html"
     subject = "Tu dirección de correo electrónico ha sido cambiada"
     message = f"""
