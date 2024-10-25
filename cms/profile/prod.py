@@ -22,13 +22,13 @@ LOGGING = {
     },
     'handlers': {
         'file': {
-            'level': 'TRACE',
+            'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': os.getenv('CMS_LOG_FILENAME', '/app/logs/app.log'),
             'formatter': 'verbose',
         },
         'console': {
-            'level': 'TRACE',
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
