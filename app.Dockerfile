@@ -9,6 +9,9 @@ ENV DJANGO_SETTINGS_MODULE=cms.profile.prod
 RUN apt-get update -y
 RUN apt-get install -y libpq-dev gcc python3-dev musl-dev
 
+ENV TZ=America/Asuncion
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 COPY requirements.txt /app/requirements.txt
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
