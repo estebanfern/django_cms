@@ -31,22 +31,22 @@ class ContentAdmin(admin.ModelAdmin):
     """
 
     # Mostrar estos campos en la lista de contenidos
-    list_display = ('title', 'category', 'autor', 'state', 'date_create', 'date_expire', 'is_active')
+    list_display = ('title', 'category', 'autor', 'state', 'date_create', 'date_expire', 'is_active', 'important')
 
     # Añadir filtros para estos campos
-    list_filter = ('state', 'is_active', 'category')
+    list_filter = ('state', 'is_active', 'category', 'important')
 
     # Habilitar búsqueda por estos campos
     search_fields = ('title', 'summary', 'autor__name', 'category__name')
 
     # Campos a mostrar en el formulario de creación y edición
-    fields = ('title', 'summary', 'category', 'autor', 'state', 'is_active', 'date_create', 'date_published' ,'date_expire','display_tags')
+    fields = ('title', 'summary', 'category', 'autor', 'state', 'is_active', 'date_create', 'date_published' ,'date_expire','display_tags', 'important')
 
     # Hacer todos los campos de solo lectura, excepto 'is_active'
-    readonly_fields = ('title', 'summary', 'category', 'autor', 'state', 'date_create', 'date_expire', 'date_published', 'display_tags')
+    readonly_fields = ('title', 'summary', 'category', 'autor', 'state', 'date_create', 'date_expire', 'date_published', 'display_tags', 'important')
 
     # Definir acciones personalizadas
-    actions = ['activar_contenidos', 'desactivar_contenidos']
+    actions = ['activar_contenidos', 'desactivar_contenidos', 'destacar_contenido', 'quitar_destacado']
 
     def display_tags(self, obj):
         return ", ".join([tag.name for tag in obj.tags.all()])
@@ -161,6 +161,24 @@ class ContentAdmin(admin.ModelAdmin):
         nombres = ', '.join([content.title for content in queryset])
         self.message_user(request, f"Contenidos desactivados: {nombres}.", level=messages.SUCCESS)
 
+    @admin.action(description='Destacar contenido')
+    def destacar_contenido(self, request, queryset):
+        if not self.has_set_important_permission(request.user):
+            self.message_user(request, "No tienes permiso para destacar contenidos.", level=messages.ERROR)
+            return
+        updated = queryset.update(important=True)
+        nombres = ', '.join([content.title for content in queryset])
+        self.message_user(request, f"Contenidos destacados: {nombres}.", level=messages.SUCCESS)
+
+    @admin.action(description='Quitar destacado')
+    def quitar_destacado(self, request, queryset):
+        if not self.has_set_important_permission(request.user):
+            self.message_user(request, "No tienes permiso para destacar contenidos.", level=messages.ERROR)
+            return
+        updated = queryset.update(important=True)
+        nombres = ', '.join([content.title for content in queryset])
+        self.message_user(request, f"Se ha quitado el destacado en los contenidos: {nombres}.", level=messages.SUCCESS)
+
     def has_add_permission(self, request):
         """
         Controla el permiso para añadir nuevos contenidos desde el panel de administración.
@@ -250,6 +268,9 @@ class ContentAdmin(admin.ModelAdmin):
         :rtype: bool
         """
         return request.user.has_perm('app.view_content')
+
+    def has_set_important_permission(self, request, obj=None):
+        return request.user.has_perm('app.set_important_content')
 
 class ReportAdmin(admin.ModelAdmin):
     list_display = ('created_at', 'reason', 'name', 'email', 'content', 'view_report_link')
