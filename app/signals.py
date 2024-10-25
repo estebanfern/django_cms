@@ -11,6 +11,20 @@ stripe.api_key = base.STRIPE_SECRET_KEY
 
 @receiver(pre_save, sender=CustomUser)
 def cache_previous_user(sender, instance, *args, **kwargs):
+    """
+    Almacena el estado original de un usuario antes de que se realicen cambios.
+
+    Este método se ejecuta antes de guardar cualquier instancia de `CustomUser`, permitiendo almacenar una copia del estado anterior del usuario en la propiedad `__original_user` del objeto `instance`.
+
+    :param sender: La clase del modelo que está enviando la señal (`CustomUser` en este caso).
+    :type sender: class
+    :param instance: La instancia del usuario que se está guardando.
+    :type instance: CustomUser
+    :param args: Argumentos posicionales adicionales.
+    :type args: list
+    :param kwargs: Argumentos con nombre adicionales.
+    :type kwargs: dict
+    """
     original_user = None
     if instance.id:
         original_user = CustomUser.objects.get(pk=instance.id)
@@ -20,6 +34,24 @@ def cache_previous_user(sender, instance, *args, **kwargs):
 
 @receiver(post_save, sender=CustomUser)
 def post_save_user_handler(sender, instance, created, **kwargs):
+    """
+    Maneja eventos después de guardar una instancia de usuario, incluyendo actualizaciones en Stripe y envío de notificaciones.
+
+    Este método se ejecuta después de que una instancia de `CustomUser` ha sido guardada. Dependiendo de los cambios realizados (como desactivación de la cuenta, cambio de nombre o email), actualiza la información relacionada en Stripe y envía notificaciones correspondientes.
+
+    - Si el usuario fue desactivado, se notificará de la desactivación y se cancelarán las suscripciones en Stripe.
+    - Si el nombre fue cambiado, se actualizará en Stripe.
+    - Si el email fue cambiado, se notificará el cambio y también se actualizará en Stripe.
+
+    :param sender: La clase del modelo que está enviando la señal (`CustomUser`).
+    :type sender: class
+    :param instance: La instancia del usuario que fue guardada.
+    :type instance: CustomUser
+    :param created: Booleano que indica si la instancia fue creada (True) o actualizada (False).
+    :type created: bool
+    :param kwargs: Argumentos con nombre adicionales.
+    :type kwargs: dict
+    """
 
     # Si se modifico un usuario
     if instance.__original_user:

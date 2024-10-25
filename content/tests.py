@@ -525,13 +525,37 @@ class ContentFormTest(TestCase):
 
 class ReactionTestCase(TestCase):
     """
-    Pruebas para la funcionalidad de like y dislike en el contenido.
+    Tests para la funcionalidad de reacciones (like y dislike) en el contenido.
+
+    Hereda de:
+        - TestCase: Clase base para escribir tests unitarios en Django.
+
+    Atributos:
+        user (CustomUser): Usuario de prueba.
+        category (Category): Categoría de prueba para asociar al contenido.
+        content (Content): Contenido de prueba al que se aplican las reacciones (like y dislike).
+
+    Métodos:
+        setUp: Configura los datos necesarios para los tests, incluyendo la creación de un usuario, una categoría y un contenido de prueba.
+        test_like_content: Verifica que un usuario pueda dar like a un contenido y se registre correctamente.
+        test_dislike_content: Verifica que un usuario pueda dar dislike a un contenido y se registre correctamente.
+        test_remove_like: Verifica que un usuario pueda quitar un like de un contenido.
+        test_remove_dislike: Verifica que un usuario pueda quitar un dislike de un contenido.
+        test_like_then_dislike: Verifica que al dar like a un contenido se elimina un dislike previamente registrado.
+        test_dislike_then_like: Verifica que al dar dislike a un contenido se elimina un like previamente registrado.
     """
 
     def setUp(self):
         """
-        Configura los datos necesarios para las pruebas, incluyendo un usuario y contenido de prueba.
-        """
+            Configura los datos necesarios para los tests, incluyendo un usuario y contenido de prueba.
+
+            Lógica:
+                - Desconecta señales para evitar que afecten los tests.
+                - Crea un usuario de prueba.
+                - Crea una categoría de prueba para asociar al contenido.
+                - Crea un contenido de prueba asociado a la categoría y el usuario.
+                - Inicia sesión con el usuario de prueba.
+            """
         pre_save.disconnect(cache_previous_user, sender=CustomUser)
         post_save.disconnect(post_save_user_handler, sender=CustomUser)
         pre_save.disconnect(cache_previous_category, sender=Category)
@@ -561,6 +585,13 @@ class ReactionTestCase(TestCase):
         self.client.login(email='testuser@example.com', password='testpassword123')
 
     def tearDown(self):
+        """
+            Restaura las señales después de la ejecución de cada test.
+
+            Lógica:
+                - Reconecta las señales que se desconectaron en `setUp`.
+                - Llama al método `tearDown` de la clase base para limpiar los datos de prueba.
+        """
         pre_save.connect(cache_previous_user, sender=CustomUser)
         post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
@@ -572,7 +603,13 @@ class ReactionTestCase(TestCase):
     @patch('content.views.update_reactions.delay')  # Mock the Celery task
     def test_like_content(self, mock_update_reactions):
         """
-        Asegura que un usuario pueda dar like a un contenido y se registre el like.
+        Verifica que un usuario pueda dar like a un contenido y se registre correctamente.
+
+        Lógica:
+            - Hace una petición GET a la vista de like para un contenido específico.
+            - Verifica que la petición sea exitosa (status code 200).
+            - Verifica que el usuario haya dado like al contenido.
+            - Asegura que la tarea Celery `update_reactions` haya sido llamada una vez.
         """
         url = reverse('like_content', args=[self.content.id])
         response = self.client.get(url)
@@ -587,7 +624,13 @@ class ReactionTestCase(TestCase):
     @patch('content.views.update_reactions.delay')  # Mock the Celery task
     def test_dislike_content(self, mock_update_reactions):
         """
-        Asegura que un usuario pueda dar dislike a un contenido y se registre el dislike.
+        Verifica que un usuario pueda dar dislike a un contenido y se registre correctamente.
+
+        Lógica:
+            - Hace una petición GET a la vista de dislike para un contenido específico.
+            - Verifica que la petición sea exitosa (status code 200).
+            - Verifica que el usuario haya dado dislike al contenido.
+            - Asegura que la tarea Celery `update_reactions` haya sido llamada una vez.
         """
         url = reverse('dislike_content', args=[self.content.id])
         response = self.client.get(url)
@@ -602,7 +645,14 @@ class ReactionTestCase(TestCase):
     @patch('content.views.update_reactions.delay')  # Mock the Celery task
     def test_remove_like(self, mock_update_reactions):
         """
-        Asegura que un usuario pueda quitar un like de un contenido.
+        Verifica que un usuario pueda quitar un like de un contenido.
+
+        Lógica:
+            - Añade un like al contenido por parte del usuario.
+            - Hace una petición GET a la vista de like nuevamente para quitar el like.
+            - Verifica que la petición sea exitosa (status code 200).
+            - Verifica que el like haya sido eliminado.
+            - Asegura que la tarea Celery `update_reactions` haya sido llamada una vez.
         """
         # Primero, dar like al contenido
         self.content.likes.add(self.user)
@@ -621,7 +671,14 @@ class ReactionTestCase(TestCase):
     @patch('content.views.update_reactions.delay')  # Mock the Celery task
     def test_remove_dislike(self, mock_update_reactions):
         """
-        Asegura que un usuario pueda quitar un dislike de un contenido.
+        Verifica que un usuario pueda quitar un dislike de un contenido.
+
+        Lógica:
+            - Añade un dislike al contenido por parte del usuario.
+            - Hace una petición GET a la vista de dislike nuevamente para quitar el dislike.
+            - Verifica que la petición sea exitosa (status code 200).
+            - Verifica que el dislike haya sido eliminado.
+            - Asegura que la tarea Celery `update_reactions` haya sido llamada una vez.
         """
         # Primero, dar dislike al contenido
         self.content.dislikes.add(self.user)
@@ -640,7 +697,13 @@ class ReactionTestCase(TestCase):
     @patch('content.views.update_reactions.delay')  # Mock the Celery task
     def test_like_then_dislike(self, mock_update_reactions):
         """
-        Asegura que dar like a un contenido elimina un dislike existente.
+        Verifica que al dar like a un contenido se elimine un dislike previamente registrado.
+
+        Lógica:
+            - Añade un dislike al contenido.
+            - Hace una petición GET a la vista de like para cambiar el dislike por un like.
+            - Verifica que el dislike haya sido eliminado y que se haya registrado el like.
+            - Asegura que la tarea Celery `update_reactions` haya sido llamada una vez.
         """
         # Primero, dar dislike al contenido
         self.content.dislikes.add(self.user)
@@ -660,7 +723,13 @@ class ReactionTestCase(TestCase):
     @patch('content.views.update_reactions.delay')  # Mock the Celery task
     def test_dislike_then_like(self, mock_update_reactions):
         """
-        Asegura que dar dislike a un contenido elimina un like existente.
+        Verifica que al dar dislike a un contenido se elimine un like previamente registrado.
+
+        Lógica:
+            - Añade un like al contenido.
+            - Hace una petición GET a la vista de dislike para cambiar el like por un dislike.
+            - Verifica que el like haya sido eliminado y que se haya registrado el dislike.
+            - Asegura que la tarea Celery `update_reactions` haya sido llamada una vez.
         """
         # Primero, dar like al contenido
         self.content.likes.add(self.user)
@@ -679,7 +748,56 @@ class ReactionTestCase(TestCase):
 
 
 class KanbanBoardTest(TestCase):
+    """
+    Pruebas para la vista de tablero Kanban y la API de actualización de estado de contenido (`update_content_state`).
+
+    Hereda de:
+        - TestCase: Clase base para escribir tests unitarios en Django.
+
+    Atributos:
+        user (CustomUser): Usuario de prueba sin permisos específicos.
+        user_creator (CustomUser): Usuario con permiso para crear contenido.
+        user_editor (CustomUser): Usuario con permiso para editar contenido.
+        user_publisher (CustomUser): Usuario con permiso para publicar contenido.
+        user_is_active_editor (CustomUser): Usuario con permiso para cambiar el estado activo del contenido.
+        category_moderated (Category): Categoría de prueba que requiere moderación.
+        category_unmoderated (Category): Categoría de prueba sin necesidad de moderación.
+        content_draft (Content): Contenido de prueba en estado borrador.
+        content_inactive (Content): Contenido de prueba en estado inactivo.
+        content_other (Content): Contenido creado por un usuario diferente al usuario creador.
+        expired_content (Content): Contenido que ha expirado su fecha de publicación.
+
+    Métodos:
+        setUp: Configura los datos necesarios para los tests, incluyendo la creación de usuarios, permisos, categorías y contenidos de prueba.
+        tearDown: Reconecta las señales desconectadas en `setUp` y realiza la limpieza posterior a los tests.
+        test_user_without_permissions: Verifica que un usuario sin permisos no pueda acceder al tablero Kanban.
+        test_user_with_create_content_permission: Verifica que un usuario con permiso de creación pueda acceder al tablero Kanban y visualizar los contenidos correspondientes.
+        test_user_with_edit_content_permission: Verifica que un usuario con permiso de edición pueda acceder al tablero Kanban y visualizar los contenidos correspondientes.
+        test_user_with_publish_content_permission: Verifica que un usuario con permiso de publicación pueda acceder al tablero Kanban y visualizar los contenidos correspondientes.
+        test_user_with_edit_is_active_permission: Verifica que un usuario con permiso para editar el estado activo pueda acceder al tablero Kanban y visualizar los contenidos correspondientes.
+        test_invalid_http_method: Verifica que la API `update_content_state` no permita el metodo GET.
+        test_creator_move_draft_to_revision: Verifica que un creador pueda mover su contenido de borrador a revisión.
+        test_creator_move_draft_to_publish_unmoderated: Verifica que un creador pueda publicar contenido en una categoría no moderada.
+        test_creator_move_publish_to_inactive: Verifica que un creador pueda mover su propio contenido de publicado a inactivo.
+        test_creator_cannot_move_other_user_content: Verifica que un creador no pueda cambiar el estado de un contenido que no le pertenece.
+        test_editor_move_revision_to_to_publish: Verifica que un editor pueda mover contenido de revisión a "a publicar".
+        test_editor_move_revision_to_draft: Verifica que un editor pueda mover contenido de revisión a borrador.
+        test_publisher_move_to_publish_to_publish: Verifica que un publicador pueda mover contenido de "a publicar" a publicado.
+        test_publisher_move_to_publish_to_revision: Verifica que un publicador pueda mover contenido de "a publicar" a revisión.
+        test_is_active_editor_move_publish_to_inactive: Verifica que un usuario con permiso `edit_is_active` pueda mover contenido de publicado a inactivo.
+        test_creator_move_inactive_to_publish: Verifica que un creador pueda mover contenido inactivo a publicado si no ha expirado.
+        test_creator_cannot_move_inactive_to_publish_expired: Verifica que un creador no pueda mover contenido expirado de inactivo a publicado.
+    """
     def setUp(self):
+        """
+        Configura los datos necesarios para las pruebas.
+
+        Lógica:
+            - Desconecta señales para evitar efectos secundarios en los tests.
+            - Crea usuarios con diferentes permisos (crear, editar, publicar y modificar estado activo).
+            - Crea categorías moderadas y no moderadas para los contenidos.
+            - Genera varios contenidos de prueba en distintos estados (borrador, inactivo, expirado).
+        """
         pre_save.disconnect(cache_previous_user, sender=CustomUser)
         post_save.disconnect(post_save_user_handler, sender=CustomUser)
         pre_save.disconnect(cache_previous_category, sender=Category)
@@ -745,6 +863,13 @@ class KanbanBoardTest(TestCase):
         )
 
     def tearDown(self):
+        """
+        Restaura las señales y limpia los datos después de cada prueba.
+
+        Lógica:
+            - Reconecta las señales desconectadas en `setUp`.
+            - Llama a `tearDown` de la clase base para realizar la limpieza adicional.
+        """
         pre_save.connect(cache_previous_user, sender=CustomUser)
         post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
@@ -755,6 +880,14 @@ class KanbanBoardTest(TestCase):
 
     # Pruebas para la vista kanban_board
     def test_user_without_permissions(self):
+        """
+        Verifica que un usuario sin permisos no pueda acceder al tablero Kanban.
+
+        Lógica:
+            - Inicia sesión con un usuario sin permisos específicos.
+            - Realiza una solicitud GET al tablero Kanban.
+            - Verifica que el estado de respuesta sea 403 (prohibido).
+        """
         # Iniciar sesión con un usuario sin permisos
         self.client.login(email='user@mail.com', password='testpassword')
 
@@ -766,6 +899,15 @@ class KanbanBoardTest(TestCase):
                          "El usuario sin permisos no debería poder acceder al tablero Kanban.")
 
     def test_user_with_create_content_permission(self):
+        """
+        Verifica que un usuario con permiso de creación pueda acceder al tablero Kanban.
+
+        Lógica:
+            - Otorga al usuario el permiso para crear contenido.
+            - Inicia sesión con el usuario y realiza una solicitud GET al tablero Kanban.
+            - Verifica que el estado de respuesta sea 200 (éxito).
+            - Confirma que el contenido en estado "Borrador" esté presente en la respuesta.
+        """
         self.user.user_permissions.add(Permission.objects.get(codename='create_content'))
         self.client.login(email='user@mail.com', password='testpassword')
 
@@ -780,6 +922,15 @@ class KanbanBoardTest(TestCase):
                       "El contenido en estado 'Borrador' no aparece en el tablero.")
 
     def test_user_with_edit_content_permission(self):
+        """
+        Verifica que un usuario con permiso de edición pueda acceder al tablero Kanban.
+
+        Lógica:
+            - Otorga al usuario el permiso para editar contenido.
+            - Inicia sesión y realiza una solicitud GET al tablero Kanban.
+            - Verifica que el estado de respuesta sea 200.
+            - Confirma que el contenido en estado "Edición" esté presente en la respuesta.
+        """
         self.user.user_permissions.add(Permission.objects.get(codename='edit_content'))
         self.client.login(email='user@mail.com', password='testpassword')
 
@@ -794,6 +945,15 @@ class KanbanBoardTest(TestCase):
                       "El contenido en estado 'Borrador' no aparece en el tablero.")
 
     def test_user_with_publish_content_permission(self):
+        """
+        Verifica que un usuario con permiso de publicación pueda acceder al tablero Kanban.
+
+        Lógica:
+            - Otorga al usuario el permiso para publicar contenido.
+            - Inicia sesión y realiza una solicitud GET al tablero Kanban.
+            - Verifica que el estado de respuesta sea 200.
+            - Confirma que el contenido en estado "Publicado" esté presente en la respuesta.
+        """
         self.user.user_permissions.add(Permission.objects.get(codename='publish_content'))
         self.client.login(email='user@mail.com', password='testpassword')
 
@@ -808,6 +968,15 @@ class KanbanBoardTest(TestCase):
                       "El contenido en estado 'Publicado' no aparece en el tablero.")
 
     def test_user_with_edit_is_active_permission(self):
+        """
+        Verifica que un usuario con permiso para editar el estado activo pueda acceder al tablero Kanban.
+
+        Lógica:
+            - Otorga al usuario el permiso `edit_is_active`.
+            - Inicia sesión y realiza una solicitud GET al tablero Kanban.
+            - Verifica que el estado de respuesta sea 200.
+            - Confirma que el contenido en estado "Publicado" esté presente en la respuesta.
+        """
         self.user.user_permissions.add(Permission.objects.get(codename='edit_is_active'))
         self.client.login(email='user@mail.com', password='testpassword')
 
@@ -824,6 +993,15 @@ class KanbanBoardTest(TestCase):
 
     # Pruebas para la API update_content_state
     def test_invalid_http_method(self):
+        """
+        Verifica que la API `update_content_state` no permita el método GET.
+
+        Lógica:
+            - Crea un contenido de prueba.
+            - Realiza una solicitud GET a la API `update_content_state` con el ID del contenido.
+            - Verifica que el estado de respuesta sea 405 (método no permitido).
+            - Verifica que el mensaje de error corresponda al método no permitido.
+        """
         category = Category.objects.create(name='Test Category')
         content = Content.objects.create(
             title='Existing Content',
@@ -844,6 +1022,14 @@ class KanbanBoardTest(TestCase):
 
     # Movimiento de "borrador" a "revisión" del propio contenido
     def test_creator_move_draft_to_revision(self):
+        """
+        Verifica que un creador pueda mover su contenido de borrador a revisión.
+
+        Lógica:
+            - Inicia sesión con el creador del contenido.
+            - Envía una solicitud POST a la API `update_content_state` para cambiar el estado a "revisión".
+            - Confirma que el estado del contenido ha cambiado a "revisión".
+        """
         self.client.login(email='creator@example.com', password='password123')
         data = {'state': 'revision'}  # Enviamos los datos como JSON
         self.client.post(
@@ -857,6 +1043,14 @@ class KanbanBoardTest(TestCase):
 
     # Movimiento de "borrador" a "publicado" (categoría no moderada)
     def test_creator_move_draft_to_publish_unmoderated(self):
+        """
+        Verifica que un creador pueda mover su contenido a publicado en una categoría no moderada.
+
+        Lógica:
+            - Inicia sesión con el creador.
+            - Envía una solicitud POST para cambiar el estado a "publicado".
+            - Confirma que el estado del contenido ha cambiado a "publicado".
+        """
         self.client.login(email='creator@example.com', password='password123')
         data = {'state': 'publish'}
         self.client.post(
@@ -870,6 +1064,14 @@ class KanbanBoardTest(TestCase):
 
     # Movimiento de "publicado" a "inactivo" por el creador (su propio contenido)
     def test_creator_move_publish_to_inactive(self):
+        """
+        Verifica que un creador pueda mover su propio contenido de publicado a inactivo.
+
+        Lógica:
+            - Cambia el contenido a "publicado".
+            - Inicia sesión con el creador y envía una solicitud POST para cambiar el estado a "inactivo".
+            - Confirma que el estado del contenido ha cambiado a "inactivo".
+        """
         # Cambiar el contenido a publicado primero
         self.content_draft.state = 'publish'
         self.content_draft.save()
@@ -887,6 +1089,14 @@ class KanbanBoardTest(TestCase):
 
     # El creador no puede mover un contenido que no es suyo
     def test_creator_cannot_move_other_user_content(self):
+        """
+        Verifica que un creador no pueda cambiar el estado de contenido que no le pertenece.
+
+        Lógica:
+            - Inicia sesión con el creador.
+            - Intenta mover el contenido de otro usuario a "revisión".
+            - Confirma que el estado del contenido no ha cambiado.
+        """
         self.client.login(email='creator@example.com', password='password123')
         data = {'state': 'revision'}
         self.client.post(
@@ -900,6 +1110,14 @@ class KanbanBoardTest(TestCase):
 
 
     def test_editor_move_revision_to_to_publish(self):
+        """
+        Verifica que un editor pueda mover contenido de revisión a "a publicar".
+
+        Lógica:
+            - Cambia el contenido a "revisión".
+            - Inicia sesión con el editor y envía una solicitud POST para mover el contenido a "a publicar".
+            - Confirma que el estado del contenido ha cambiado a "a publicar".
+        """
         # Cambiar el contenido a revisión primero
         self.content_draft.state = 'revision'
         self.content_draft.save()
@@ -916,6 +1134,14 @@ class KanbanBoardTest(TestCase):
                          "El editor debería poder mover contenido de revisión a a publicar.")
 
     def test_editor_move_revision_to_draft(self):
+        """
+        Verifica que un editor pueda mover contenido de revisión a borrador.
+
+        Lógica:
+            - Cambia el contenido a "revisión".
+            - Inicia sesión con el editor y envía una solicitud POST para mover el contenido a "borrador".
+            - Confirma que el estado del contenido ha cambiado a "borrador".
+        """
         # Cambiar el contenido a revisión primero
         self.content_draft.state = 'revision'
         self.content_draft.save()
@@ -932,6 +1158,14 @@ class KanbanBoardTest(TestCase):
                          "El editor debería poder mover contenido de revisión a borrador.")
 
     def test_publisher_move_to_publish_to_publish(self):
+        """
+        Verifica que un publicador pueda mover contenido de "a publicar" a publicado.
+
+        Lógica:
+            - Cambia el contenido a "a publicar".
+            - Inicia sesión con el publicador y envía una solicitud POST para mover el contenido a "publicado".
+            - Confirma que el estado del contenido ha cambiado a "publicado".
+        """
         # Cambiar el contenido a "a publicar"
         self.content_draft.state = 'to_publish'
         self.content_draft.save()
@@ -948,6 +1182,14 @@ class KanbanBoardTest(TestCase):
                          "El publicador debería poder mover contenido de a publicar a publicado.")
 
     def test_publisher_move_to_publish_to_revision(self):
+        """
+        Verifica que un publicador pueda mover contenido de "a publicar" a revisión.
+
+        Lógica:
+            - Cambia el contenido a "a publicar".
+            - Inicia sesión con el publicador y envía una solicitud POST para mover el contenido a "revisión".
+            - Confirma que el estado del contenido ha cambiado a "revisión".
+        """
         # Cambiar el contenido a "a publicar" primero
         self.content_draft.state = 'to_publish'
         self.content_draft.save()
@@ -964,6 +1206,14 @@ class KanbanBoardTest(TestCase):
                          "El publicador debería poder mover contenido de a publicar a revisión.")
 
     def test_is_active_editor_move_publish_to_inactive(self):
+        """
+        Verifica que un usuario con el permiso `edit_is_active` pueda mover contenido de publicado a inactivo.
+
+        Lógica:
+            - Cambia el contenido a "publicado".
+            - Inicia sesión con el usuario con permiso `edit_is_active` y envía una solicitud POST para mover el contenido a "inactivo".
+            - Confirma que el estado del contenido ha cambiado a "inactivo".
+        """
         # Cambiar el contenido a publicado
         self.content_draft.state = 'publish'
         self.content_draft.save()
@@ -981,6 +1231,14 @@ class KanbanBoardTest(TestCase):
 
 
     def test_creator_move_inactive_to_publish(self):
+        """
+        Verifica que un creador pueda mover contenido inactivo a publicado si no ha expirado.
+
+        Lógica:
+            - Inicia sesión con el creador.
+            - Envía una solicitud POST para mover el contenido de inactivo a "publicado".
+            - Confirma que el estado del contenido ha cambiado a "publicado".
+        """
         # El contenido en estado inactivo y no expirado
         self.client.login(email='creator@example.com', password='password123')
         data = {'state': 'publish'}
@@ -994,6 +1252,14 @@ class KanbanBoardTest(TestCase):
                          "El creador debería poder mover contenido inactivo a publicado si no ha expirado.")
 
     def test_creator_cannot_move_inactive_to_publish_expired(self):
+        """
+        Verifica que un creador no pueda mover contenido expirado de inactivo a publicado.
+
+        Lógica:
+            - Inicia sesión con el creador.
+            - Intenta mover un contenido expirado a "publicado".
+            - Confirma que el contenido sigue en estado "inactivo" y no ha sido publicado.
+        """
         self.client.login(email='creator@example.com', password='password123')
         data = {'state': 'publish'}
 

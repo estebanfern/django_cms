@@ -704,17 +704,16 @@ def report_detail(request, report_id):
     """
     Muestra los detalles de un reporte en una vista personalizada.
 
-    Parámetros:
-        request (HttpRequest): Objeto de solicitud HTTP.
-        report_id (int): ID del reporte cuyos detalles se van a visualizar.
+    :param request: El objeto de solicitud HTTP.
+    :type request: HttpRequest
+    :param report_id: El ID del reporte cuyos detalles se van a visualizar.
+    :type report_id: int
 
-    Comportamiento:
-        - Obtiene el reporte utilizando el ID proporcionado o devuelve un error 404 si no existe.
-        - Obtiene las opciones de metadatos del modelo `Report` para usarlas en la plantilla.
-        - Renderiza la plantilla `report_detail.html` con el reporte y sus metadatos.
+    :return: La respuesta renderizada con los detalles del reporte.
+    :rtype: HttpResponse
 
-    Retorna:
-        HttpResponse: La respuesta renderizada con los detalles del reporte.
+    :raises PermissionDenied: Si el usuario no tiene permisos para ver reportes.
+    :raises Http404: Si el reporte con el `report_id` proporcionado no existe.
     """
     user = request.user
     if not (
@@ -737,17 +736,13 @@ def view_content_detail(request, content_id):
     """
     Muestra los detalles de un contenido en una vista personalizada.
 
-    Parámetros:
-        request (HttpRequest): Objeto de solicitud HTTP.
-        content_id (int): ID del contenido cuyos detalles se van a visualizar.
+    :param request: El objeto de solicitud HTTP.
+    :type request: HttpRequest
+    :param content_id: El ID del contenido cuyo contador de compartidos se incrementará.
+    :type content_id: int
 
-    Comportamiento:
-        - Obtiene el contenido utilizando el ID proporcionado o devuelve un error 404 si no existe.
-        - Obtiene las opciones de metadatos del modelo `Content` para usarlas en la plantilla.
-        - Renderiza la plantilla `content_detail.html` con el contenido y sus metadatos.
-
-    Retorna:
-        HttpResponse: La respuesta renderizada con los detalles del contenido.
+    :return: Respuesta JSON con el estado de la operación.
+    :rtype: JsonResponse
     """
     user = request.user
     if not (
@@ -768,15 +763,13 @@ def view_count_share(request, content_id):
     """
     Encola en el worker de Celery la tarea para incrementar el contador de compartidos de un contenido.
 
-    Parámetros:
-        request (HttpRequest): Objeto de solicitud HTTP.
-        contend_id (int): ID del contenido cuyo contador de compartidos se incrementará.
+    :param request: El objeto de solicitud HTTP.
+    :type request: HttpRequest
+    :param content_id: El ID del contenido cuyo contador de compartidos se incrementará.
+    :type content_id: int
 
-    Comportamiento:
-        - Encola al worker de Celery la tarea `count_share` con el ID del contenido.
-
-    Retorna:
-        JsonResponse: Respuesta JSON con el estado de la operación.
+    :return: Respuesta JSON con el estado de la operación.
+    :rtype: JsonResponse
     """
     count_share.delay(content_id)
     return JsonResponse({'status': 'success', 'message': 'Enqueued task.'})

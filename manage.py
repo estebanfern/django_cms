@@ -5,7 +5,16 @@ import sys
 
 
 def main():
-    """Run administrative tasks."""
+    """
+    Ejecuta tareas administrativas de Django, configurando el entorno y gestionando errores de importación.
+
+    :comportamiento:
+        - Configura la variable de entorno `DJANGO_SETTINGS_MODULE` con la ruta de configuración deseada.
+        - Intenta importar y ejecutar `execute_from_command_line` desde `django.core.management`.
+        - Si Django no está instalado, genera un mensaje de error detallado sobre el fallo de importación.
+
+    :raises ImportError: Si Django no está disponible en el entorno o falta la configuración adecuada.
+    """
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cms.profile.dev')
     try:
         from django.core.management import execute_from_command_line

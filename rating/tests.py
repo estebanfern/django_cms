@@ -13,11 +13,35 @@ from rating.models import Rating
 class RatingTestCase(TestCase):
     """
     Pruebas para la funcionalidad de calificación de contenido.
+
+    Hereda de:
+        - TestCase: Clase base para escribir tests unitarios en Django.
+
+    Atributos:
+        user (CustomUser): Usuario de prueba que realiza las calificaciones.
+        category (Category): Categoría de prueba para asociar al contenido.
+        content (Content): Contenido de prueba al que se le aplicarán las calificaciones.
+        url (str): URL para realizar las solicitudes de calificación de contenido.
+
+    Métodos:
+        setUp: Configura los datos necesarios para los tests, incluyendo la creación de un usuario, categoría y contenido de prueba.
+        tearDown: Reconecta las señales desconectadas y realiza la limpieza posterior a los tests.
+        test_rate_content_unauthenticated: Verifica que un usuario no autenticado no pueda calificar un contenido.
+        test_rate_content_authenticated_valid: Verifica que un usuario autenticado pueda calificar un contenido con un valor válido (1-5).
+        test_update_existing_rating: Verifica que un usuario pueda actualizar su calificación previa en lugar de crear una nueva.
+        test_rate_content_invalid_rating: Verifica que se pueda registrar una calificación fuera del rango esperado (sin validación de rango).
+        test_missing_rating_value: Verifica que se devuelva un error si no se proporciona un valor de calificación.
     """
 
     def setUp(self):
         """
         Configura los datos necesarios para las pruebas, incluyendo un usuario, contenido y categoría de prueba.
+
+        Lógica:
+            - Desconecta señales para evitar efectos secundarios.
+            - Crea un usuario de prueba.
+            - Crea una categoría y un contenido de prueba asociados al usuario.
+            - Define la URL para las solicitudes de calificación.
         """
 
         pre_save.disconnect(cache_previous_user, sender=CustomUser)
@@ -49,6 +73,13 @@ class RatingTestCase(TestCase):
         self.url = reverse('rate_content', args=[self.content.id])
 
     def tearDown(self):
+        """
+        Reconecta las señales desconectadas y realiza la limpieza después de cada prueba.
+
+        Lógica:
+            - Reconecta las señales desconectadas durante `setUp`.
+            - Llama a `tearDown` de la clase base para realizar la limpieza adicional.
+        """
         pre_save.connect(cache_previous_user, sender=CustomUser)
         post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
@@ -60,7 +91,13 @@ class RatingTestCase(TestCase):
     @patch('rating.views.update_rating_avg.delay')  # Mock the Celery task
     def test_rate_content_unauthenticated(self, mock_update_rating_avg):
         """
-        Asegura que un usuario no autenticado no pueda calificar un contenido.
+        Verifica que un usuario no autenticado no pueda calificar un contenido.
+
+        Lógica:
+            - Realiza una solicitud POST sin autenticación a la URL de calificación.
+            - Verifica que el estado de la respuesta sea 403 (prohibido).
+            - Confirma que el mensaje de error sea el esperado.
+            - Verifica que la tarea Celery no haya sido llamada.
         """
         response = self.client.post(self.url, {'rating': 5})
         self.assertEqual(response.status_code, 403)
@@ -70,7 +107,14 @@ class RatingTestCase(TestCase):
     @patch('rating.views.update_rating_avg.delay')  # Mock the Celery task
     def test_rate_content_authenticated_valid(self, mock_update_rating_avg):
         """
-        Asegura que un usuario autenticado pueda calificar un contenido con un valor válido (1-5).
+        Verifica que un usuario autenticado pueda calificar un contenido con un valor válido (1-5).
+
+        Lógica:
+            - Inicia sesión con el usuario de prueba.
+            - Realiza una solicitud POST con una calificación válida.
+            - Verifica que el estado de la respuesta sea 200 (éxito).
+            - Confirma que la calificación fue guardada correctamente en la base de datos.
+            - Verifica que la tarea Celery fue llamada una vez.
         """
         self.client.login(email='testuser@example.com', password='testpassword123')
         response = self.client.post(self.url, {'rating': 4})
@@ -87,7 +131,13 @@ class RatingTestCase(TestCase):
     @patch('rating.views.update_rating_avg.delay')  # Mock the Celery task
     def test_update_existing_rating(self, mock_update_rating_avg):
         """
-        Asegura que un usuario pueda actualizar su calificación previa en lugar de crear una nueva.
+        Verifica que un usuario pueda actualizar su calificación previa en lugar de crear una nueva.
+
+        Lógica:
+            - Inicia sesión y califica el contenido con un valor inicial.
+            - Actualiza la calificación con un nuevo valor.
+            - Verifica que la calificación haya sido actualizada correctamente.
+            - Confirma que la tarea Celery fue llamada dos veces (una para cada calificación).
         """
         # Primero, calificar el contenido con un valor de 3
         self.client.login(email='testuser@example.com', password='testpassword123')
@@ -108,7 +158,13 @@ class RatingTestCase(TestCase):
     @patch('rating.views.update_rating_avg.delay')  # Mock the Celery task
     def test_rate_content_invalid_rating(self, mock_update_rating_avg):
         """
-        Asegura que un usuario pueda calificar un contenido, incluso con un valor fuera de rango (sin validar rango).
+        Verifica que se pueda registrar una calificación fuera del rango esperado (sin validación de rango).
+
+        Lógica:
+            - Inicia sesión con el usuario de prueba.
+            - Realiza una solicitud POST con una calificación fuera de rango (por ejemplo, 10).
+            - Verifica que la respuesta sea exitosa y que el valor fuera de rango sea registrado.
+            - Confirma que la tarea Celery fue llamada una vez.
         """
         self.client.login(email='testuser@example.com', password='testpassword123')
         response = self.client.post(self.url, {'rating': 10})  # Valor fuera de rango, pero permitido por la vista actual
@@ -125,7 +181,14 @@ class RatingTestCase(TestCase):
     @patch('rating.views.update_rating_avg.delay')  # Mock the Celery task
     def test_missing_rating_value(self, mock_update_rating_avg):
         """
-        Asegura que se devuelva un error si no se proporciona un valor de calificación.
+        Verifica que se devuelva un error si no se proporciona un valor de calificación.
+
+        Lógica:
+            - Inicia sesión con el usuario de prueba.
+            - Realiza una solicitud POST sin proporcionar un valor de calificación.
+            - Verifica que el estado de la respuesta sea 400 (error de solicitud).
+            - Confirma que el mensaje de error sea el esperado.
+            - Verifica que la tarea Celery no haya sido llamada.
         """
         self.client.login(email='testuser@example.com', password='testpassword123')
         response = self.client.post(self.url)  # No se proporciona 'rating'
