@@ -1,6 +1,7 @@
 from django.contrib import admin, messages
 from django.http import HttpResponseRedirect
 
+from suscription.models import Suscription
 from .models import Category
 from .forms import CategoryForm
 from django.utils.translation import gettext_lazy as _
@@ -193,8 +194,8 @@ class CategoryAdmin(admin.ModelAdmin):
         """
         Acción personalizada para eliminar categorías seleccionadas en el panel de administración.
 
-        Verifica si las categorías tienen contenidos asociados antes de eliminarlas.
-        Si hay contenidos asociados, muestra un mensaje de error; de lo contrario, elimina las categorías seleccionadas.
+        Verifica si las categorías tienen contenidos y/o suscripciones asociados antes de eliminarlas.
+        Si hay contenidos y/o suscripciones asociados, muestra un mensaje de error; de lo contrario, elimina las categorías seleccionadas.
 
         :param request: Objeto de solicitud HTTP.
         :type request: HttpRequest
@@ -208,15 +209,33 @@ class CategoryAdmin(admin.ModelAdmin):
         # Filtrar las categorías con contenidos asociados
         categories_with_content = queryset.filter(content__isnull=False).distinct()
         categories_without_content = queryset.exclude(content__isnull=False).distinct()
+        categories_with_subcriptions = queryset.filter(suscription__isnull=False).distinct()
+        categories_without_subcriptions = queryset.exclude(suscription__isnull=False).distinct()
 
-        if categories_with_content.exists():
+        if categories_with_content.exists() and categories_with_subcriptions.exists():
+            # Mostrar mensaje de error para categorías con contenidos y suscripciones asociados
+            self.message_user(
+                request,
+                f"No se pueden eliminar las siguientes categorías porque tienen contenidos y suscripciones asociados:\n"
+                f"Categorías con contenidos: {', '.join([str(cat) for cat in categories_with_content])}.\n"
+                f"Categorías con suscripciones: {', '.join([str(cat) for cat in categories_with_subcriptions])}.",
+                level=messages.ERROR
+            )
+        elif categories_with_content.exists():
             # Mostrar mensaje de error para categorías con contenidos asociados
             self.message_user(
                 request,
                 f"No se pueden eliminar las siguientes categorías porque tienen contenidos asociados: {', '.join([str(cat) for cat in categories_with_content])}.",
                 level=messages.ERROR
             )
-        if categories_without_content.exists():
+        elif categories_with_subcriptions.exists():
+            # Mostrar mensaje de error para categorías con suscripciones asociados
+            self.message_user(
+                request,
+                f"No se pueden eliminar las siguientes categorías porque tienen suscripciones asociados: {', '.join([str(cat) for cat in categories_with_subcriptions])}.",
+                level=messages.ERROR
+            )
+        if categories_without_content.exists() and categories_without_subcriptions.exists():
             deleted_categories_name = ', '.join([str(cat) for cat in categories_without_content])
             queryset.filter(id__in=[category.id for category in categories_without_content]).delete()
             self.message_user(request, f"Categorías eliminadas con éxito: {deleted_categories_name}.", level=messages.SUCCESS)
@@ -226,11 +245,18 @@ class CategoryAdmin(admin.ModelAdmin):
 
     def delete_view (self, request, object_id, extra_context=None):
         """
-        Sobrescribe la vista de eliminación para impedir eliminar categorias con contenidos asociados.
+        Sobrescribe la vista de eliminación para impedir eliminar categorias con contenidos y suscripciones asociados.
         """
         category = self.get_object(request, object_id)
+        subscription = Suscription.objects.filter(category=category).first()
 
-        if category.content_set.exists():
+        if category.content_set.exists() and subscription:
+            messages.error(request, "No se puede eliminar esta categoría porque tiene contenidos y suscripciones asociados.")
+            return HttpResponseRedirect(reverse('admin:category_category_changelist'))
+        elif subscription:
+            messages.error(request, "No se puede eliminar esta categoría porque tiene suscripciones asociados.")
+            return HttpResponseRedirect(reverse('admin:category_category_changelist'))
+        elif category.content_set.exists():
             messages.error(request, "No se puede eliminar esta categoría porque tiene contenidos asociados.")
             return HttpResponseRedirect(reverse('admin:category_category_changelist'))
 
@@ -314,7 +340,7 @@ class CategoryAdmin(admin.ModelAdmin):
         """
         Verifica si el usuario actual tiene permisos para eliminar categorías.
 
-        Verifica si las categorías tienen contenidos asociados antes de permitir la eliminación.
+        Verifica si las categorías tienen contenidos asociados y suscripciones activas antes de permitir la eliminación.
 
         :param request: Objeto de solicitud HTTP.
         :type request: HttpRequest
@@ -323,10 +349,17 @@ class CategoryAdmin(admin.ModelAdmin):
         :return: True si el usuario tiene permisos para eliminar categorías y no hay contenidos asociados, de lo contrario False.
         :rtype: bool
         """
-        # Validar permisos y que no existan contenidos asociados antes de permitir eliminar
+        # Validar permisos y que no existan contenidos asociados ni suscripciones activas antes de permitir eliminar
         if obj:
-            if obj.content_set.exists():  # Verificar si hay contenidos asociados
-                self.message_user(request, ("No se puede eliminar esta categoría porque tiene contenidos asociados."), level=messages.ERROR)
+            subscription = Suscription.objects.filter(category=obj).first()
+            if obj.content_set.exists() and subscription:
+                self.message_user(request,"No se puede eliminar esta categoría porque tiene contenidos y suscripciones asociados.", level=messages.ERROR)
+                return False
+            elif subscription:
+                self.message_user(request, "No se puede eliminar esta categoría porque tiene suscripciones asociadas.", level=messages.ERROR)
+                return False
+            elif obj.content_set.exists():
+                self.message_user(request, "No se puede eliminar esta categoría porque tiene contenidos asociados.", level=messages.ERROR)
                 return False
         return request.user.has_perm('app.delete_category')
 

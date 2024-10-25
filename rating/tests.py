@@ -1,7 +1,11 @@
 from unittest.mock import patch
+from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from app.models import CustomUser
+from app.signals import cache_previous_user, post_save_user_handler
+from category.signals import cache_previous_category, post_save_category_handler, cache_category_before_delete, handle_category_after_delete
 from content.models import Content, Category
 from django.utils import timezone
 from rating.models import Rating
@@ -15,6 +19,14 @@ class RatingTestCase(TestCase):
         """
         Configura los datos necesarios para las pruebas, incluyendo un usuario, contenido y categoría de prueba.
         """
+
+        pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        post_save.disconnect(post_save_user_handler, sender=CustomUser)
+        pre_save.disconnect(cache_previous_category, sender=Category)
+        post_save.disconnect(post_save_category_handler, sender=Category)
+        pre_delete.disconnect(cache_category_before_delete, sender=Category)
+        post_delete.disconnect(handle_category_after_delete, sender=Category)
+
         # Crear un usuario de prueba
         self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
@@ -35,6 +47,15 @@ class RatingTestCase(TestCase):
 
         # URL para calificar el contenido
         self.url = reverse('rate_content', args=[self.content.id])
+
+    def tearDown(self):
+        pre_save.connect(cache_previous_user, sender=CustomUser)
+        post_save.connect(post_save_user_handler, sender=CustomUser)
+        pre_save.connect(cache_previous_category, sender=Category)
+        post_save.connect(post_save_category_handler, sender=Category)
+        pre_delete.connect(cache_category_before_delete, sender=Category)
+        post_delete.connect(handle_category_after_delete, sender=Category)
+        super().tearDown()
 
     @patch('rating.views.update_rating_avg.delay')  # Mock the Celery task
     def test_rate_content_unauthenticated(self, mock_update_rating_avg):
