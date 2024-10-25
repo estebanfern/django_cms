@@ -9,6 +9,7 @@ Subpackages
 
    app.auth
    app.profile
+   app.templatetags
 
 Submodules
 ----------
@@ -57,14 +58,6 @@ app.views module
 ----------------
 
 .. automodule:: app.views
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: app
    :members:
    :undoc-members:
    :show-inheritance:

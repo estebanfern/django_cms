@@ -43,11 +43,3 @@ content.views module
    :members:
    :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: content
-   :members:
-   :undoc-members:
-   :show-inheritance:

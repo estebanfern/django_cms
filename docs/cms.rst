@@ -7,7 +7,6 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   cms.profile
 
 Submodules
 ----------
@@ -40,14 +39,6 @@ cms.wsgi module
 ---------------
 
 .. automodule:: cms.wsgi
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: cms
    :members:
    :undoc-members:
    :show-inheritance:

@@ -51,11 +51,3 @@ category.views module
    :members:
    :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: category
-   :members:
-   :undoc-members:
-   :show-inheritance:
