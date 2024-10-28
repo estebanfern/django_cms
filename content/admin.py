@@ -163,7 +163,7 @@ class ContentAdmin(admin.ModelAdmin):
 
     @admin.action(description='Destacar contenido')
     def destacar_contenido(self, request, queryset):
-        if not self.has_set_important_permission(request.user):
+        if not self.has_set_important_permission(request):
             self.message_user(request, "No tienes permiso para destacar contenidos.", level=messages.ERROR)
             return
         updated = queryset.update(important=True)
@@ -172,7 +172,7 @@ class ContentAdmin(admin.ModelAdmin):
 
     @admin.action(description='Quitar destacado')
     def quitar_destacado(self, request, queryset):
-        if not self.has_set_important_permission(request.user):
+        if not self.has_set_important_permission(request):
             self.message_user(request, "No tienes permiso para destacar contenidos.", level=messages.ERROR)
             return
         updated = queryset.update(important=True)
