@@ -82,7 +82,7 @@ def home_view(request):
     if (page_number is None) or (page_number < 1): page_number = 1
     page_obj = paginator.get_page(page_number)
 
-    importants = list(divide_in_groups(Content.objects.filter(important__exact=True), 6))
+    importants = list(divide_in_groups(Content.objects.filter(important__exact=True), 5))
 
     # Renderiza la plantilla con los contenidos paginados y la información de la categoría y búsqueda
     return render(request, 'inicio.html', {'page_obj': page_obj, 'category': category, 'query': query, 'importants': importants})
