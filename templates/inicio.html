@@ -36,6 +36,52 @@
 </div><!-- End Page Title -->
 <section class="section">
   <div class="row">
+
+    <div class="col-12 ">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title text-center">Contenidos destacados</h5>
+          <div id="carouselExampleAutoplaying" class="carousel slide" data-bs-ride="carousel">
+            <div class="row">
+              <div class="carousel-inner">
+                {% for group in importants %}
+                  <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                    <div class="col-12">
+                      <div class="row">
+                        {% for important in group %}
+                          <div class="col mb-4">
+                            <div class="card mt-3 h-100">
+                              <div class="card-body text-center justify-content-center align-content-center align-items-center">
+                                <a href="/content/{{important.id}}">
+                                  <h5 class="card-title text-center">{{ important.title }}</h5>
+                                </a>
+                              </div>
+                              <div class="card-footer text-center">
+                                {{ important.autor.name }}
+                              </div>
+                            </div>
+                          </div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div> 
+              <!-- TODO: Que se vean bien los controles de navegación :P -->
+              <!-- <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleAutoplaying" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon text-bg-secondary" aria-hidden="true"></span>
+                <span class="visually-hidden">Anterior</span>
+              </button>
+              <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleAutoplaying" data-bs-slide="next">
+                <span class="carousel-control-next-icon text-bg-secondary" aria-hidden="true"></span>
+                <span class="visually-hidden">Siguiente</span>
+              </button> -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="col-12">
 
       <div class="card">
@@ -124,5 +170,6 @@
       </div>
 
     </div>
+  </div>
 </section>
 {% endblock content %}
