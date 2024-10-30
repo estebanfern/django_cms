@@ -593,6 +593,46 @@ h6 {
 .header-nav .profile .dropdown-item:hover {
   background-color: #f6f9ff;
 }
+/*--------------------------------------------------------------
+# Carousel
+--------------------------------------------------------------*/
+
+#carouselExampleAutoplaying .carousel-control-prev-icon,
+#carouselExampleAutoplaying .carousel-control-next-icon {
+    background-color: transparent !important;
+    background-size: 100%;
+}
+
+#carouselExampleAutoplaying .carousel-control-prev-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='blue' viewBox='0 0 16 16'%3E%3Cpath d='M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E");
+}
+
+#carouselExampleAutoplaying .carousel-control-next-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='blue' viewBox='0 0 16 16'%3E%3Cpath d='M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+}
+
+#carouselExampleAutoplaying .carousel-control-prev-icon:hover,
+#carouselExampleAutoplaying .carousel-control-next-icon:hover {
+    background-color: transparent !important;
+    opacity: 1;
+}
+
+#carouselExampleAutoplaying .carousel-control-prev,
+#carouselExampleAutoplaying .carousel-control-next {
+    width: 5.5%;
+}
+
+#carouselExampleAutoplaying .carousel-control-prev {
+    left: -3%;
+}
+
+#carouselExampleAutoplaying .carousel-control-next {
+    right: -3%;
+}
+
+#carouselExampleAutoplaying .carousel-inner {
+    padding: 0 2rem;
+}
 
 /*--------------------------------------------------------------
 # Sidebar
