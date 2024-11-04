@@ -1,11 +1,16 @@
+from datetime import datetime
+
 import stripe
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
+from django.utils.timezone import make_aware
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import notification.service
 from app.models import CustomUser
 from category.models import Category
+from suscription import service
 from suscription.models import Suscription
 from django.contrib.auth.decorators import login_required
 from cms.profile import base
@@ -487,3 +492,59 @@ def stripe_webhook(request):
 
     return JsonResponse({'status': 'success'}, status=200)
 
+@login_required
+def finances(request):
+
+    users = CustomUser.objects.all()
+
+    # Obtener todas las categorías
+    categories = Category.objects.all()
+
+    # Obtener parámetros de filtros desde request.GET
+    usr = int(request.GET.get('user')) if request.GET.get('user') else None
+    cat = int(request.GET.get('category')) if request.GET.get('category') else None
+    state = request.GET.get('state') if request.GET.get('state') else None
+    date_begin = request.GET.get('date_subscribed__range__gte') if request.GET.get('date_subscribed__range__gte') else None
+    date_end = request.GET.get('date_subscribed__range__lte') if request.GET.get('date_subscribed__range__lte') else None
+
+    # Crear queryset inicial de suscripciones
+    suscriptions = Suscription.objects.filter(stripe_subscription_id__isnull=False, category__type=Category.TypeChoices.paid)
+
+    # Aplicar filtros al queryset
+    if usr:
+        suscriptions = suscriptions.filter(user__id=usr)
+    if cat:
+        suscriptions = suscriptions.filter(category__id=cat)
+    if state:
+        suscriptions = suscriptions.filter(state=state)
+    if date_begin:
+        date_begin_obj = datetime.strptime(date_begin, '%Y-%m-%dT%H:%M')
+    else:
+        date_begin_obj = None
+    if date_end:
+        date_end_obj = datetime.strptime(date_end, '%Y-%m-%dT%H:%M')
+    else:
+        date_end_obj = None
+
+    # Calcular el total pagado dentro del rango de fechas seleccionado
+    paid_suscriptions = []
+    for suscription in suscriptions:
+
+        total_paid = service.calculate_total_paid(suscription, date_begin_obj, date_end_obj)
+        # Solo agregar a paid_suscriptions si hay pagos
+        if total_paid > 0:
+            suscription.total_amount_paid = total_paid
+            paid_suscriptions.append(suscription)
+
+    # Pasar datos y filtros a la plantilla
+    context = {
+        'users': users,
+        'categories': categories,
+        'suscriptions': paid_suscriptions,
+        'usr': usr,
+        'cat': cat,
+        'state': state,
+        'date_begin': date_begin,
+        'date_end': date_end,
+    }
+    return render(request, 'subscription/finance.html', context)

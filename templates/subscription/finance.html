@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block content %}
+
+
+    <form method="get" class="admin-filters">
+        <div class="col-12 my-3">
+            <div class="col-8 row">
+                <div class="col">
+                    <select name="user" class="form-select" id="user">
+                        <option value="">Todos los usuarios</option>
+                        {% for u in users %}
+                        <option value="{{ u.id }}" {% if u.id == usr %} selected {% endif %}>{{ u.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col">
+                    <select name="category" class="form-select" id="category">
+                        <option value="">Todas las categorías</option>
+                        {% for c in categories %}
+                        <option value="{{ c.id }}" {% if c.id == cat %} selected {% endif %}>{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col">
+                    <select name="state" class="form-select" id="state">
+                        <option value="">Todos los estados</option>
+                        <option value="active" {% if state == "active" %} selected {% endif %}>Activo</option>
+                        <option value="cancelled" {% if state == "cancelled" %} selected {% endif %}>Cancelado</option>
+                        <option value="pending_cancellation" {% if state == "pending_cancellation" %} selected {% endif %}>Pendiente de Cancelación</option>
+                    </select>
+                </div>
+
+                <div class="col">
+                    <input type="datetime-local" class="form-control" name="date_subscribed__range__gte" id="date_begin" placeholder="Fecha desde" 
+                        {% if date_begin %} value="{{ date_begin }}" {% endif %}>
+                </div>
+
+                <div class="col">
+                    <input type="datetime-local" class="form-control" name="date_subscribed__range__lte" id="date_end" placeholder="Fecha hasta" 
+                        {% if date_end %} value="{{ date_end }}" {% endif %}>
+                </div>
+
+                <div class="col">
+                    <button type="submit" class="btn btn-primary">Buscar</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">Historial de Suscripciones</div>
+            <div class="card-body">
+                <table class="table table-striped mt-3">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Categoría</th>
+                            <th>Precio de Suscripción</th>
+                            <th>Estado</th>
+                            <th>Fecha de Suscripción</th>
+                            <th>Fecha de Fin del Período de Facturación</th>
+                            <th>Fecha del Último Pago</th>
+                            <th>Total Pagado</th>
+                            <th>Detalles del Método de Pago</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for suscription in suscriptions %}
+                        <tr>
+                            <td>{{ suscription.user }}</td>
+                            <td>{{ suscription.category }}</td>
+                            <td>{{ suscription.category.price }} PYG</td>
+                            <td>{{ suscription.get_state_display }}</td>
+                            <td>{{ suscription.date_subscribed }}</td>
+                            <td>{{ suscription.billing_period_end }}</td>
+                            <td>{{ suscription.last_payment_date }}</td>
+                            <td>{{ suscription.total_amount_paid }}</td>
+                            <td>{{ suscription.payment_method_details }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center">No hay registros de suscripciones.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock content %}
