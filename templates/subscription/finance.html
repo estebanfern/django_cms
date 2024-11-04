@@ -5,12 +5,12 @@
 
     <form method="get" class="admin-filters">
         <div class="col-12 my-3">
-            <div class="col-8 row">
+            <div class="col-12 row">
                 <div class="col">
                     <select name="user" class="form-select" id="user">
                         <option value="">Todos los usuarios</option>
                         {% for u in users %}
-                        <option value="{{ u.id }}" {% if u.id == usr %} selected {% endif %}>{{ u.username }}</option>
+                        <option value="{{ u.id }}" {% if u.id == usr %} selected {% endif %}>{{ u.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -52,14 +52,14 @@
 
     <div class="col-lg-12">
         <div class="card">
-            <div class="card-header">Historial de Suscripciones</div>
+            <div class="card-header">Suscripciones</div>
             <div class="card-body">
                 <table class="table table-striped mt-3">
                     <thead>
                         <tr>
                             <th>Usuario</th>
                             <th>Categoría</th>
-                            <th>Precio de Suscripción</th>
+                            <th>Monto</th>
                             <th>Estado</th>
                             <th>Fecha de Suscripción</th>
                             <th>Fecha del Último Pago</th>
