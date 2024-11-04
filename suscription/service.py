@@ -60,3 +60,34 @@ def get_last_payment_date(suscription, date_begin_obj, date_end_obj):
 
     except stripe.error.StripeError:
         return JsonResponse("Error en Stripe", status=500)
+
+
+def get_payment_method(suscription):
+    stripe.api_key = base.STRIPE_SECRET_KEY
+    try:
+        # Obtener la ultima factura pagada
+        invoices = stripe.Invoice.list(
+            subscription=suscription.stripe_subscription_id,
+            status='paid',  # Solo facturas pagadas
+            limit=1,  # Obtener solo la última factura pagada
+        ).data
+
+        if not invoices:
+            return "No hay método de pago"
+
+        last_paid_invoice = invoices[0]
+
+        if not last_paid_invoice.get('payment_intent'):
+            return "No hay método de pago"
+
+        payment_intent = stripe.PaymentIntent.retrieve(last_paid_invoice['payment_intent'])
+        payment_method = stripe.PaymentMethod.retrieve(payment_intent['payment_method'])
+
+        # Verificar si es una tarjeta y retornar detalles
+        if payment_method.card:
+            return f"{payment_method.card['brand'].capitalize()} •••• {payment_method.card['last4']}"
+        else:
+            return "No hay método de pago"
+
+    except stripe.error.StripeError as e:
+        return JsonResponse("Error en Stripe", status=500)

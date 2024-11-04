@@ -62,7 +62,6 @@
                             <th>Precio de Suscripción</th>
                             <th>Estado</th>
                             <th>Fecha de Suscripción</th>
-                            <th>Fecha de Fin del Período de Facturación</th>
                             <th>Fecha del Último Pago</th>
                             <th>Total Pagado</th>
                             <th>Detalles del Método de Pago</th>
@@ -76,10 +75,9 @@
                             <td>{{ suscription.category.price }} PYG</td>
                             <td>{{ suscription.get_state_display }}</td>
                             <td>{{ suscription.date_subscribed }}</td>
-                            <td>{{ suscription.billing_period_end }}</td>
                             <td>{{ suscription.last_payment_date }}</td>
                             <td>{{ suscription.total_amount_paid }}</td>
-                            <td>{{ suscription.payment_method_details }}</td>
+                            <td>{{ suscription.payment_method }}</td>
                         </tr>
                         {% empty %}
                         <tr>

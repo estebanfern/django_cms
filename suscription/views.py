@@ -533,12 +533,16 @@ def finances(request):
         total_paid = service.calculate_total_paid(suscription, date_begin_obj, date_end_obj)
         # Solo agregar a paid_suscriptions si hay pagos
         if total_paid > 0:
-            suscription.total_amount_paid = total_paid
+            suscription.total_amount_paid = str(total_paid) + " PYG"
             paid_suscriptions.append(suscription)
 
         date_paid_at = service.get_last_payment_date(suscription, date_begin_obj, date_end_obj)
         if date_paid_at:
             suscription.last_payment_date = date_paid_at
+
+        payment_method = service.get_payment_method(suscription)
+        if payment_method:
+            suscription.payment_method = payment_method
 
     # Pasar datos y filtros a la plantilla
     context = {
