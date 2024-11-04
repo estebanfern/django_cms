@@ -3,14 +3,12 @@ from datetime import datetime
 import stripe
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
-from django.utils import timezone
 from django.utils.timezone import make_aware
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import notification.service
 from app.models import CustomUser
 from category.models import Category
-from suscription import service
 from suscription.models import Suscription
 from django.contrib.auth.decorators import login_required
 from cms.profile import base
@@ -503,7 +501,6 @@ def finances(request):
     # Obtener parámetros de filtros desde request.GET
     usr = int(request.GET.get('user')) if request.GET.get('user') else None
     cat = int(request.GET.get('category')) if request.GET.get('category') else None
-    state = request.GET.get('state') if request.GET.get('state') else None
     date_begin = request.GET.get('date_subscribed__range__gte') if request.GET.get('date_subscribed__range__gte') else None
     date_end = request.GET.get('date_subscribed__range__lte') if request.GET.get('date_subscribed__range__lte') else None
 
@@ -515,8 +512,6 @@ def finances(request):
         suscriptions = suscriptions.filter(user__id=usr)
     if cat:
         suscriptions = suscriptions.filter(category__id=cat)
-    if state:
-        suscriptions = suscriptions.filter(state=state)
     if date_begin:
         date_begin_obj = datetime.strptime(date_begin, '%Y-%m-%dT%H:%M')
     else:
@@ -527,32 +522,58 @@ def finances(request):
         date_end_obj = None
 
     # Calcular el total pagado dentro del rango de fechas seleccionado
-    paid_suscriptions = []
+    invoices_data = []
+    total_general = 0
     for suscription in suscriptions:
+        try:
+            invoices = stripe.Invoice.list(
+                subscription=suscription.stripe_subscription_id,
+                status='paid'
+            )
+            for invoice in invoices['data']:
+                paid_at = invoice['status_transitions']['paid_at']
 
-        total_paid = service.calculate_total_paid(suscription, date_begin_obj, date_end_obj)
-        # Solo agregar a paid_suscriptions si hay pagos
-        if total_paid > 0:
-            suscription.total_amount_paid = str(total_paid) + " PYG"
-            paid_suscriptions.append(suscription)
+                # Convertir Unix timestamp a objetos datetime
+                dt_paid_at = make_aware(datetime.fromtimestamp(paid_at))
+                formatted_paid_at = dt_paid_at.strftime('%Y-%m-%dT%H:%M')
+                date_paid_at = datetime.strptime(formatted_paid_at, '%Y-%m-%dT%H:%M')
 
-        date_paid_at = service.get_last_payment_date(suscription, date_begin_obj, date_end_obj)
-        if date_paid_at:
-            suscription.last_payment_date = date_paid_at
+                if (not date_begin_obj or date_paid_at >= date_begin_obj) and (not date_end_obj or date_paid_at <= date_end_obj):
+                    total_general += invoice['amount_paid']
 
-        payment_method = service.get_payment_method(suscription)
-        if payment_method:
-            suscription.payment_method = payment_method
+                    payment_intent = stripe.PaymentIntent.retrieve(invoice['payment_intent'])
+                    payment_method = stripe.PaymentMethod.retrieve(payment_intent['payment_method'])
+
+                    # Verificar si es una tarjeta y retornar detalles
+                    if payment_method.card:
+                        payment_method_details = f"{payment_method.card['brand'].capitalize()} •••• {payment_method.card['last4']}"
+                    else:
+                        return "No hay método de pago"
+
+                    # Agregar los datos de la factura a la lista
+                    invoices_data.append({
+                        'fecha_pago': dt_paid_at,
+                        'suscriptor': suscription.user,
+                        'categoria': suscription.category,
+                        'monto': invoice['amount_paid'],
+                        'metodo_pago': payment_method_details,
+                    })
+
+        except stripe.error.StripeError:
+            return JsonResponse("Error en Stripe", status=500)
+
+    # Ordenar las facturas por la fecha de pago
+    invoices_data = sorted(invoices_data, key=lambda x: x['fecha_pago'], reverse=False)
 
     # Pasar datos y filtros a la plantilla
     context = {
         'users': users,
         'categories': categories,
-        'suscriptions': paid_suscriptions,
+        'invoices_data': invoices_data,
         'usr': usr,
         'cat': cat,
-        'state': state,
         'date_begin': date_begin,
         'date_end': date_end,
+        'total_general': total_general,
     }
     return render(request, 'subscription/finance.html', context)
