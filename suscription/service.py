@@ -1,3 +1,4 @@
+import locale
 from datetime import datetime
 
 import stripe
@@ -33,3 +34,29 @@ def calculate_total_paid(suscription, date_begin_obj, date_end_obj):
         return JsonResponse("Error en Stripe", status=500)
 
     return total_paid
+
+
+def get_last_payment_date(suscription, date_begin_obj, date_end_obj):
+    stripe.api_key = base.STRIPE_SECRET_KEY
+    try:
+        invoices = stripe.Invoice.list(
+            subscription=suscription.stripe_subscription_id,
+            status='paid'
+        )
+        for invoice in invoices['data']:
+            paid_at = invoice['status_transitions']['paid_at']
+
+            # Convertir Unix timestamp a objetos datetime
+            dt_paid_at = make_aware(datetime.fromtimestamp(paid_at))
+            formatted_paid_at = dt_paid_at.strftime('%Y-%m-%dT%H:%M')
+            date_paid_at = datetime.strptime(formatted_paid_at, '%Y-%m-%dT%H:%M')
+
+            locale.setlocale(locale.LC_TIME, 'es_PY.UTF-8')
+            formatted_period_end = dt_paid_at.strftime('%d de %B de %Y a las %H:%M')
+
+            if (not date_begin_obj or date_paid_at >= date_begin_obj) and (
+                    not date_end_obj or date_paid_at <= date_end_obj):
+                return formatted_period_end
+
+    except stripe.error.StripeError:
+        return JsonResponse("Error en Stripe", status=500)

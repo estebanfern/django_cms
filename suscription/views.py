@@ -536,6 +536,10 @@ def finances(request):
             suscription.total_amount_paid = total_paid
             paid_suscriptions.append(suscription)
 
+        date_paid_at = service.get_last_payment_date(suscription, date_begin_obj, date_end_obj)
+        if date_paid_at:
+            suscription.last_payment_date = date_paid_at
+
     # Pasar datos y filtros a la plantilla
     context = {
         'users': users,
