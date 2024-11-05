@@ -36,7 +36,7 @@
 
 </head>
 
-<body {% if not user.is_creator %} class="toggle-sidebar" {% endif %}>
+<body {% if not user.is_creator and not perms.app.view_finances %} class="toggle-sidebar" {% endif %}>
 
   <!-- ======= Header ======= -->
   <header id="header" class="header fixed-top d-flex align-items-center">
@@ -46,7 +46,7 @@
         <img src="{% static 'assets/img/logo.png' %}" alt="">
         <span class="d-none d-lg-block">CMS</span>
       </a>
-      {% if user.is_creator %}
+      {% if user.is_creator or perms.app.view_finances %}
         <i class="bi bi-list toggle-sidebar-btn"></i> <!-- Side bar toggle button -->
       {% endif %}
     </div><!-- End Logo -->
@@ -227,6 +227,17 @@
             <li>
               <hr class="dropdown-divider">
             </li>
+            {% if not perms.app.view_finances %}
+              <li>
+                <a class="dropdown-item d-flex align-items-center" href="/finances">
+                  <i class="bi bi-bank"></i>
+                  <span>Mis pagos</span>
+                </a>
+              </li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+            {% endif %}
             <li>
               <a class="dropdown-item d-flex align-items-center" href="/logout">
                 <i class="bi bi-box-arrow-right"></i>
@@ -257,7 +268,7 @@
 
   </header><!-- End Header -->
 
-  {% if user.is_creator %}
+  {% if user.is_creator or perms.app.view_finances %}
     <!-- ======= Sidebar ======= -->
     <aside id="sidebar" class="sidebar">
 
@@ -297,6 +308,15 @@
           <a class="nav-link collapsed" href="/stadistics">
             <i class="bi bi-bar-chart-line"></i>
             <span>Estadísticas</span>
+          </a>
+        </li>
+        {% endif %}
+
+        {% if perms.app.view_finances %}
+        <li class="nav-item">
+          <a class="nav-link collapsed" href="/finances">
+            <i class="bi bi-bank"></i>
+            <span>Finanzas</span>
           </a>
         </li>
         {% endif %}
