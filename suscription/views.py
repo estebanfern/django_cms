@@ -1,3 +1,4 @@
+import locale
 from collections import defaultdict
 from datetime import datetime
 
@@ -493,18 +494,12 @@ def stripe_webhook(request):
     return JsonResponse({'status': 'success'}, status=200)
 
 @login_required
-def finances(request):
-
-    users = CustomUser.objects.all()
-
-    # Obtener todas las categorías
-    categories = Category.objects.all()
-
+def table_data(request):
     # Obtener parámetros de filtros desde request.GET
     usr = int(request.GET.get('user')) if request.GET.get('user') else None
     cat = int(request.GET.get('category')) if request.GET.get('category') else None
-    date_begin = request.GET.get('date_subscribed__range__gte') if request.GET.get('date_subscribed__range__gte') else None
-    date_end = request.GET.get('date_subscribed__range__lte') if request.GET.get('date_subscribed__range__lte') else None
+    date_begin = request.GET.get('date_begin') if request.GET.get('date_begin') else None
+    date_end = request.GET.get('date_end') if request.GET.get('date_end') else None
 
     # Crear queryset inicial de suscripciones
     suscriptions = Suscription.objects.filter(stripe_subscription_id__isnull=False, category__type=Category.TypeChoices.paid)
@@ -514,71 +509,50 @@ def finances(request):
         suscriptions = suscriptions.filter(user__id=usr)
     if cat:
         suscriptions = suscriptions.filter(category__id=cat)
-    if date_begin:
-        date_begin_obj = datetime.strptime(date_begin, '%Y-%m-%dT%H:%M')
-    else:
-        date_begin_obj = None
-    if date_end:
-        date_end_obj = datetime.strptime(date_end, '%Y-%m-%dT%H:%M')
-    else:
-        date_end_obj = None
+    date_begin_obj = make_aware(datetime.strptime(date_begin, '%Y-%m-%dT%H:%M')) if date_begin else None
+    date_end_obj = make_aware(datetime.strptime(date_end, '%Y-%m-%dT%H:%M')) if date_end else None
 
-    # Calcular el total pagado dentro del rango de fechas seleccionado
+    # Obtener y filtrar las facturas
     invoices_data = []
     total_general = 0
     for suscription in suscriptions:
         try:
-            invoices = stripe.Invoice.list(
-                subscription=suscription.stripe_subscription_id,
-                status='paid'
-            )
+            invoices = stripe.Invoice.list(subscription=suscription.stripe_subscription_id, status='paid')
             for invoice in invoices['data']:
                 paid_at = invoice['status_transitions']['paid_at']
-
-                # Convertir Unix timestamp a objetos datetime
                 dt_paid_at = make_aware(datetime.fromtimestamp(paid_at))
-                formatted_paid_at = dt_paid_at.strftime('%Y-%m-%dT%H:%M')
-                date_paid_at = datetime.strptime(formatted_paid_at, '%Y-%m-%dT%H:%M')
+                locale.setlocale(locale.LC_TIME, 'es_PY.UTF-8')
+                formatted_period_end = dt_paid_at.strftime('%d de %B de %Y a las %H:%M')
 
-                if (not date_begin_obj or date_paid_at >= date_begin_obj) and (not date_end_obj or date_paid_at <= date_end_obj):
+                if (not date_begin_obj or dt_paid_at >= date_begin_obj) and (not date_end_obj or dt_paid_at <= date_end_obj):
                     total_general += invoice['amount_paid']
 
-                    # payment_intent = stripe.PaymentIntent.retrieve(invoice['payment_intent'])
-                    # payment_method = stripe.PaymentMethod.retrieve(payment_intent['payment_method'])
-                    #
-                    # # Verificar si es una tarjeta y retornar detalles
-                    # if payment_method.card:
-                    #     payment_method_details = f"{payment_method.card['brand'].capitalize()} •••• {payment_method.card['last4']}"
-                    # else:
-                    #     return "No hay metodo de pago"
+                    payment_intent = stripe.PaymentIntent.retrieve(invoice['payment_intent'])
+                    payment_method = stripe.PaymentMethod.retrieve(payment_intent['payment_method'])
 
-                    payment_method_details = 'Visa •••• 4242'
+                    payment_method_details = f"{payment_method.card['brand'].capitalize()} •••• {payment_method.card['last4']}" if payment_method.card else "Otro"
 
-                    # Agregar los datos de la factura a la lista
                     invoices_data.append({
-                        'fecha_pago': dt_paid_at,
-                        'suscriptor': suscription.user,
-                        'categoria': suscription.category,
+                        'fecha_pago': formatted_period_end,
+                        'suscriptor': suscription.user.name,
+                        'categoria': suscription.category.name,
                         'monto': invoice['amount_paid'],
                         'metodo_pago': payment_method_details,
                     })
 
         except stripe.error.StripeError:
-            return JsonResponse("Error en Stripe", status=500)
+            return JsonResponse({"error": "Error en Stripe"}, status=500)
 
-    # Ordenar las facturas por la fecha de pago
-    # invoices_data = sorted(invoices_data, key=lambda x: x['fecha_pago'], reverse=False)
+    # invoices_data = sorted(invoices_data, key=lambda x: x['fecha_pago'])
+    return JsonResponse({'invoices_data': invoices_data, 'total_general': total_general})
 
-    # Pasar datos y filtros a la plantilla
+@login_required
+def finances(request):
+    users = CustomUser.objects.all()
+    categories = Category.objects.all()
     context = {
         'users': users,
         'categories': categories,
-        'invoices_data': invoices_data,
-        'usr': usr,
-        'cat': cat,
-        'date_begin': date_begin,
-        'date_end': date_end,
-        'total_general': total_general,
     }
     return render(request, 'subscription/finance.html', context)
 

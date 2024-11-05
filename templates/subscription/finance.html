@@ -57,6 +57,7 @@
       <div class="card">
         <div class="card-body">
           <canvas id="categoryChart"></canvas>
+          <p id="categoryChartLoading" class="text-center">Cargando...</p>
         </div>
       </div>
     </div>
@@ -65,6 +66,7 @@
       <div class="card">
         <div class="card-body">
           <canvas id="dailyTotalsChart"></canvas>
+          <p id="dailyTotalsChartLoading" class="text-center">Cargando...</p>
         </div>
       </div>
     </div>
@@ -73,6 +75,7 @@
       <div class="card">
         <div class="card-body">
           <canvas id="timelineChart"></canvas>
+          <p id="timelineChartLoading" class="text-center">Cargando...</p>
         </div>
       </div>
     </div>
@@ -96,23 +99,11 @@
                         <th>Monto</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for invoice in invoices_data %}
-                    <tr>
-                        <td>{{ invoice.fecha_pago }}</td>
-                        <td>{{ invoice.suscriptor }}</td>
-                        <td>{{ invoice.categoria }}</td>
-                        <td>{{ invoice.metodo_pago }}</td>
-                        <td>{{ invoice.monto }} PYG</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="9" class="text-center">No hay registros de suscripciones.</td>
-                    </tr>
-                    {% endfor %}
+                <tbody id="invoicesTableBody">
+                  <!-- Los datos se actualizarán por JavaScript -->
                 </tbody>
             </table>
-            <h5 class="text-end">Total General: {{ total_general }} PYG</h5>
+            <h5 class="text-end" id="totalGeneral">Total General: Cargando...</h5>
         </div>
     </div>
 </div>
@@ -120,7 +111,63 @@
 
 
 <script>
-    // Función para obtener los valores de los filtros y construir la URL de parámetros
+    // Función para mostrar los mensajes de "Cargando..."
+    function showLoadingMessages() {
+      const loaders = ["categoryChartLoading", "dailyTotalsChartLoading", "timelineChartLoading"];
+      
+      loaders.forEach(loaderId => {
+          const loader = document.getElementById(loaderId);
+          if (loader) loader.style.display = "block";
+      });
+
+      // Limpiar contenido de los gráficos
+      if (categoryChartInstance) categoryChartInstance.destroy();
+      if (dailyTotalsChartInstance) dailyTotalsChartInstance.destroy();
+      if (timelineChartInstance) timelineChartInstance.destroy();
+
+      // Limpiar contenido de la tabla
+      document.getElementById("invoicesTableBody").innerHTML = '<tr><td colspan="5" class="text-center">Cargando...</td></tr>';
+      document.getElementById("totalGeneral").textContent = "Total General: Cargando...";
+    }
+
+    // Función para cargar y actualizar la tabla de datos
+    function loadTable() {
+      const params = getFilterParams();
+      $.ajax({
+          url: '/finances/table_data' + params,
+          type: 'GET',
+          headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+          success: function(response) {
+              updateTable(response.invoices_data, response.total_general);
+          },
+          error: function(xhr, status, error) {
+              console.error('Error en la solicitud AJAX:', error);
+          }
+      });
+    }
+
+    function updateTable(invoices, total_general) {
+      const tableBody = document.getElementById("invoicesTableBody");
+      tableBody.innerHTML = ''; // Limpiar la tabla actual
+
+      if (invoices.length > 0) {
+          invoices.forEach(invoice => {
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                  <td>${invoice.fecha_pago}</td>
+                  <td>${invoice.suscriptor}</td>
+                  <td>${invoice.categoria}</td>
+                  <td>${invoice.metodo_pago}</td>
+                  <td>${invoice.monto} PYG</td>
+              `;
+              tableBody.appendChild(row);
+          });
+          document.getElementById("totalGeneral").textContent = `Total General: ${total_general} PYG`;
+      } else {
+          tableBody.innerHTML = `<tr><td colspan="5" class="text-center">No hay registros de suscripciones.</td></tr>`;
+      }
+    }
+
     function getFilterParams() {
       const user = document.getElementById('user').value;
       const category = document.getElementById('category').value;
@@ -128,23 +175,23 @@
       const date_end = document.getElementById('date_end').value;
       return `?user=${user}&category=${category}&date_begin=${date_begin}&date_end=${date_end}`;
     }
-  
-    // Función para cargar y actualizar el gráfico de torta
+
     function loadCategoryChart() {
       const params = getFilterParams();
-  
       $.ajax({
-        url: '/finances/category_totals' + params,
-        type: 'GET',
-        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-        success: function(response) {
-          updateCategoryChart(response.labels, response.totals);
-        },
-        error: function(xhr, status, error) {
-          console.error('Error en la solicitud AJAX:', error);
-        }
+          url: '/finances/category_totals' + params,
+          type: 'GET',
+          headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+          success: function(response) {
+              updateCategoryChart(response.labels, response.totals);
+              document.getElementById("categoryChartLoading").style.display = "none";
+          },
+          error: function(xhr, status, error) {
+              console.error('Error en la solicitud AJAX:', error);
+          }
       });
     }
+
   
     // Crear o actualizar el gráfico de torta
     let categoryChartInstance = null;
@@ -210,6 +257,7 @@
           headers: { 'X-CSRFToken': '{{ csrf_token }}' },
           success: function(response) {
               updateTimelineChart(response.categories, response.datasets);
+              document.getElementById("timelineChartLoading").style.display = "none";
           },
           error: function(xhr, status, error) {
               console.error('Error en la solicitud AJAX:', error);
@@ -281,6 +329,7 @@
           headers: { 'X-CSRFToken': '{{ csrf_token }}' },
           success: function(response) {
               updateDailyTotalsChart(response.dates, response.totals);
+              document.getElementById("dailyTotalsChartLoading").style.display = "none";
           },
           error: function(xhr, status, error) {
               console.error('Error en la solicitud AJAX:', error);
@@ -325,6 +374,9 @@
 
     // Escuchar el evento de envío del formulario para actualizar el gráfico
     document.getElementById('filter-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      showLoadingMessages();  // Limpiar y mostrar "Cargando..."
+      loadTable();
       loadCategoryChart();    // Cargar el gráfico con los nuevos filtros
       loadDailyTotalsChart();
       loadTimelineChart();
@@ -332,6 +384,8 @@
   
     // Cargar los gráficos al cargar la página
     document.addEventListener('DOMContentLoaded', function() {
+      showLoadingMessages();  // Mostrar "Cargando..." en todos los elementos al cargar la página
+      loadTable();
       loadCategoryChart();
       loadDailyTotalsChart();
       loadTimelineChart();
