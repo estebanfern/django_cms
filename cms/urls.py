@@ -39,7 +39,7 @@ from category.views import categories_by_type
 from rating import views as rating_views
 from stadistic.views import view_stadistics, top_liked, top_rating, top_disliked, top_view, top_shares
 from suscription.views import suscribe_category, unsuscribe_category, create_checkout_session, stripe_webhook, \
-    my_subscriptions, finances
+    my_subscriptions, finances, category_totals, category_timeline, daily_totals
 
 urlpatterns = [
 
@@ -100,6 +100,9 @@ urlpatterns = [
     path('stadistics/shares/', top_shares, name='top_shares'),
 
     path('finances/',finances, name='finances'),
+    path('finances/category_totals/',category_totals, name='finances_category'),
+    path('finances/category_timeline/', category_timeline, name='finances_category_timeline'),
+  path('finances/daily_totals/', daily_totals, name='finances_daily_totals'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

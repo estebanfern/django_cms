@@ -12,7 +12,7 @@
     </ol>
     </nav>
 </div><!-- End Page Title -->
-<form method="get" class="admin-filters">
+<form method="get" class="admin-filters" id="filter-form">
     <div class="col-12 my-3">
         <div class="col-12 row">
             <div class="col">
@@ -50,6 +50,38 @@
     </div>
 </form>
 
+
+
+<div class="row">
+    <div class="col-6">
+      <div class="card">
+        <div class="card-body">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6">
+      <div class="card">
+        <div class="card-body">
+          <canvas id="dailyTotalsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6">
+      <div class="card">
+        <div class="card-body">
+          <canvas id="timelineChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+</div>
+
+
+
+
 <div class="col-lg-12">
     <div class="card">
         <div class="card-header">Suscripciones</div>
@@ -57,7 +89,7 @@
             <table class="table table-striped mt-3">
                 <thead>
                     <tr>
-                        <th>Fecha Hora del Pago</th>
+                        <th>Fecha del Pago</th>
                         <th>Suscriptor</th>
                         <th>Categoría</th>
                         <th>Método de Pago</th>
@@ -84,6 +116,228 @@
         </div>
     </div>
 </div>
+
+
+
+<script>
+    // Función para obtener los valores de los filtros y construir la URL de parámetros
+    function getFilterParams() {
+      const user = document.getElementById('user').value;
+      const category = document.getElementById('category').value;
+      const date_begin = document.getElementById('date_begin').value;
+      const date_end = document.getElementById('date_end').value;
+      return `?user=${user}&category=${category}&date_begin=${date_begin}&date_end=${date_end}`;
+    }
+  
+    // Función para cargar y actualizar el gráfico de torta
+    function loadCategoryChart() {
+      const params = getFilterParams();
+  
+      $.ajax({
+        url: '/finances/category_totals' + params,
+        type: 'GET',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+        success: function(response) {
+          updateCategoryChart(response.labels, response.totals);
+        },
+        error: function(xhr, status, error) {
+          console.error('Error en la solicitud AJAX:', error);
+        }
+      });
+    }
+  
+    // Crear o actualizar el gráfico de torta
+    let categoryChartInstance = null;
+    function updateCategoryChart(labels, totals) {
+      const categoryChartElement = document.getElementById('categoryChart');
+  
+      if (categoryChartInstance) {
+        categoryChartInstance.destroy();
+      }
+  
+      categoryChartInstance = new Chart(categoryChartElement, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Total de Pagos',
+            data: totals,
+            backgroundColor: [
+              'rgba(255, 99, 132, 0.7)',   // Rojo claro
+              'rgba(54, 162, 235, 0.7)',   // Azul claro
+              'rgba(255, 206, 86, 0.7)',   // Amarillo claro
+              'rgba(75, 192, 192, 0.7)',   // Verde azulado
+              'rgba(153, 102, 255, 0.7)',  // Violeta
+              'rgba(255, 159, 64, 0.7)',   // Naranja claro
+              'rgba(255, 99, 71, 0.7)',    // Tomate
+              'rgba(144, 238, 144, 0.7)',  // Verde claro
+              'rgba(173, 216, 230, 0.7)',  // Azul cielo claro
+              'rgba(238, 130, 238, 0.7)',  // Violeta claro
+              'rgba(255, 182, 193, 0.7)',  // Rosa claro
+              'rgba(210, 105, 30, 0.7)',   // Marrón
+              'rgba(0, 191, 255, 0.7)',    // Azul profundo
+              'rgba(34, 139, 34, 0.7)',    // Verde bosque
+              'rgba(255, 215, 0, 0.7)',    // Dorado
+              'rgba(139, 0, 139, 0.7)',    // Púrpura oscuro
+              'rgba(255, 228, 181, 0.7)',  // Arena claro
+              'rgba(135, 206, 250, 0.7)',  // Azul cielo
+              'rgba(255, 218, 185, 0.7)',  // Melocotón claro
+              'rgba(255, 69, 0, 0.7)',     // Rojo anaranjado
+              'rgba(124, 252, 0, 0.7)',    // Verde lima
+              'rgba(255, 140, 0, 0.7)',    // Naranja oscuro
+              'rgba(199, 199, 199, 0.7)',  // Gris claro
+              'rgba(189, 183, 107, 0.7)',  // Caqui oscuro
+              'rgba(106, 90, 205, 0.7)'    // Púrpura medio
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            title: { display: true, text: 'Total de pagos por categorias' }
+          }
+        }
+      });
+    }
+    let timelineChartInstance = null;
+    // Función para cargar y actualizar el gráfico de líneas de tiempo
+    function loadTimelineChart() {
+      const params = getFilterParams();
+      $.ajax({
+          url: '/finances/category_timeline' + params,
+          type: 'GET',
+          headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+          success: function(response) {
+              updateTimelineChart(response.categories, response.datasets);
+          },
+          error: function(xhr, status, error) {
+              console.error('Error en la solicitud AJAX:', error);
+          }
+      });
+    }
+
+    function updateTimelineChart(categories, datasets) {
+      const timelineChartElement = document.getElementById('timelineChart');
+      if (timelineChartInstance) {
+          timelineChartInstance.destroy();
+      }
+  
+
+      // Verificar si hay datos en datasets
+      const hasData = datasets && datasets.length > 0;
+      
+      const labels = hasData ? datasets[0].dates : []; // Usar fechas si existen
+
+      // Crear etiquetas y datasets vacíos si no hay datos
+      const chartDatasets = hasData ? datasets.map((dataset, index) => ({
+        label: dataset.label,
+        data: dataset.data,
+        borderColor: `hsl(${index * 45}, 70%, 60%)`,
+        fill: false,
+        tension: 0.1
+      })) : [{
+        label: 'Sin datos',
+        data: [],
+        borderColor: 'rgba(200, 200, 200, 0.5)',
+        backgroundColor: 'rgba(200, 200, 200, 0.2)',
+        fill: false,
+        tension: 0
+      }];
+
+      timelineChartInstance = new Chart(timelineChartElement, {
+          type: 'line',
+          data: {
+              labels: labels,  // Usamos todas las fechas ordenadas
+              datasets: datasets.map((dataset, index) => ({
+                  label: dataset.label,
+                  data: dataset.data,
+                  borderColor: `hsl(${index * 45}, 70%, 60%)`,
+                  fill: false,
+                  tension: 0.1
+              }))
+          },
+          options: {
+              responsive: true,
+              plugins: {
+                  legend: { position: 'bottom' },
+                  title: { display: true, text: 'Comparativa de las categorias pagadas por fecha' }
+              },
+              scales: {
+                  x: { title: { display: true, text: 'Fecha de Pago' } },
+                  y: { title: { display: true, text: 'Monto del Pago (PYG)' } }
+              }
+          }
+      });
+    }
+
+    // Función para cargar y actualizar el gráfico de barras de montos diarios
+    function loadDailyTotalsChart() {
+      const params = getFilterParams();
+
+      $.ajax({
+          url: '/finances/daily_totals' + params,
+          type: 'GET',
+          headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+          success: function(response) {
+              updateDailyTotalsChart(response.dates, response.totals);
+          },
+          error: function(xhr, status, error) {
+              console.error('Error en la solicitud AJAX:', error);
+          }
+      });
+    }
+
+    // Crear o actualizar el gráfico de barras
+    let dailyTotalsChartInstance = null;
+    function updateDailyTotalsChart(dates, totals) {
+      const dailyTotalsChartElement = document.getElementById('dailyTotalsChart');
+
+      if (dailyTotalsChartInstance) {
+          dailyTotalsChartInstance.destroy();
+      }
+
+      dailyTotalsChartInstance = new Chart(dailyTotalsChartElement, {
+          type: 'bar',
+          data: {
+              labels: dates,
+              datasets: [{
+                  label: 'Monto Total',
+                  data: totals,
+                  backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                  borderColor: 'rgba(75, 192, 192, 1)',
+                  borderWidth: 1
+              }]
+          },
+          options: {
+              responsive: true,
+              plugins: {
+                  legend: { display: false },
+                  title: { display: true, text: 'Monto Total por Fecha' }
+              },
+              scales: {
+                  x: { title: { display: true, text: 'Fecha de Pago' } },
+                  y: { beginAtZero: true, title: { display: true, text: 'Monto Total (PYG)' } }
+              }
+          }
+      });
+    }
+
+    // Escuchar el evento de envío del formulario para actualizar el gráfico
+    document.getElementById('filter-form').addEventListener('submit', function(event) {
+      loadCategoryChart();    // Cargar el gráfico con los nuevos filtros
+      loadDailyTotalsChart();
+      loadTimelineChart();
+    });
+  
+    // Cargar los gráficos al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+      loadCategoryChart();
+      loadDailyTotalsChart();
+      loadTimelineChart();
+    });
+  </script>
+  
 
 
 {% endblock content %}
