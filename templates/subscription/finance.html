@@ -15,14 +15,16 @@
 <form method="get" class="admin-filters" id="filter-form">
     <div class="col-12 my-3">
         <div class="col-12 row">
-            <div class="col">
-                <select name="user" class="form-select" id="user">
-                    <option value="">Todos los usuarios</option>
-                    {% for u in users %}
-                    <option value="{{ u.id }}" {% if u.id == usr %} selected {% endif %}>{{ u.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+            {% if has_finance_permission %}
+              <div class="col">
+                  <select name="user" class="form-select" id="user">
+                      <option value="">Todos los usuarios</option>
+                      {% for u in users %}
+                      <option value="{{ u.id }}" {% if u.id == usr %} selected {% endif %}>{{ u.name }}</option>
+                      {% endfor %}
+                  </select>
+              </div>
+            {% endif %}
 
             <div class="col">
                 <select name="category" class="form-select" id="category">
@@ -51,43 +53,41 @@
 </form>
 
 
-
-<div class="row">
-    <div class="col-6">
-      <div class="card">
-        <div class="card-body">
-          <canvas id="categoryChart"></canvas>
-          <p id="categoryChartLoading" class="text-center">Cargando...</p>
+{% if has_finance_permission %}
+  <div class="row">
+      <div class="col-6">
+        <div class="card">
+          <div class="card-body">
+            <canvas id="categoryChart"></canvas>
+            <p id="categoryChartLoading" class="text-center">Cargando...</p>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="col-6">
-      <div class="card">
-        <div class="card-body">
-          <canvas id="dailyTotalsChart"></canvas>
-          <p id="dailyTotalsChartLoading" class="text-center">Cargando...</p>
+      <div class="col-6">
+        <div class="card">
+          <div class="card-body">
+            <canvas id="dailyTotalsChart"></canvas>
+            <p id="dailyTotalsChartLoading" class="text-center">Cargando...</p>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="col-6">
-      <div class="card">
-        <div class="card-body">
-          <canvas id="timelineChart"></canvas>
-          <p id="timelineChartLoading" class="text-center">Cargando...</p>
+      <div class="col-6">
+        <div class="card">
+          <div class="card-body">
+            <canvas id="timelineChart"></canvas>
+            <p id="timelineChartLoading" class="text-center">Cargando...</p>
+          </div>
         </div>
       </div>
-    </div>
-
-</div>
-
-
+  </div>
+{% endif %}
 
 
 <div class="col-lg-12">
     <div class="card">
-        <div class="card-header">Suscripciones</div>
+        <div class="card-header">Pagos</div>
         <div class="card-body">
             <table class="table table-striped mt-3">
                 <thead>
@@ -113,17 +113,18 @@
 <script>
     // Función para mostrar los mensajes de "Cargando..."
     function showLoadingMessages() {
-      const loaders = ["categoryChartLoading", "dailyTotalsChartLoading", "timelineChartLoading"];
-      
-      loaders.forEach(loaderId => {
-          const loader = document.getElementById(loaderId);
-          if (loader) loader.style.display = "block";
-      });
+      {% if has_finance_permission %}
+        const loaders = ["categoryChartLoading", "dailyTotalsChartLoading", "timelineChartLoading"];
+        loaders.forEach(loaderId => {
+            const loader = document.getElementById(loaderId);
+            if (loader) loader.style.display = "block";
+        });
 
-      // Limpiar contenido de los gráficos
-      if (categoryChartInstance) categoryChartInstance.destroy();
-      if (dailyTotalsChartInstance) dailyTotalsChartInstance.destroy();
-      if (timelineChartInstance) timelineChartInstance.destroy();
+        // Limpiar contenido de los gráficos
+        if (categoryChartInstance) categoryChartInstance.destroy();
+        if (dailyTotalsChartInstance) dailyTotalsChartInstance.destroy();
+        if (timelineChartInstance) timelineChartInstance.destroy();
+      {% endif %}
 
       // Limpiar contenido de la tabla
       document.getElementById("invoicesTableBody").innerHTML = '<tr><td colspan="5" class="text-center">Cargando...</td></tr>';
@@ -170,10 +171,16 @@
     }
 
     function getFilterParams() {
-      const user = document.getElementById('user').value;
-      const category = document.getElementById('category').value;
-      const date_begin = document.getElementById('date_begin').value;
-      const date_end = document.getElementById('date_end').value;
+      const userElement = document.getElementById('user');
+      const categoryElement = document.getElementById('category');
+      const dateBeginElement = document.getElementById('date_begin');
+      const dateEndElement = document.getElementById('date_end');
+  
+      const user = userElement ? userElement.value : "";  // Si no existe, asigna una cadena vacía
+      const category = categoryElement ? categoryElement.value : "";
+      const date_begin = dateBeginElement ? dateBeginElement.value : "";
+      const date_end = dateEndElement ? dateEndElement.value : "";
+
       return `?user=${user}&category=${category}&date_begin=${date_begin}&date_end=${date_end}`;
     }
 
@@ -378,19 +385,26 @@
       event.preventDefault();
       showLoadingMessages();  // Limpiar y mostrar "Cargando..."
       loadTable();
-      loadCategoryChart();    // Cargar el gráfico con los nuevos filtros
-      loadDailyTotalsChart();
-      loadTimelineChart();
+      {% if has_finance_permission %}
+        loadCategoryChart();    // Cargar el gráfico con los nuevos filtros
+        loadDailyTotalsChart();
+        loadTimelineChart();
+      {% endif %}
     });
   
+    
     // Cargar los gráficos al cargar la página
     document.addEventListener('DOMContentLoaded', function() {
       showLoadingMessages();  // Mostrar "Cargando..." en todos los elementos al cargar la página
       loadTable();
-      loadCategoryChart();
-      loadDailyTotalsChart();
-      loadTimelineChart();
+      {% if has_finance_permission %}
+        loadCategoryChart();
+        loadDailyTotalsChart();
+        loadTimelineChart();
+      {% endif %}
     });
+
+
   </script>
   
 

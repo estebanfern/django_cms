@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import datetime
 
 import stripe
-from django.db.models import Count, Sum
+from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.timezone import make_aware
@@ -495,14 +495,18 @@ def stripe_webhook(request):
 
 @login_required
 def table_data(request):
-    # Obtener parámetros de filtros desde request.GET
-    usr = int(request.GET.get('user')) if request.GET.get('user') else None
+
+    user = request.user
+    if not user.has_perm('app.view_finances'):
+        suscriptions = Suscription.objects.filter(stripe_subscription_id__isnull=False,category__type=Category.TypeChoices.paid, user=user)
+        usr = None
+    else:
+        suscriptions = Suscription.objects.filter(stripe_subscription_id__isnull=False,category__type=Category.TypeChoices.paid)
+        usr = int(request.GET.get('user')) if request.GET.get('user') else None
+
     cat = int(request.GET.get('category')) if request.GET.get('category') else None
     date_begin = request.GET.get('date_begin') if request.GET.get('date_begin') else None
     date_end = request.GET.get('date_end') if request.GET.get('date_end') else None
-
-    # Crear queryset inicial de suscripciones
-    suscriptions = Suscription.objects.filter(stripe_subscription_id__isnull=False, category__type=Category.TypeChoices.paid)
 
     # Aplicar filtros al queryset
     if usr:
@@ -548,11 +552,17 @@ def table_data(request):
 
 @login_required
 def finances(request):
-    users = CustomUser.objects.all()
+    user = request.user
+    has_finance_permission = user.has_perm('app.view_finances')
+    if not has_finance_permission:
+        users = CustomUser.objects.filter(id=user.id)
+    else:
+        users = CustomUser.objects.all()
     categories = Category.objects.all()
     context = {
         'users': users,
         'categories': categories,
+        'has_finance_permission': has_finance_permission,
     }
     return render(request, 'subscription/finance.html', context)
 
@@ -564,6 +574,10 @@ def category_totals(request):
     :param request: Objeto de solicitud HTTP.
     :return: JsonResponse con los nombres de categorías y sus totales de compras.
     """
+
+    user = request.user
+    if not user.has_perm('app.view_finances'):
+        raise PermissionDenied
 
     # Filtrar por categoría si se seleccionó una
     if request.GET.get('category'):
@@ -621,6 +635,11 @@ def category_totals(request):
 
 @login_required
 def category_timeline(request):
+
+    user = request.user
+    if not user.has_perm('app.view_finances'):
+        raise PermissionDenied
+
     # Filtrar suscripciones activas y pagadas
     suscriptions = Suscription.objects.filter(
         stripe_subscription_id__isnull=False,
@@ -703,6 +722,11 @@ def category_timeline(request):
 
 @login_required
 def daily_totals(request):
+
+    user = request.user
+    if not user.has_perm('app.view_finances'):
+        raise PermissionDenied
+
     # Filtrar suscripciones activas y pagadas
     suscriptions = Suscription.objects.filter(
         stripe_subscription_id__isnull=False,

@@ -20,6 +20,10 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM public.auth_group WHERE name = 'Administrador') THEN
         INSERT INTO public.auth_group (name) VALUES ('Administrador');
     END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM public.auth_group WHERE name = 'Financiero') THEN
+        INSERT INTO public.auth_group (name) VALUES ('Financiero');
+    END IF;
 END $$;
 
 --Adjudicación de permsos
@@ -117,6 +121,12 @@ BEGIN
 		(SELECT id FROM public.auth_permission WHERE codename = 'block_content')
 	);
 
+    --ver finanzas a financiero
+	INSERT INTO public.auth_group_permissions (group_id, permission_id) VALUES (
+		(SELECT id FROM public.auth_group WHERE name = 'Financiero'),
+		(SELECT id FROM public.auth_permission WHERE codename = 'view_finances')
+	);
+
  -- Obtener el content_type_id del modelo 'CustomUser'
     SELECT id INTO customuser_content_type_id
     FROM public.django_content_type
@@ -201,6 +211,10 @@ BEGIN
 	INSERT INTO public.app_customuser (password, email, name, photo, is_active, date_joined, about, is_superuser)
 	VALUES ('pbkdf2_sha256$870000$FGoSCplr3LwAJGHvtT2Nck$gnDoOSio6SeB3ryqZ7OQ4blsoMHm9+Fj2SezR2B1r04=', 'administrador@mail.com',
 	'Administrador Cartes', 'profile_pics/perfil.png', true, CURRENT_TIMESTAMP, 'Soy un administrador', false);
+    --Financiero
+	INSERT INTO public.app_customuser (password, email, name, photo, is_active, date_joined, about, is_superuser)
+	VALUES ('pbkdf2_sha256$870000$FGoSCplr3LwAJGHvtT2Nck$gnDoOSio6SeB3ryqZ7OQ4blsoMHm9+Fj2SezR2B1r04=', 'financiero@mail.com',
+	'Financiero Gustavo', 'profile_pics/perfil.png', true, CURRENT_TIMESTAMP, 'Soy un financiero', false);
 END $$;
 
 --Relación entre usuarios base y roles
@@ -229,5 +243,10 @@ BEGIN
 	INSERT INTO public.app_customuser_groups (customuser_id, group_id) VALUES(
 		(SELECT id FROM public.app_customuser WHERE email = 'administrador@mail.com'),
 		(SELECT id FROM auth_group WHERE name = 'Administrador')
+	);
+
+    INSERT INTO public.app_customuser_groups (customuser_id, group_id) VALUES(
+        (SELECT id FROM public.app_customuser WHERE email = 'financiero@mail.com'),
+        (SELECT id FROM auth_group WHERE name = 'Financiero')
 	);
 END $$;

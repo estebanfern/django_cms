@@ -174,6 +174,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             # Permisos para ver estadisticas como admin
             ("view_stadistics", "Ver estadisticas"),
 
+            # Permisos financieros
+            ("view_finances", "Ver finanzas"),
+
         ]
 
     @property
