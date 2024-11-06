@@ -217,6 +217,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         "app.unblock_users",
         "app.view_users",
         "app.view_stadistics",
+        "app.view_finances",
     }
     def is_creator(self):
         """
