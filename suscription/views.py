@@ -526,8 +526,17 @@ def table_data(request):
     total_general = 0
     for suscription in suscriptions:
         try:
-            invoices = stripe.Invoice.list(subscription=suscription.stripe_subscription_id, status='paid')
+            category_id = suscription.category.id
+            customer_id = suscription.user.stripe_customer_id
+            invoices = stripe.Invoice.list(customer=customer_id, status='paid')
+
             for invoice in invoices['data']:
+                metadata = invoice['subscription_details']['metadata']
+                stripe_category_id = metadata.get('category_id')
+
+                if not stripe_category_id or int(stripe_category_id) != category_id:
+                    continue
+
                 paid_at = invoice['status_transitions']['paid_at']
                 dt_paid_at = make_aware(datetime.fromtimestamp(paid_at))
                 locale.setlocale(locale.LC_TIME, 'es_PY.UTF-8')
@@ -612,9 +621,17 @@ def category_totals(request):
 
     for suscription in suscriptions:
         try:
-            invoices = stripe.Invoice.list(subscription=suscription.stripe_subscription_id, status='paid')
+            category_id = suscription.category.id
+            customer_id = suscription.user.stripe_customer_id
+            invoices = stripe.Invoice.list(customer=customer_id, status='paid')
 
             for invoice in invoices['data']:
+                metadata = invoice['subscription_details']['metadata']
+                stripe_category_id = metadata.get('category_id')
+
+                if not stripe_category_id or int(stripe_category_id) != category_id:
+                    continue
+
                 paid_at = invoice['status_transitions']['paid_at']
 
                 # Convertir Unix timestamp a objetos datetime
@@ -677,10 +694,17 @@ def category_timeline(request):
 
     for suscription in suscriptions:
         try:
-            # Obtener facturas desde Stripe
-            invoices = stripe.Invoice.list(subscription=suscription.stripe_subscription_id, status='paid')
+            category_id = suscription.category.id
+            customer_id = suscription.user.stripe_customer_id
+            invoices = stripe.Invoice.list(customer=customer_id, status='paid')
 
             for invoice in invoices['data']:
+                metadata = invoice['subscription_details']['metadata']
+                stripe_category_id = metadata.get('category_id')
+
+                if not stripe_category_id or int(stripe_category_id) != category_id:
+                    continue
+
                 paid_at = invoice['status_transitions']['paid_at']
 
                 # Convertir Unix timestamp a objetos datetime
@@ -765,9 +789,17 @@ def daily_totals(request):
     # Recorrer cada suscripción y obtener las facturas pagadas
     for suscription in suscriptions:
         try:
-            invoices = stripe.Invoice.list(subscription=suscription.stripe_subscription_id, status='paid')
+            category_id = suscription.category.id
+            customer_id = suscription.user.stripe_customer_id
+            invoices = stripe.Invoice.list(customer=customer_id, status='paid')
 
             for invoice in invoices['data']:
+                metadata = invoice['subscription_details']['metadata']
+                stripe_category_id = metadata.get('category_id')
+
+                if not stripe_category_id or int(stripe_category_id) != category_id:
+                    continue
+
                 paid_at = invoice['status_transitions']['paid_at']
 
                 # Convertir Unix timestamp a objetos datetime
