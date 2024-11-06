@@ -174,6 +174,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             # Permisos para ver estadisticas como admin
             ("view_stadistics", "Ver estadisticas"),
 
+            # Permisos financieros
+            ("view_finances", "Ver finanzas"),
+
         ]
 
     @property
@@ -214,6 +217,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         "app.unblock_users",
         "app.view_users",
         "app.view_stadistics",
+        "app.view_finances",
     }
     def is_creator(self):
         """
