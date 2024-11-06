@@ -87,7 +87,15 @@
 
 <div class="col-lg-12">
     <div class="card">
-        <div class="card-header">Pagos</div>
+        <div class="card-header d-flex justify-content-between">
+          <span>Pagos</span>
+          <form action="{% url 'finances_export_to_excel' %}" method="post" id="export-form">
+              {% csrf_token %}
+              <input type="hidden" name="invoices_data" id="export_invoices_data">
+              <input type="hidden" name="total_general" id="export_total_general">
+              <button type="submit" class="btn btn-success">Descargar Excel</button>
+          </form>
+        </div>
         <div class="card-body">
             <table class="table table-striped mt-3">
                 <thead>
@@ -111,6 +119,9 @@
 
 
 <script>
+
+    let invoicesData = [];
+
     // Función para mostrar los mensajes de "Cargando..."
     function showLoadingMessages() {
       {% if has_finance_permission %}
@@ -127,6 +138,7 @@
       {% endif %}
 
       // Limpiar contenido de la tabla
+      invoicesData = [];
       document.getElementById("invoicesTableBody").innerHTML = '<tr><td colspan="5" class="text-center">Cargando...</td></tr>';
       document.getElementById("totalGeneral").textContent = "Total General: Cargando...";
     }
@@ -150,6 +162,8 @@
     function updateTable(invoices, total_general) {
       const tableBody = document.getElementById("invoicesTableBody");
       tableBody.innerHTML = ''; // Limpiar la tabla actual
+
+      invoicesData = invoices;
 
       if (invoices.length > 0) {
           invoices.forEach(invoice => {
@@ -404,6 +418,21 @@
       {% endif %}
     });
 
+    document.getElementById('export-form').addEventListener('submit', function(event) {
+      event.preventDefault();  // Evita el envío inmediato del formulario
+  
+      // Serializa los datos de la tabla (invoices_data y total_general) y los pasa al formulario
+      if (invoicesData.length > 0) {
+        const invoicesJSON = JSON.stringify(invoicesData);  // Asumiendo que invoicesData contiene los datos de la tabla actual
+        const totalGeneral = document.getElementById("totalGeneral").textContent.match(/\d+/)[0];  // Obtiene el total general numérico
+    
+        document.getElementById('export_invoices_data').value = invoicesJSON;
+        document.getElementById('export_total_general').value = totalGeneral;
+    
+        this.submit();  // Envía el formulario después de llenar los campos ocultos
+      } 
+    });
+  
 
   </script>
   

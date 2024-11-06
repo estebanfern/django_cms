@@ -1,11 +1,16 @@
+import json
 import locale
+from io import BytesIO
+
+import openpyxl
 from collections import defaultdict
 from datetime import datetime
 
 import stripe
 from django.core.exceptions import PermissionDenied
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
 from django.utils.timezone import make_aware
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -791,3 +796,55 @@ def daily_totals(request):
     }
 
     return JsonResponse(data)
+
+
+@login_required
+def export_to_excel(request):
+
+    # Obtener los datos enviados desde el formulario
+    invoices_data_json = request.POST.get('invoices_data')
+    total_general = request.POST.get('total_general')
+
+    # Convertir los datos JSON a un objeto Python
+    invoices_data = json.loads(invoices_data_json)
+
+    if not invoices_data:
+        return JsonResponse({"error": "No hay datos para exportar"}, status=400)
+
+    # Crear el archivo Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Suscripciones"
+
+    # Agregar encabezados
+    headers = ['Fecha del Pago', 'Suscriptor', 'Categoría', 'Método de Pago', 'Monto']
+    ws.append(headers)
+
+    # Agregar los datos de la tabla
+    for invoice in invoices_data:
+        ws.append([
+            invoice['fecha_pago'],
+            invoice['suscriptor'],
+            invoice['categoria'],
+            invoice['metodo_pago'],
+            invoice['monto']
+        ])
+
+    # Agregar una fila para el total general
+    ws.append(["", "", "", "Total General", total_general])
+
+    # Guardar el archivo en un BytesIO en lugar de HttpResponse directamente
+    excel_file = BytesIO()
+    wb.save(excel_file)
+    excel_file.seek(0)  # Mover el puntero de archivo al principio
+
+    timestamp = timezone.localtime(timezone.now()).strftime("%d-%m-%Y_%H-%M")
+
+    # Configurar la respuesta HTTP para enviar el archivo
+    response = HttpResponse(
+        content=excel_file.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="finanzas_{timestamp}.xlsx"'
+
+    return response
