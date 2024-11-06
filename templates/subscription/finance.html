@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block content %}
+
+
+<div class="pagetitle">
+    <h1>Finanzas</h1>
+    <nav>
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+        <li class="breadcrumb-item active">Finanzas</li>
+    </ol>
+    </nav>
+</div><!-- End Page Title -->
+<form method="get" class="admin-filters" id="filter-form">
+    <div class="col-12 my-3">
+        <div class="col-12 row">
+            {% if has_finance_permission %}
+              <div class="col">
+                  <select name="user" class="form-select" id="user">
+                      <option value="">Todos los usuarios</option>
+                      {% for u in users %}
+                      <option value="{{ u.id }}" {% if u.id == usr %} selected {% endif %}>{{ u.name }}</option>
+                      {% endfor %}
+                  </select>
+              </div>
+            {% endif %}
+
+            <div class="col">
+                <select name="category" class="form-select" id="category">
+                    <option value="">Todas las categorías</option>
+                    {% for c in categories %}
+                    <option value="{{ c.id }}" {% if c.id == cat %} selected {% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col">
+                <input type="datetime-local" class="form-control" name="date_subscribed__range__gte" id="date_begin" placeholder="Fecha desde" 
+                    {% if date_begin %} value="{{ date_begin }}" {% endif %}>
+            </div>
+
+            <div class="col">
+                <input type="datetime-local" class="form-control" name="date_subscribed__range__lte" id="date_end" placeholder="Fecha hasta" 
+                    {% if date_end %} value="{{ date_end }}" {% endif %}>
+            </div>
+
+            <div class="col">
+                <button type="submit" class="btn btn-primary">Buscar</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+{% if has_finance_permission %}
+  <div class="row">
+      <div class="col-6">
+        <div class="card">
+          <div class="card-body">
+            <canvas id="categoryChart"></canvas>
+            <p id="categoryChartLoading" class="text-center">Cargando...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-6">
+        <div class="card">
+          <div class="card-body">
+            <canvas id="dailyTotalsChart"></canvas>
+            <p id="dailyTotalsChartLoading" class="text-center">Cargando...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-6">
+        <div class="card">
+          <div class="card-body">
+            <canvas id="timelineChart"></canvas>
+            <p id="timelineChartLoading" class="text-center">Cargando...</p>
+          </div>
+        </div>
+      </div>
+  </div>
+{% endif %}
+
+
+<div class="col-lg-12">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between">
+          <span>Pagos</span>
+          <form action="{% url 'finances_export_to_excel' %}" method="post" id="export-form">
+              {% csrf_token %}
+              <input type="hidden" name="invoices_data" id="export_invoices_data">
+              <input type="hidden" name="total_general" id="export_total_general">
+              <button type="submit" class="btn btn-success">Descargar Excel</button>
+          </form>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped mt-3">
+                <thead>
+                    <tr>
+                        <th>Fecha del Pago</th>
+                        <th>Suscriptor</th>
+                        <th>Categoría</th>
+                        <th>Método de Pago</th>
+                        <th>Monto</th>
+                    </tr>
+                </thead>
+                <tbody id="invoicesTableBody">
+                  <!-- Los datos se actualizarán por JavaScript -->
+                </tbody>
+            </table>
+            <h5 class="text-end" id="totalGeneral">Total General: Cargando...</h5>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+
+    let invoicesData = [];
+
+    // Función para mostrar los mensajes de "Cargando..."
+    function showLoadingMessages() {
+      {% if has_finance_permission %}
+        const loaders = ["categoryChartLoading", "dailyTotalsChartLoading", "timelineChartLoading"];
+        loaders.forEach(loaderId => {
+            const loader = document.getElementById(loaderId);
+            if (loader) loader.style.display = "block";
+        });
+
+        // Limpiar contenido de los gráficos
+        if (categoryChartInstance) categoryChartInstance.destroy();
+        if (dailyTotalsChartInstance) dailyTotalsChartInstance.destroy();
+        if (timelineChartInstance) timelineChartInstance.destroy();
+      {% endif %}
+
+      // Limpiar contenido de la tabla
+      invoicesData = [];
+      document.getElementById("invoicesTableBody").innerHTML = '<tr><td colspan="5" class="text-center">Cargando...</td></tr>';
+      document.getElementById("totalGeneral").textContent = "Total General: Cargando...";
+    }
+
+    // Función para cargar y actualizar la tabla de datos
+    function loadTable() {
+      const params = getFilterParams();
+      $.ajax({
+          url: '/finances/table_data' + params,
+          type: 'GET',
+          headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+          success: function(response) {
+              updateTable(response.invoices_data, response.total_general);
+          },
+          error: function(xhr, status, error) {
+              console.error('Error en la solicitud AJAX:', error);
+          }
+      });
+    }
+
+    function updateTable(invoices, total_general) {
+      const tableBody = document.getElementById("invoicesTableBody");
+      tableBody.innerHTML = ''; // Limpiar la tabla actual
+
+      invoicesData = invoices;
+
+      if (invoices.length > 0) {
+          invoices.forEach(invoice => {
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                  <td>${invoice.fecha_pago}</td>
+                  <td>${invoice.suscriptor}</td>
+                  <td>${invoice.categoria}</td>
+                  <td>${invoice.metodo_pago}</td>
+                  <td>${invoice.monto} PYG</td>
+              `;
+              tableBody.appendChild(row);
+          });
+          document.getElementById("totalGeneral").textContent = `Total General: ${total_general} PYG`;
+      } else {
+          tableBody.innerHTML = `<tr><td colspan="5" class="text-center">No hay registros de suscripciones.</td></tr>`;
+          document.getElementById("totalGeneral").textContent = "Total General: 0 PYG";
+      }
+    }
+
+    function getFilterParams() {
+      const userElement = document.getElementById('user');
+      const categoryElement = document.getElementById('category');
+      const dateBeginElement = document.getElementById('date_begin');
+      const dateEndElement = document.getElementById('date_end');
+  
+      const user = userElement ? userElement.value : "";  // Si no existe, asigna una cadena vacía
+      const category = categoryElement ? categoryElement.value : "";
+      const date_begin = dateBeginElement ? dateBeginElement.value : "";
+      const date_end = dateEndElement ? dateEndElement.value : "";
+
+      return `?user=${user}&category=${category}&date_begin=${date_begin}&date_end=${date_end}`;
+    }
+
+    function loadCategoryChart() {
+      const params = getFilterParams();
+      $.ajax({
+          url: '/finances/category_totals' + params,
+          type: 'GET',
+          headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+          success: function(response) {
+              updateCategoryChart(response.labels, response.totals);
+              document.getElementById("categoryChartLoading").style.display = "none";
+          },
+          error: function(xhr, status, error) {
+              console.error('Error en la solicitud AJAX:', error);
+          }
+      });
+    }
+
+  
+    // Crear o actualizar el gráfico de torta
+    let categoryChartInstance = null;
+    function updateCategoryChart(labels, totals) {
+      const categoryChartElement = document.getElementById('categoryChart');
+  
+      if (categoryChartInstance) {
+        categoryChartInstance.destroy();
+      }
+  
+      categoryChartInstance = new Chart(categoryChartElement, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Total de Pagos',
+            data: totals,
+            backgroundColor: [
+              'rgba(255, 99, 132, 0.7)',   // Rojo claro
+              'rgba(54, 162, 235, 0.7)',   // Azul claro
+              'rgba(255, 206, 86, 0.7)',   // Amarillo claro
+              'rgba(75, 192, 192, 0.7)',   // Verde azulado
+              'rgba(153, 102, 255, 0.7)',  // Violeta
+              'rgba(255, 159, 64, 0.7)',   // Naranja claro
+              'rgba(255, 99, 71, 0.7)',    // Tomate
+              'rgba(144, 238, 144, 0.7)',  // Verde claro
+              'rgba(173, 216, 230, 0.7)',  // Azul cielo claro
+              'rgba(238, 130, 238, 0.7)',  // Violeta claro
+              'rgba(255, 182, 193, 0.7)',  // Rosa claro
+              'rgba(210, 105, 30, 0.7)',   // Marrón
+              'rgba(0, 191, 255, 0.7)',    // Azul profundo
+              'rgba(34, 139, 34, 0.7)',    // Verde bosque
+              'rgba(255, 215, 0, 0.7)',    // Dorado
+              'rgba(139, 0, 139, 0.7)',    // Púrpura oscuro
+              'rgba(255, 228, 181, 0.7)',  // Arena claro
+              'rgba(135, 206, 250, 0.7)',  // Azul cielo
+              'rgba(255, 218, 185, 0.7)',  // Melocotón claro
+              'rgba(255, 69, 0, 0.7)',     // Rojo anaranjado
+              'rgba(124, 252, 0, 0.7)',    // Verde lima
+              'rgba(255, 140, 0, 0.7)',    // Naranja oscuro
+              'rgba(199, 199, 199, 0.7)',  // Gris claro
+              'rgba(189, 183, 107, 0.7)',  // Caqui oscuro
+              'rgba(106, 90, 205, 0.7)'    // Púrpura medio
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            title: { display: true, text: 'Total de pagos por categorias' }
+          }
+        }
+      });
+    }
+    let timelineChartInstance = null;
+    // Función para cargar y actualizar el gráfico de líneas de tiempo
+    function loadTimelineChart() {
+      const params = getFilterParams();
+      $.ajax({
+          url: '/finances/category_timeline' + params,
+          type: 'GET',
+          headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+          success: function(response) {
+              updateTimelineChart(response.categories, response.datasets);
+              document.getElementById("timelineChartLoading").style.display = "none";
+          },
+          error: function(xhr, status, error) {
+              console.error('Error en la solicitud AJAX:', error);
+          }
+      });
+    }
+
+    function updateTimelineChart(categories, datasets) {
+      const timelineChartElement = document.getElementById('timelineChart');
+      if (timelineChartInstance) {
+          timelineChartInstance.destroy();
+      }
+  
+
+      // Verificar si hay datos en datasets
+      const hasData = datasets && datasets.length > 0;
+      
+      const labels = hasData ? datasets[0].dates : []; // Usar fechas si existen
+
+      // Crear etiquetas y datasets vacíos si no hay datos
+      const chartDatasets = hasData ? datasets.map((dataset, index) => ({
+        label: dataset.label,
+        data: dataset.data,
+        borderColor: `hsl(${index * 45}, 70%, 60%)`,
+        fill: false,
+        tension: 0.1
+      })) : [{
+        label: 'Sin datos',
+        data: [],
+        borderColor: 'rgba(200, 200, 200, 0.5)',
+        backgroundColor: 'rgba(200, 200, 200, 0.2)',
+        fill: false,
+        tension: 0
+      }];
+
+      timelineChartInstance = new Chart(timelineChartElement, {
+          type: 'line',
+          data: {
+              labels: labels,  // Usamos todas las fechas ordenadas
+              datasets: datasets.map((dataset, index) => ({
+                  label: dataset.label,
+                  data: dataset.data,
+                  borderColor: `hsl(${index * 45}, 70%, 60%)`,
+                  fill: false,
+                  tension: 0.1
+              }))
+          },
+          options: {
+              responsive: true,
+              plugins: {
+                  legend: { position: 'bottom' },
+                  title: { display: true, text: 'Comparativa de las categorias pagadas por fecha' }
+              },
+              scales: {
+                  x: { title: { display: true, text: 'Fecha de Pago' } },
+                  y: { title: { display: true, text: 'Monto del Pago (PYG)' } }
+              }
+          }
+      });
+    }
+
+    // Función para cargar y actualizar el gráfico de barras de montos diarios
+    function loadDailyTotalsChart() {
+      const params = getFilterParams();
+
+      $.ajax({
+          url: '/finances/daily_totals' + params,
+          type: 'GET',
+          headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+          success: function(response) {
+              updateDailyTotalsChart(response.dates, response.totals);
+              document.getElementById("dailyTotalsChartLoading").style.display = "none";
+          },
+          error: function(xhr, status, error) {
+              console.error('Error en la solicitud AJAX:', error);
+          }
+      });
+    }
+
+    // Crear o actualizar el gráfico de barras
+    let dailyTotalsChartInstance = null;
+    function updateDailyTotalsChart(dates, totals) {
+      const dailyTotalsChartElement = document.getElementById('dailyTotalsChart');
+
+      if (dailyTotalsChartInstance) {
+          dailyTotalsChartInstance.destroy();
+      }
+
+      dailyTotalsChartInstance = new Chart(dailyTotalsChartElement, {
+          type: 'bar',
+          data: {
+              labels: dates,
+              datasets: [{
+                  label: 'Monto Total',
+                  data: totals,
+                  backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                  borderColor: 'rgba(75, 192, 192, 1)',
+                  borderWidth: 1
+              }]
+          },
+          options: {
+              responsive: true,
+              plugins: {
+                  legend: { display: false },
+                  title: { display: true, text: 'Monto Total por Fecha' }
+              },
+              scales: {
+                  x: { title: { display: true, text: 'Fecha de Pago' } },
+                  y: { beginAtZero: true, title: { display: true, text: 'Monto Total (PYG)' } }
+              }
+          }
+      });
+    }
+
+    // Escuchar el evento de envío del formulario para actualizar el gráfico
+    document.getElementById('filter-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      showLoadingMessages();  // Limpiar y mostrar "Cargando..."
+      loadTable();
+      {% if has_finance_permission %}
+        loadCategoryChart();    // Cargar el gráfico con los nuevos filtros
+        loadDailyTotalsChart();
+        loadTimelineChart();
+      {% endif %}
+    });
+  
+    
+    // Cargar los gráficos al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+      showLoadingMessages();  // Mostrar "Cargando..." en todos los elementos al cargar la página
+      loadTable();
+      {% if has_finance_permission %}
+        loadCategoryChart();
+        loadDailyTotalsChart();
+        loadTimelineChart();
+      {% endif %}
+    });
+
+    document.getElementById('export-form').addEventListener('submit', function(event) {
+      event.preventDefault();  // Evita el envío inmediato del formulario
+  
+      // Serializa los datos de la tabla (invoices_data y total_general) y los pasa al formulario
+      if (invoicesData.length > 0) {
+        const invoicesJSON = JSON.stringify(invoicesData);  // Asumiendo que invoicesData contiene los datos de la tabla actual
+        const totalGeneral = document.getElementById("totalGeneral").textContent.match(/\d+/)[0];  // Obtiene el total general numérico
+    
+        document.getElementById('export_invoices_data').value = invoicesJSON;
+        document.getElementById('export_total_general').value = totalGeneral;
+    
+        this.submit();  // Envía el formulario después de llenar los campos ocultos
+      } 
+    });
+  
+
+  </script>
+  
+
+
+{% endblock content %}

@@ -141,6 +141,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             ("view_content", "Ver contenidos"),
             ("edit_is_active", "Editar estado de contenidos"),
             ("block_content", "Bloquear contenidos"),
+            ("set_important_content", "Editar contenido destacado"),
 
             # Permisos para roles
             ("create_roles", "Crear roles"),
@@ -172,6 +173,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
             # Permisos para ver estadisticas como admin
             ("view_stadistics", "Ver estadisticas"),
+
+            # Permisos financieros
+            ("view_finances", "Ver finanzas"),
 
         ]
 
@@ -213,6 +217,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         "app.unblock_users",
         "app.view_users",
         "app.view_stadistics",
+        "app.view_finances",
     }
     def is_creator(self):
         """
@@ -243,6 +248,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         "app.block_users",
         "app.unblock_users",
         "app.view_users",
+        "app.set_important_content",
     }
     def is_admin(self):
         """

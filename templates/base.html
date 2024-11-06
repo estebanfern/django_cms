@@ -227,6 +227,17 @@
             <li>
               <hr class="dropdown-divider">
             </li>
+            {% if not perms.app.view_finances %}
+              <li>
+                <a class="dropdown-item d-flex align-items-center" href="/finances">
+                  <i class="bi bi-bank"></i>
+                  <span>Mis pagos</span>
+                </a>
+              </li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+            {% endif %}
             <li>
               <a class="dropdown-item d-flex align-items-center" href="/logout">
                 <i class="bi bi-box-arrow-right"></i>
@@ -297,6 +308,15 @@
           <a class="nav-link collapsed" href="/stadistics">
             <i class="bi bi-bar-chart-line"></i>
             <span>Estadísticas</span>
+          </a>
+        </li>
+        {% endif %}
+
+        {% if perms.app.view_finances %}
+        <li class="nav-item">
+          <a class="nav-link collapsed" href="/finances">
+            <i class="bi bi-bank"></i>
+            <span>Finanzas</span>
           </a>
         </li>
         {% endif %}

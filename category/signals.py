@@ -68,7 +68,7 @@ def post_save_category_handler(sender, instance, created, **kwargs):
             product=product.id,
             unit_amount=instance.price,  # Stripe maneja los precios en centavos
             currency='PYG',
-            recurring={"interval": "month"},  # Suscripción mensual
+            recurring={"interval": "day"},  # Suscripción mensual
         )
 
         # Guardar los IDs del producto y precio en el modelo de categoría
@@ -99,7 +99,7 @@ def post_save_category_handler(sender, instance, created, **kwargs):
                     product=product.id,
                     unit_amount=instance.price,
                     currency='PYG',
-                    recurring={"interval": "month"},
+                    recurring={"interval": "day"},
                 )
                 # Guardar los IDs del producto y precio en el modelo de categoría
                 instance.stripe_product_id = product.id

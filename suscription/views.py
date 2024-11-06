@@ -1,6 +1,17 @@
+import json
+import locale
+from io import BytesIO
+
+import openpyxl
+from collections import defaultdict
+from datetime import datetime
+
 import stripe
-from django.http import JsonResponse
+from django.core.exceptions import PermissionDenied
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
+from django.utils.timezone import make_aware
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import notification.service
@@ -453,7 +464,7 @@ def stripe_webhook(request):
                     product=category.stripe_product_id,
                     unit_amount=new_price,
                     currency='PYG',
-                    recurring={"interval": "month"},
+                    recurring={"interval": "day"},
                 )
                 # Guardar el nuevo ID del precio en el modelo de categoría
                 category.stripe_price_id = new_price_stripe.id
@@ -487,3 +498,385 @@ def stripe_webhook(request):
 
     return JsonResponse({'status': 'success'}, status=200)
 
+@login_required
+def table_data(request):
+
+    user = request.user
+    if not user.has_perm('app.view_finances'):
+        suscriptions = Suscription.objects.filter(stripe_subscription_id__isnull=False,category__type=Category.TypeChoices.paid, user=user)
+        usr = None
+    else:
+        suscriptions = Suscription.objects.filter(stripe_subscription_id__isnull=False,category__type=Category.TypeChoices.paid)
+        usr = int(request.GET.get('user')) if request.GET.get('user') else None
+
+    cat = int(request.GET.get('category')) if request.GET.get('category') else None
+    date_begin = request.GET.get('date_begin') if request.GET.get('date_begin') else None
+    date_end = request.GET.get('date_end') if request.GET.get('date_end') else None
+
+    # Aplicar filtros al queryset
+    if usr:
+        suscriptions = suscriptions.filter(user__id=usr)
+    if cat:
+        suscriptions = suscriptions.filter(category__id=cat)
+    date_begin_obj = make_aware(datetime.strptime(date_begin, '%Y-%m-%dT%H:%M')) if date_begin else None
+    date_end_obj = make_aware(datetime.strptime(date_end, '%Y-%m-%dT%H:%M')) if date_end else None
+
+    # Obtener y filtrar las facturas
+    invoices_data = []
+    total_general = 0
+    for suscription in suscriptions:
+        try:
+            category_id = suscription.category.id
+            customer_id = suscription.user.stripe_customer_id
+            invoices = stripe.Invoice.list(customer=customer_id, status='paid')
+
+            for invoice in invoices['data']:
+                metadata = invoice['subscription_details']['metadata']
+                stripe_category_id = metadata.get('category_id')
+
+                if not stripe_category_id or int(stripe_category_id) != category_id:
+                    continue
+
+                paid_at = invoice['status_transitions']['paid_at']
+                dt_paid_at = make_aware(datetime.fromtimestamp(paid_at))
+                locale.setlocale(locale.LC_TIME, 'es_PY.UTF-8')
+                formatted_period_end = dt_paid_at.strftime('%d de %B de %Y a las %H:%M')
+
+                if (not date_begin_obj or dt_paid_at >= date_begin_obj) and (not date_end_obj or dt_paid_at <= date_end_obj):
+                    total_general += invoice['amount_paid']
+
+                    payment_intent = stripe.PaymentIntent.retrieve(invoice['payment_intent'])
+                    payment_method = stripe.PaymentMethod.retrieve(payment_intent['payment_method'])
+
+                    payment_method_details = f"{payment_method.card['brand'].capitalize()} •••• {payment_method.card['last4']}" if payment_method.card else "Otro"
+
+                    invoices_data.append({
+                        'fecha_pago': formatted_period_end,
+                        'suscriptor': suscription.user.name,
+                        'categoria': suscription.category.name,
+                        'monto': invoice['amount_paid'],
+                        'metodo_pago': payment_method_details,
+                    })
+
+        except stripe.error.StripeError:
+            return JsonResponse({"error": "Error en Stripe"}, status=500)
+
+    # invoices_data = sorted(invoices_data, key=lambda x: x['fecha_pago'])
+    return JsonResponse({'invoices_data': invoices_data, 'total_general': total_general})
+
+@login_required
+def finances(request):
+    user = request.user
+    has_finance_permission = user.has_perm('app.view_finances')
+    if not has_finance_permission:
+        users = CustomUser.objects.filter(id=user.id)
+    else:
+        users = CustomUser.objects.all()
+    categories = Category.objects.all()
+    context = {
+        'users': users,
+        'categories': categories,
+        'has_finance_permission': has_finance_permission,
+    }
+    return render(request, 'subscription/finance.html', context)
+
+@login_required
+def category_totals(request):
+    """
+    Devuelve el total de compras por categoría en el rango de fechas seleccionado.
+
+    :param request: Objeto de solicitud HTTP.
+    :return: JsonResponse con los nombres de categorías y sus totales de compras.
+    """
+
+    user = request.user
+    if not user.has_perm('app.view_finances'):
+        raise PermissionDenied
+
+    # Filtrar por categoría si se seleccionó una
+    if request.GET.get('category'):
+        category_id = int(request.GET.get('category'))
+        suscriptions = Suscription.objects.filter(category_id=category_id, stripe_subscription_id__isnull=False, category__type=Category.TypeChoices.paid)
+    else:
+        suscriptions = Suscription.objects.filter(stripe_subscription_id__isnull=False, category__type=Category.TypeChoices.paid)
+
+    if request.GET.get('user'):
+        user_id = int(request.GET.get('user'))
+        suscriptions = suscriptions.filter(user_id=user_id)
+
+    # Filtrar por fechas de suscripción
+    if request.GET.get('date_begin'):
+        date_begin = request.GET.get('date_begin')
+        date_begin_obj = datetime.strptime(date_begin, '%Y-%m-%dT%H:%M')
+    else:
+        date_begin_obj = None
+
+    if request.GET.get('date_end'):
+        date_end = request.GET.get('date_end')
+        date_end_obj = datetime.strptime(date_end, '%Y-%m-%dT%H:%M')
+    else:
+        date_end_obj = None
+
+    category_payment_counts = {}
+
+    for suscription in suscriptions:
+        try:
+            category_id = suscription.category.id
+            customer_id = suscription.user.stripe_customer_id
+            invoices = stripe.Invoice.list(customer=customer_id, status='paid')
+
+            for invoice in invoices['data']:
+                metadata = invoice['subscription_details']['metadata']
+                stripe_category_id = metadata.get('category_id')
+
+                if not stripe_category_id or int(stripe_category_id) != category_id:
+                    continue
+
+                paid_at = invoice['status_transitions']['paid_at']
+
+                # Convertir Unix timestamp a objetos datetime
+                dt_paid_at = make_aware(datetime.fromtimestamp(paid_at))
+                formatted_paid_at = dt_paid_at.strftime('%Y-%m-%dT%H:%M')
+                date_paid_at = datetime.strptime(formatted_paid_at, '%Y-%m-%dT%H:%M')
+
+                if (not date_begin_obj or date_paid_at >= date_begin_obj) and (not date_end_obj or date_paid_at <= date_end_obj):
+                    category_name = suscription.category.name
+                    category_payment_counts[category_name] = category_payment_counts.get(category_name, 0) + 1
+
+        except stripe.error.StripeError as e:
+            print(f"Error al obtener facturas de Stripe: {e}")
+
+    # Preparar los datos para el gráfico
+    data = {
+        'labels': list(category_payment_counts.keys()),
+        'totals': list(category_payment_counts.values())
+    }
+
+    return JsonResponse(data)
+
+
+@login_required
+def category_timeline(request):
+
+    user = request.user
+    if not user.has_perm('app.view_finances'):
+        raise PermissionDenied
+
+    # Filtrar suscripciones activas y pagadas
+    suscriptions = Suscription.objects.filter(
+        stripe_subscription_id__isnull=False,
+        category__type=Category.TypeChoices.paid
+    )
+
+    # Aplicar filtros del request
+    if request.GET.get('category'):
+        category_id = int(request.GET.get('category'))
+        suscriptions = suscriptions.filter(category_id=category_id)
+
+    if request.GET.get('user'):
+        user_id = int(request.GET.get('user'))
+        suscriptions = suscriptions.filter(user_id=user_id)
+
+    if request.GET.get('date_begin'):
+        date_begin = request.GET.get('date_begin')
+        date_begin_obj = datetime.strptime(date_begin, '%Y-%m-%dT%H:%M')
+    else:
+        date_begin_obj = None
+
+    if request.GET.get('date_end'):
+        date_end = request.GET.get('date_end')
+        date_end_obj = datetime.strptime(date_end, '%Y-%m-%dT%H:%M')
+    else:
+        date_end_obj = None
+
+    # Estructura para almacenar la suma diaria por categoría
+    category_time_data = defaultdict(lambda: defaultdict(int))  # {categoria: {fecha: total_diario}}
+
+    for suscription in suscriptions:
+        try:
+            category_id = suscription.category.id
+            customer_id = suscription.user.stripe_customer_id
+            invoices = stripe.Invoice.list(customer=customer_id, status='paid')
+
+            for invoice in invoices['data']:
+                metadata = invoice['subscription_details']['metadata']
+                stripe_category_id = metadata.get('category_id')
+
+                if not stripe_category_id or int(stripe_category_id) != category_id:
+                    continue
+
+                paid_at = invoice['status_transitions']['paid_at']
+
+                # Convertir Unix timestamp a objetos datetime
+                dt_paid_at = make_aware(datetime.fromtimestamp(paid_at))
+                formatted_paid_at = dt_paid_at.strftime('%Y-%m-%dT%H:%M')
+                date_paid_at = datetime.strptime(formatted_paid_at, '%Y-%m-%dT%H:%M')
+                dt_paid_at = dt_paid_at.strftime('%d-%m-%Y')
+
+                if (not date_begin_obj or date_paid_at >= date_begin_obj) and (not date_end_obj or date_paid_at <= date_end_obj):
+                    amount_paid = invoice['amount_paid']
+
+                    # Sumar monto a la fecha y categoría correspondiente
+                    category_name = suscription.category.name
+                    category_time_data[category_name][dt_paid_at] += amount_paid
+
+        except stripe.error.StripeError as e:
+            print(f"Error al obtener facturas de Stripe: {e}")
+
+    # Obtener todas las fechas únicas y ordenarlas
+    all_dates = sorted({date for dates in category_time_data.values() for date in dates},key=lambda x: datetime.strptime(x, '%d-%m-%Y'))
+
+    # Formatear los datos para que cada categoría tenga datos en todas las fechas
+    final_data = {}
+    for category, daily_totals in category_time_data.items():
+        final_data[category] = {
+            'dates': all_dates,
+            'amounts': [daily_totals.get(date, 0) for date in all_dates]
+        }
+
+    # Construir el JSON de respuesta para Chart.js
+    data = {
+        'categories': list(final_data.keys()),
+        'datasets': [
+            {
+                'label': category,
+                'data': final_data[category]['amounts'],
+                'dates': final_data[category]['dates']
+            }
+            for category in final_data
+        ]
+    }
+
+    return JsonResponse(data)
+
+@login_required
+def daily_totals(request):
+
+    user = request.user
+    if not user.has_perm('app.view_finances'):
+        raise PermissionDenied
+
+    # Filtrar suscripciones activas y pagadas
+    suscriptions = Suscription.objects.filter(
+        stripe_subscription_id__isnull=False,
+        category__type=Category.TypeChoices.paid
+    )
+
+    # Aplicar filtros del request
+    if request.GET.get('category'):
+        category_id = int(request.GET.get('category'))
+        suscriptions = suscriptions.filter(category_id=category_id)
+
+    if request.GET.get('user'):
+        user_id = int(request.GET.get('user'))
+        suscriptions = suscriptions.filter(user_id=user_id)
+
+    if request.GET.get('date_begin'):
+        date_begin = request.GET.get('date_begin')
+        date_begin_obj = datetime.strptime(date_begin, '%Y-%m-%dT%H:%M')
+    else:
+        date_begin_obj = None
+
+    if request.GET.get('date_end'):
+        date_end = request.GET.get('date_end')
+        date_end_obj = datetime.strptime(date_end, '%Y-%m-%dT%H:%M')
+    else:
+        date_end_obj = None
+
+    # Diccionario para almacenar los montos diarios
+    daily_totals = defaultdict(float)  # {fecha: total_monto}
+
+    # Recorrer cada suscripción y obtener las facturas pagadas
+    for suscription in suscriptions:
+        try:
+            category_id = suscription.category.id
+            customer_id = suscription.user.stripe_customer_id
+            invoices = stripe.Invoice.list(customer=customer_id, status='paid')
+
+            for invoice in invoices['data']:
+                metadata = invoice['subscription_details']['metadata']
+                stripe_category_id = metadata.get('category_id')
+
+                if not stripe_category_id or int(stripe_category_id) != category_id:
+                    continue
+
+                paid_at = invoice['status_transitions']['paid_at']
+
+                # Convertir Unix timestamp a objetos datetime
+                dt_paid_at = make_aware(datetime.fromtimestamp(paid_at))
+                formatted_paid_at = dt_paid_at.strftime('%Y-%m-%dT%H:%M')
+                date_paid_at = datetime.strptime(formatted_paid_at, '%Y-%m-%dT%H:%M')
+
+                dt_paid_at = dt_paid_at.strftime('%d-%m-%Y')
+
+                if (not date_begin_obj or date_paid_at >= date_begin_obj) and (not date_end_obj or date_paid_at <= date_end_obj):
+                    amount_paid = invoice['amount_paid']
+
+                    # Acumular el monto en la fecha correspondiente
+                    daily_totals[dt_paid_at] += amount_paid
+
+        except stripe.error.StripeError as e:
+            print(f"Error al obtener facturas de Stripe: {e}")
+
+    # Ordenar las fechas
+    sorted_dates = sorted(daily_totals.keys(), key=lambda x: datetime.strptime(x, '%d-%m-%Y'))
+
+    # Preparar los datos para el gráfico
+    data = {
+        'dates': sorted_dates,
+        'totals': [daily_totals[date] for date in sorted_dates]
+    }
+
+    return JsonResponse(data)
+
+
+@login_required
+def export_to_excel(request):
+
+    # Obtener los datos enviados desde el formulario
+    invoices_data_json = request.POST.get('invoices_data')
+    total_general = request.POST.get('total_general')
+
+    # Convertir los datos JSON a un objeto Python
+    invoices_data = json.loads(invoices_data_json)
+
+    if not invoices_data:
+        return JsonResponse({"error": "No hay datos para exportar"}, status=400)
+
+    # Crear el archivo Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Suscripciones"
+
+    # Agregar encabezados
+    headers = ['Fecha del Pago', 'Suscriptor', 'Categoría', 'Método de Pago', 'Monto']
+    ws.append(headers)
+
+    # Agregar los datos de la tabla
+    for invoice in invoices_data:
+        ws.append([
+            invoice['fecha_pago'],
+            invoice['suscriptor'],
+            invoice['categoria'],
+            invoice['metodo_pago'],
+            invoice['monto']
+        ])
+
+    # Agregar una fila para el total general
+    ws.append(["", "", "", "Total General", total_general])
+
+    # Guardar el archivo en un BytesIO en lugar de HttpResponse directamente
+    excel_file = BytesIO()
+    wb.save(excel_file)
+    excel_file.seek(0)  # Mover el puntero de archivo al principio
+
+    timestamp = timezone.localtime(timezone.now()).strftime("%d-%m-%Y_%H-%M")
+
+    # Configurar la respuesta HTTP para enviar el archivo
+    response = HttpResponse(
+        content=excel_file.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="finanzas_{timestamp}.xlsx"'
+
+    return response
