@@ -464,7 +464,7 @@ def stripe_webhook(request):
                     product=category.stripe_product_id,
                     unit_amount=new_price,
                     currency='PYG',
-                    recurring={"interval": "month"},
+                    recurring={"interval": "day"},
                 )
                 # Guardar el nuevo ID del precio en el modelo de categoría
                 category.stripe_price_id = new_price_stripe.id
