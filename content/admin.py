@@ -161,7 +161,7 @@ class ContentAdmin(admin.ModelAdmin):
         nombres = ', '.join([content.title for content in queryset])
         self.message_user(request, f"Contenidos desactivados: {nombres}.", level=messages.SUCCESS)
 
-    @admin.action(description='Destacar contenido')
+    @admin.action(description='Destacar contenidos')
     def destacar_contenido(self, request, queryset):
         if not self.has_set_important_permission(request):
             self.message_user(request, "No tienes permiso para destacar contenidos.", level=messages.ERROR)
@@ -170,7 +170,7 @@ class ContentAdmin(admin.ModelAdmin):
         nombres = ', '.join([content.title for content in queryset])
         self.message_user(request, f"Contenidos destacados: {nombres}.", level=messages.SUCCESS)
 
-    @admin.action(description='Quitar destacado')
+    @admin.action(description='Quitar destacados')
     def quitar_destacado(self, request, queryset):
         if not self.has_set_important_permission(request):
             self.message_user(request, "No tienes permiso para destacar contenidos.", level=messages.ERROR)
