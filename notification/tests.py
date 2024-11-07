@@ -1,7 +1,4 @@
 from django.test import TestCase
-
-# Create your tests here.
-
 from unittest.mock import patch
 from django.utils.timezone import now
 from app.models import CustomUser
@@ -10,11 +7,22 @@ from content.models import Content
 from category.models import Category
 from suscription.models import Suscription
 from django.contrib.auth import get_user_model
+from django.db.models.signals import post_save, pre_save, pre_delete, post_delete
+from app.signals import cache_previous_user, post_save_user_handler
+from category.signals import cache_previous_category, post_save_category_handler, cache_category_before_delete, handle_category_after_delete
 
 User = get_user_model()
 
 class NotificationServiceTests(TestCase):
     def setUp(self):
+        # Disconnect signals to avoid side effects during tests
+        pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        post_save.disconnect(post_save_user_handler, sender=CustomUser)
+        pre_save.disconnect(cache_previous_category, sender=Category)
+        post_save.disconnect(post_save_category_handler, sender=Category)
+        pre_delete.disconnect(cache_category_before_delete, sender=Category)
+        post_delete.disconnect(handle_category_after_delete, sender=Category)
+
         # Create a test user
         self.user = CustomUser.objects.create_user(
             email="testuser@example.com",
@@ -38,7 +46,7 @@ class NotificationServiceTests(TestCase):
             category=self.category,
             autor=self.user,
             state=Content.StateChoices.draft,
-            date_expire=now()  # Now should be resolved correctly
+            date_expire=now()
         )
 
         # Create a test subscription
@@ -48,25 +56,29 @@ class NotificationServiceTests(TestCase):
             state=Suscription.SuscriptionState.active
         )
 
+    def tearDown(self):
+        # Reconnect signals after tests
+        pre_save.connect(cache_previous_user, sender=CustomUser)
+        post_save.connect(post_save_user_handler, sender=CustomUser)
+        pre_save.connect(cache_previous_category, sender=Category)
+        post_save.connect(post_save_category_handler, sender=Category)
+        pre_delete.connect(cache_category_before_delete, sender=Category)
+        post_delete.connect(handle_category_after_delete, sender=Category)
+        super().tearDown()
+
     @patch("notification.tasks.send_notification_task.delay")
     def test_change_state(self, mock_send_notification_task):
-        # Probar que changeState envía la notificación correcta
         changeState([self.user.email], self.content, "draft")
-
-        # Verificar que send_notification_task fue llamado con los argumentos correctos
         mock_send_notification_task.assert_called_once()
         args, kwargs = mock_send_notification_task.call_args
-        self.assertEqual(args[0], "Cambio de estado")  # Asunto del correo
+        self.assertEqual(args[0], "Cambio de estado")
         self.assertIn("Tu contenido Test Content ha cambiado de estado", args[2]["message"])
 
     @patch("notification.tasks.send_notification_task.delay")
     def test_change_role(self, mock_send_notification_task):
-        # Crear grupo simulado
         from django.contrib.auth.models import Group
         group = Group.objects.create(name="Test Group")
-
         changeRole(self.user, [group], added=True)
-
         mock_send_notification_task.assert_called_once()
         args, kwargs = mock_send_notification_task.call_args
         self.assertEqual(args[0], "Has sido añadido a un rol.")
@@ -75,7 +87,6 @@ class NotificationServiceTests(TestCase):
     @patch("notification.tasks.send_notification_task.delay")
     def test_welcome_user(self, mock_send_notification_task):
         welcomeUser(self.user)
-
         mock_send_notification_task.assert_called_once()
         args, kwargs = mock_send_notification_task.call_args
         self.assertEqual(args[0], "¡Bienvenido a nuestra aplicación!")
@@ -84,7 +95,6 @@ class NotificationServiceTests(TestCase):
     @patch("notification.tasks.send_notification_task.delay")
     def test_expire_content(self, mock_send_notification_task):
         expire_content(self.user, self.content)
-
         mock_send_notification_task.assert_called_once()
         args, kwargs = mock_send_notification_task.call_args
         self.assertEqual(args[0], "Contenido vencido")
@@ -92,34 +102,25 @@ class NotificationServiceTests(TestCase):
 
     @patch("notification.tasks.send_notification_task.delay")
     def test_payment_success(self, mock_send_notification_task):
-        # Create a fake invoice structure
         class FakeInvoice:
             amount_paid = 1000
             currency = "USD"
-
-            # Nested structure to simulate lines and period end
             class FakeLine:
                 class FakePeriod:
-                    end = 1672531199  # Simulate a timestamp for end
-
+                    end = 1672531199
                 period = FakePeriod()
-
             lines = type("Lines", (), {"data": [FakeLine()]})
             status_transitions = type("Transitions", (), {"paid_at": 1672531199})
 
         invoice = FakeInvoice()
-
         payment_success(self.user, self.category, invoice)
-
         mock_send_notification_task.assert_called_once()
         args, kwargs = mock_send_notification_task.call_args
         self.assertEqual(args[0], "Pago exitoso")
         self.assertIn("tu pago por la categoría Test Category ha sido procesado exitosamente", args[2]["message"])
 
-
     @patch("notification.tasks.send_notification_task.delay")
     def test_payment_failed(self, mock_send_notification_task):
-        # Crear factura simulada
         class FakeInvoice:
             amount_due = 1000
             currency = "USD"
@@ -127,7 +128,6 @@ class NotificationServiceTests(TestCase):
 
         invoice = FakeInvoice()
         payment_failed(self.user, self.category, invoice)
-
         mock_send_notification_task.assert_called_once()
         args, kwargs = mock_send_notification_task.call_args
         self.assertEqual(args[0], "Pago fallido")
@@ -136,11 +136,7 @@ class NotificationServiceTests(TestCase):
     @patch("notification.tasks.send_notification_task.delay")
     def test_subscription_cancelled(self, mock_send_notification_task):
         subscription_cancelled(self.user, self.category)
-
         mock_send_notification_task.assert_called_once()
         args, kwargs = mock_send_notification_task.call_args
         self.assertEqual(args[0], "Suscripción cancelada")
         self.assertIn("tu suscripción a la categoría Test Category ha sido cancelada", args[2]["message"])
-
-
-
