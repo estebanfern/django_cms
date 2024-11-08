@@ -9,8 +9,8 @@ from app.models import CustomUser
 from app.signals import cache_previous_user, post_save_user_handler
 from category.models import Category
 from category.signals import cache_previous_category, post_save_category_handler, cache_category_before_delete, handle_category_after_delete
-from content.forms import ContentForm
-from content.models import Content
+from content.forms import ContentForm, ReportForm
+from content.models import Content, Report
 from unittest.mock import patch
 
 class ContentCreateViewTest(TestCase):
@@ -1272,3 +1272,189 @@ class KanbanBoardTest(TestCase):
         self.expired_content.refresh_from_db()
         self.assertEqual(self.expired_content.state, 'inactive',
                          "El contenido expirado no debería poder moverse de inactivo a publicado.")
+
+
+class ReportModelTest(TestCase):
+    """
+    Pruebas unitarias para el modelo `Report`, que asegura que los reportes se puedan crear y manejen adecuadamente
+    los atributos y relaciones definidas en el modelo.
+
+    Métodos:
+        - setUp: Configura el entorno de prueba creando un usuario, una categoría y un contenido de prueba.
+        - tearDown: Restaura las señales desconectadas para asegurar que las pruebas no interfieran con el funcionamiento normal.
+        - test_create_report: Verifica la creación correcta de un reporte asociado con un contenido,
+        comprobando que los atributos del reporte coincidan con los valores esperados.
+    """
+    def setUp(self):
+        # Desconectar la señal post_save para Category
+        post_save.disconnect(post_save_category_handler, sender=Category)
+        
+        # Crear un usuario de prueba
+        self.user = get_user_model().objects.create_user(
+            email='reportuser@example.com',
+            name='Report User',
+            password='password123'
+        )
+        
+        # Crear una categoría de prueba
+        self.category = Category.objects.create(
+            name='Test Category',
+            description='Descripción de prueba'  # Proporcionar una descripción si es necesario
+        )
+        
+        # Crear un contenido de prueba con autor y categoría
+        self.content = Content.objects.create(
+            title='Test Content',
+            summary='Summary for test content',
+            autor=self.user,
+            category=self.category,
+            state='draft',
+            date_create=timezone.now(),
+        )
+
+    def tearDown(self):
+        # Reconectar la señal después de la prueba
+        post_save.connect(post_save_category_handler, sender=Category)
+
+    def test_create_report(self):
+        report = Report.objects.create(
+            content=self.content,
+            reported_by=self.user,
+            email='user@example.com',
+            name='Test Reporter',
+            reason='spam',
+            description='Este es un reporte de prueba.',
+            created_at=timezone.now()
+        )
+        self.assertEqual(report.content, self.content)
+        self.assertEqual(report.reported_by, self.user)
+        self.assertEqual(report.email, 'user@example.com')
+        self.assertEqual(report.name, 'Test Reporter')
+        self.assertEqual(report.reason, 'spam')
+        self.assertIn('reporte de prueba', report.description)
+
+
+
+class ReportFormTest(TestCase):
+    """
+    Pruebas unitarias para el formulario `ReportForm`, asegurando que se manejen correctamente los datos iniciales,
+    los datos válidos e inválidos al crear un reporte.
+
+    Métodos:
+        - setUp: Configura el entorno de prueba creando un usuario de prueba para usar en los formularios.
+        - test_form_initial_data_for_authenticated_user: Verifica que los campos `name` y `email` se inicialicen
+        correctamente con los datos del usuario autenticado.
+        - test_form_invalid_data: Verifica que el formulario sea inválido cuando los datos proporcionados no son correctos.
+        - test_form_valid_data: Verifica que el formulario sea válido cuando se proporcionan datos correctos para crear un reporte.
+    """
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            email='formuser@example.com',
+            name='Form User',
+            password='password123'
+        )
+
+    def test_form_initial_data_for_authenticated_user(self):
+        form = ReportForm(user=self.user)
+        self.assertEqual(form.fields['name'].initial, 'Form User')
+        self.assertEqual(form.fields['email'].initial, 'formuser@example.com')
+
+    def test_form_invalid_data(self):
+        form_data = {'name': '', 'email': 'invalidemail', 'reason': 'spam', 'description': 'Test description'}
+        form = ReportForm(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('name', form.errors)
+        self.assertIn('email', form.errors)
+    
+    def test_form_valid_data(self):
+        form_data = {'name': 'Test User', 'email': 'testuser@example.com', 'reason': 'spam', 'description': 'Valid report'}
+        form = ReportForm(data=form_data)
+        self.assertTrue(form.is_valid())
+
+class ReportPostViewTest(TestCase):
+    """
+    Pruebas unitarias para la vista `report_post`, que maneja la creación de reportes asociados a contenidos.
+
+    Métodos:
+        - setUp: Configura el entorno de prueba creando un usuario, categoría y contenido de prueba.
+        - tearDown: Reconecta la señal `post_save` para `Category` después de cada prueba.
+        - test_post_valid_report: Verifica que se pueda crear un reporte correctamente con datos válidos.
+        - test_post_invalid_report: Verifica el manejo de datos inválidos, asegurando que el formulario no se acepte.
+        - test_post_report_ajax: Verifica el comportamiento de la vista al realizar una solicitud AJAX, asegurando una respuesta adecuada.
+    """
+    def setUp(self):
+        # Desconectar la señal post_save para Category
+        post_save.disconnect(post_save_category_handler, sender=Category)
+        
+        # Crear un usuario de prueba
+        self.user = get_user_model().objects.create_user(
+            email='viewuser@example.com',
+            name='View User',
+            password='password123'
+        )
+        
+        # Crear una categoría de prueba
+        self.category = Category.objects.create(
+            name='Test Category',
+            description='Descripción de prueba'  # Asegura que la descripción sea compatible si es requerida
+        )
+        
+        # Crear un contenido de prueba con autor y categoría
+        self.content = Content.objects.create(
+            title='Content for reporting',
+            summary='Summary for test content',
+            autor=self.user,
+            category=self.category,  # Se asigna la categoría para evitar problemas de relación
+            state='draft',
+            date_create=timezone.now()
+        )
+        
+        # URL para la vista de reportes
+        self.url = reverse('report_post', args=[self.content.id])
+        
+        # Autenticarse como el usuario de prueba
+        self.client.login(email='viewuser@example.com', password='password123')
+
+    def tearDown(self):
+        # Reconectar la señal después de la prueba
+        post_save.connect(post_save_category_handler, sender=Category)
+
+    def test_post_valid_report(self):
+        # Enviar una solicitud POST válida para crear un reporte
+        response = self.client.post(self.url, {
+            'name': 'Test User',
+            'email': 'test@example.com',
+            'reason': 'spam',
+            'description': 'Testing report'
+        })
+        
+        # Verificar que se redirige correctamente y se crea el reporte
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Report.objects.filter(content=self.content).exists())
+
+    def test_post_invalid_report(self):
+        # Enviar una solicitud POST inválida
+        response = self.client.post(self.url, {
+            'name': '',
+            'email': 'invalidemail',
+            'reason': 'spam',
+            'description': ''
+        })
+        
+        # Verificar que se recibe un código de error y el mensaje esperado
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('No se permite acceso directo', response.content.decode())
+
+    def test_post_report_ajax(self):
+        # Enviar una solicitud POST usando AJAX
+        response = self.client.post(self.url, {
+            'name': 'Test User',
+            'email': 'test@example.com',
+            'reason': 'spam',
+            'description': 'Testing report'
+        }, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        
+        # Verificar que se recibe una respuesta JSON de éxito
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json().get('success'), True)
+        self.assertTrue(Report.objects.filter(content=self.content).exists())
