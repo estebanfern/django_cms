@@ -40,6 +40,8 @@ def home_view(request):
         date_published__lt=timezone.now()
     ).select_related('category', 'autor').order_by('-date_published')
 
+    importants = list(divide_in_groups(contents.filter(important__exact=True), 5))
+
     if request.user.is_authenticated:
         suscribed_categories = Suscription.objects.filter(user=request.user).values_list('category', flat=True)
     else:
@@ -81,8 +83,6 @@ def home_view(request):
         page_number = int(str_page_number)
     if (page_number is None) or (page_number < 1): page_number = 1
     page_obj = paginator.get_page(page_number)
-
-    importants = list(divide_in_groups(Content.objects.filter(important__exact=True), 5))
 
     # Renderiza la plantilla con los contenidos paginados y la información de la categoría y búsqueda
     return render(request, 'inicio.html', {'page_obj': page_obj, 'category': category, 'query': query, 'importants': importants})
