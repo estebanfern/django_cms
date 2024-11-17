@@ -3,18 +3,18 @@ from django.apps import apps
 
 def categories(request):
     """
-    Función para obtener y clasificar las categorías de contenido según su tipo.
+    Obtiene y clasifica las categorías de contenido según su tipo.
 
     :param request: La solicitud HTTP recibida.
     :type request: HttpRequest
 
-    Lógica:
+    :logic:
         - Filtra y clasifica las categorías en tres tipos:
             - 'Publico': Categorías visibles para todos los usuarios.
             - 'Suscriptor': Categorías accesibles solo para usuarios suscriptores.
             - 'Pago': Categorías accesibles solo mediante pago.
 
-    :return: Un diccionario con las categorías clasificadas en:
+    :return: Diccionario con las categorías clasificadas por tipo:
         - 'categories_publicas': Categorías públicas.
         - 'categories_suscriptores': Categorías para suscriptores.
         - 'categories_pago': Categorías de pago.

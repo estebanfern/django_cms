@@ -4,24 +4,43 @@ def validate_permission_kanban(user, content, newState, oldState):
     """
     Valida si un usuario tiene permiso para cambiar el estado de un contenido en un flujo de trabajo tipo Kanban.
 
-    Esta función verifica:
-    - Si la transición entre estados es válida según el flujo de estados predefinido.
-    - Si el usuario tiene los permisos necesarios para cambiar a un nuevo estado.
-    - Restricciones adicionales según las reglas del negocio para ciertos estados, como la moderación de categorías.
+    Esta función asegura que las transiciones de estado de un contenido sean válidas de acuerdo con las reglas del negocio.
 
-    :param user: El usuario que intenta realizar la acción.
-    :type user: User (Django User model)
-    :param content: El contenido cuyo estado se está modificando.
-    :type content: Content (Modelo de contenido)
+    :param user: Usuario que intenta realizar la acción.
+    :type user: User
+    :param content: Contenido cuyo estado se está modificando.
+    :type content: Content
     :param newState: El nuevo estado al que se desea cambiar.
     :type newState: str
     :param oldState: El estado actual del contenido.
     :type oldState: str
 
-    :return: Un diccionario con el estado de la validación y un mensaje de error o éxito.
+    :return: Diccionario con el estado de la validación y un mensaje descriptivo.
     :rtype: dict
 
-    :raises KeyError: Si el `newState` o el `oldState` no son válidos dentro del flujo de estados.
+    :raises KeyError: Si el `newState` o el `oldState` no son válidos dentro del flujo de estados predefinido.
+
+    Flujo de Estados:
+        - draft:
+            - name: "Borrador"
+            - next: ["revision", "publish"]
+            - prev: []
+        - revision:
+            - name: "Edición"
+            - next: ["to_publish"]
+            - prev: ["draft"]
+        - to_publish:
+            - name: "A publicar"
+            - next: ["publish"]
+            - prev: ["revision"]
+        - publish:
+            - name: "Publicado"
+            - next: ["inactive"]
+            - prev: []
+        - inactive:
+            - name: "Inactivo"
+            - next: []
+            - prev: ["publish"]
     """
     stateFlow = {
         'draft': {

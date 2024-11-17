@@ -191,7 +191,7 @@ def stripe_webhook(request):
     :param request: Objeto de solicitud HTTP.
     :type request: HttpRequest
 
-    :comportamiento:
+    Comportamiento
         - Verifica la firma del webhook y construye el evento de Stripe.
         - Realiza acciones específicas según el tipo de evento:
           - `checkout.session.completed`: Guarda el ID del cliente de Stripe en el usuario del sistema.

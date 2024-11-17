@@ -14,23 +14,18 @@ from app.signals import cache_previous_user, post_save_user_handler
 @override_settings(DEFAULT_FILE_STORAGE='storages.backends.s3boto3.S3Boto3Storage')
 class ProfilePictureUploadTest(TestCase):
     """
-    Pruebas para la subida de fotos de perfil de usuario.
+    Clase de pruebas para la funcionalidad de carga de imágenes de perfil de usuario.
 
-    Hereda de:
-        TestCase: Clase base para las pruebas unitarias en Django.
-
-    Métodos:
-        setUp: Configura un usuario de prueba antes de cada test.
-        test_profile_picture_upload: Verifica que se pueda subir una foto de perfil correctamente.
+    :raises: Puede lanzar excepciones relacionadas con la creación de datos de prueba.
     """
 
     def setUp(self):
         """
-        Configura un usuario de prueba antes de cada test.
+        Configura el entorno de pruebas para la carga de imágenes de perfil.
 
-        Acciones:
-            - Crea un usuario con un correo electrónico, nombre y contraseña específicos.
+        :raises: Puede lanzar excepciones relacionadas con la creación de datos de prueba.
         """
+
         pre_save.disconnect(cache_previous_user, sender=CustomUser)
         post_save.disconnect(post_save_user_handler, sender=CustomUser)
         # Crea un usuario de prueba
@@ -41,6 +36,10 @@ class ProfilePictureUploadTest(TestCase):
         )
 
     def tearDown(self):
+        """
+        Limpia el entorno de pruebas reconectando las señales.
+        """
+
         pre_save.connect(cache_previous_user, sender=CustomUser)
         post_save.connect(post_save_user_handler, sender=CustomUser)
         super().tearDown()
@@ -48,11 +47,10 @@ class ProfilePictureUploadTest(TestCase):
     @override_settings(DEFAULT_FILE_STORAGE='storages.backends.s3boto3.S3Boto3Storage')
     def test_profile_picture_upload(self):
         """
-        Verifica que se pueda subir una foto de perfil correctamente.
+        Prueba la carga de una imagen de perfil para un usuario.
 
-        Acciones:
-            - Carga una imagen de prueba y la asigna al campo `photo` del usuario.
-            - Guarda el usuario con la imagen subida.
+        :return: Verifica que la imagen se asocie correctamente al campo `photo` del usuario.
+        :rtype: None
         """
 
         # Ruta de la imagen de prueba
@@ -72,32 +70,32 @@ class ProfilePictureUploadTest(TestCase):
 
 class CustomUserCreationFormTest(TestCase):
     """
-    Pruebas para el formulario de creación de usuarios personalizados.
-
-    Hereda de:
-        TestCase: Clase base para las pruebas unitarias en Django.
-
-    Métodos:
-        test_valid_form: Verifica que el formulario sea válido con datos correctos.
-        test_invalid_password_confirmation: Verifica que el formulario sea inválido si las contraseñas no coinciden.
+    Clase de pruebas para el formulario de creación de usuarios personalizados.
     """
 
     def setUp(self):
+        """
+        Configura el entorno de pruebas desconectando las señales para evitar efectos secundarios.
+        """
+
         pre_save.disconnect(cache_previous_user, sender=CustomUser)
         post_save.disconnect(post_save_user_handler, sender=CustomUser)
 
     def tearDown(self):
+        """
+        Reconecta las señales después de completar las pruebas.
+        """
+
         pre_save.connect(cache_previous_user, sender=CustomUser)
         post_save.connect(post_save_user_handler, sender=CustomUser)
         super().tearDown()
 
     def test_valid_form(self):
         """
-        Verifica que el formulario sea válido con datos correctos.
+        Prueba que el formulario de creación de usuario sea válido con datos correctos.
 
-        Acciones:
-            - Rellena el formulario con datos válidos.
-            - Guarda el usuario y verifica que los datos guardados sean correctos.
+        :return: Verifica que se cree un usuario con los datos proporcionados.
+        :rtype: None
         """
 
         form_data = {
@@ -114,11 +112,10 @@ class CustomUserCreationFormTest(TestCase):
 
     def test_invalid_password_confirmation(self):
         """
-        Verifica que el formulario sea inválido si las contraseñas no coinciden.
+        Prueba que el formulario sea inválido si las contraseñas no coinciden.
 
-        Acciones:
-            - Rellena el formulario con contraseñas diferentes.
-            - Verifica que el formulario no sea válido y que el error se encuentre en el campo `password2`.
+        :return: Verifica que se genere un error en el campo `password2`.
+        :rtype: None
         """
 
         form_data = {
@@ -134,27 +131,14 @@ class CustomUserCreationFormTest(TestCase):
 
 class CustomAuthenticationFormTest(TestCase):
     """
-    Pruebas para el formulario de autenticación personalizado.
-
-    Hereda de:
-        TestCase: Clase base para las pruebas unitarias en Django.
-
-    Métodos:
-        setUp: Configura un usuario de prueba antes de cada test.
-        test_valid_form: Verifica que el formulario sea válido con credenciales correctas.
-        test_invalid_password: Verifica que el formulario sea inválido con una contraseña incorrecta.
-        test_missing_username: Verifica que el formulario sea inválido si falta el correo electrónico.
-        test_missing_password: Verifica que el formulario sea inválido si falta la contraseña.
-        test_inactive_user: Verifica que el formulario sea inválido si el usuario está desactivado.
+    Clase de pruebas para el formulario de autenticación de usuarios personalizados.
     """
 
     def setUp(self):
         """
-        Configura un usuario de prueba antes de cada test.
-
-        Acciones:
-            - Crea un usuario con un correo electrónico, nombre y contraseña específicos.
+        Configura el entorno de pruebas creando un usuario de prueba.
         """
+
         pre_save.disconnect(cache_previous_user, sender=CustomUser)
         post_save.disconnect(post_save_user_handler, sender=CustomUser)
         # Crear un usuario de prueba
@@ -165,17 +149,20 @@ class CustomAuthenticationFormTest(TestCase):
         )
 
     def tearDown(self):
+        """
+        Reconecta las señales después de completar las pruebas.
+        """
+
         pre_save.connect(cache_previous_user, sender=CustomUser)
         post_save.connect(post_save_user_handler, sender=CustomUser)
         super().tearDown()
 
     def test_valid_form(self):
         """
-        Verifica que el formulario sea válido con credenciales correctas.
+        Prueba que el formulario de autenticación sea válido con credenciales correctas.
 
-        Acciones:
-            - Rellena el formulario con un correo electrónico y contraseña válidos.
-            - Verifica que el formulario sea válido.
+        :return: Verifica que el formulario sea válido.
+        :rtype: None
         """
 
         form_data = {
@@ -187,11 +174,10 @@ class CustomAuthenticationFormTest(TestCase):
 
     def test_invalid_password(self):
         """
-        Verifica que el formulario sea inválido con una contraseña incorrecta.
+        Prueba que el formulario sea inválido con una contraseña incorrecta.
 
-        Acciones:
-            - Rellena el formulario con una contraseña incorrecta.
-            - Verifica que el formulario no sea válido y que haya un error general de autenticación.
+        :return: Verifica que se genere un error relacionado con la autenticación incorrecta.
+        :rtype: None
         """
 
         form_data = {
@@ -204,11 +190,10 @@ class CustomAuthenticationFormTest(TestCase):
 
     def test_missing_username(self):
         """
-        Verifica que el formulario sea inválido si falta el correo electrónico.
+        Prueba que el formulario sea inválido si falta el correo electrónico.
 
-        Acciones:
-            - Rellena el formulario sin un correo electrónico.
-            - Verifica que el formulario no sea válido y que el error se encuentre en el campo `username`.
+        :return: Verifica que se genere un error en el campo `username`.
+        :rtype: None
         """
 
         form_data = {
@@ -221,11 +206,10 @@ class CustomAuthenticationFormTest(TestCase):
 
     def test_missing_password(self):
         """
-        Verifica que el formulario sea inválido si falta la contraseña.
+        Prueba que el formulario sea inválido si falta la contraseña.
 
-        Acciones:
-            - Rellena el formulario sin una contraseña.
-            - Verifica que el formulario no sea válido y que el error se encuentre en el campo `password`.
+        :return: Verifica que se genere un error en el campo `password`.
+        :rtype: None
         """
 
         form_data = {
@@ -238,12 +222,10 @@ class CustomAuthenticationFormTest(TestCase):
 
     def test_inactive_user(self):
         """
-        Verifica que el formulario sea inválido si el usuario está desactivado.
+        Prueba que el formulario sea inválido si el usuario está desactivado.
 
-        Acciones:
-            - Desactiva el usuario de prueba.
-            - Rellena el formulario con credenciales válidas.
-            - Verifica que el formulario no sea válido.
+        :return: Verifica que el formulario no sea válido.
+        :rtype: None
         """
 
         self.user.is_active = False
@@ -259,23 +241,14 @@ class CustomAuthenticationFormTest(TestCase):
 
 class ProfileUpdateFormTest(TestCase):
     """
-    Pruebas para el formulario de actualización de perfil.
-
-    Hereda de:
-        TestCase: Clase base para las pruebas unitarias en Django.
-
-    Métodos:
-        setUp: Configura un usuario de prueba antes de cada test.
-        test_update_name_and_about: Verifica que se puedan actualizar los campos `name` y `about`.
+    Clase de pruebas para el formulario de actualización de perfil de usuario.
     """
 
     def setUp(self):
         """
-        Configura un usuario de prueba antes de cada test.
-
-        Acciones:
-            - Crea un usuario con un correo electrónico, nombre, contraseña y descripción específicos.
+        Configura el entorno de pruebas creando un usuario de prueba con datos iniciales.
         """
+
         pre_save.disconnect(cache_previous_user, sender=CustomUser)
         post_save.disconnect(post_save_user_handler, sender=CustomUser)
         self.user = get_user_model().objects.create_user(
@@ -286,17 +259,20 @@ class ProfileUpdateFormTest(TestCase):
         )
 
     def tearDown(self):
+        """
+        Reconecta las señales después de completar las pruebas.
+        """
+
         pre_save.connect(cache_previous_user, sender=CustomUser)
         post_save.connect(post_save_user_handler, sender=CustomUser)
         super().tearDown()
 
     def test_update_name_and_about(self):
         """
-        Verifica que se puedan actualizar los campos `name` y `about`.
+        Prueba que el formulario permita actualizar el nombre y el campo `about` del perfil.
 
-        Acciones:
-            - Rellena el formulario con un nuevo nombre y descripción.
-            - Guarda el formulario y verifica que los datos del usuario se actualicen correctamente.
+        :return: Verifica que los datos del usuario se actualicen correctamente.
+        :rtype: None
         """
 
         form_data = {
@@ -312,29 +288,14 @@ class ProfileUpdateFormTest(TestCase):
 
 class ChangePasswordFormTest(TestCase):
     """
-    Pruebas para el formulario de cambio de contraseña.
-
-    Hereda de:
-        TestCase: Clase base para las pruebas unitarias en Django.
-
-    Métodos:
-        setUp: Configura un usuario de prueba antes de cada test.
-        test_valid_password_change: Verifica que el formulario sea válido con las contraseñas correctas.
-        test_incorrect_current_password: Verifica que el formulario sea inválido si la contraseña actual es incorrecta.
-        test_new_passwords_do_not_match: Verifica que el formulario sea inválido si las nuevas contraseñas no coinciden.
-        test_new_password_same_as_current: Verifica que el formulario sea inválido si la nueva contraseña es igual a la actual.
-        test_missing_current_password: Verifica que el formulario sea inválido si falta la contraseña actual.
-        test_missing_new_password: Verifica que el formulario sea inválido si faltan las nuevas contraseñas.
-        test_short_new_password: Verifica que el formulario sea inválido si la nueva contraseña es demasiado corta.
+    Clase de pruebas para el formulario de cambio de contraseña.
     """
 
     def setUp(self):
         """
-        Configura un usuario de prueba antes de cada test.
-
-        Acciones:
-            - Crea un usuario con un correo electrónico, nombre y contraseña específicos.
+        Configura el entorno de pruebas creando un usuario con una contraseña inicial.
         """
+
         pre_save.disconnect(cache_previous_user, sender=CustomUser)
         post_save.disconnect(post_save_user_handler, sender=CustomUser)
         self.user = get_user_model().objects.create_user(
@@ -344,17 +305,20 @@ class ChangePasswordFormTest(TestCase):
         )
 
     def tearDown(self):
+        """
+        Reconecta las señales después de completar las pruebas.
+        """
+
         pre_save.connect(cache_previous_user, sender=CustomUser)
         post_save.connect(post_save_user_handler, sender=CustomUser)
         super().tearDown()
 
     def test_valid_password_change(self):
         """
-        Verifica que el formulario sea válido con las contraseñas correctas.
+        Prueba que el formulario sea válido con una contraseña actual correcta y nuevas contraseñas válidas.
 
-        Acciones:
-            - Rellena el formulario con la contraseña actual y nuevas contraseñas válidas.
-            - Guarda el formulario y verifica que la contraseña del usuario haya cambiado.
+        :return: Verifica que la contraseña del usuario se actualice correctamente.
+        :rtype: None
         """
 
         form_data = {
@@ -370,11 +334,10 @@ class ChangePasswordFormTest(TestCase):
 
     def test_incorrect_current_password(self):
         """
-        Verifica que el formulario sea inválido si la contraseña actual es incorrecta.
+        Prueba que el formulario sea inválido si la contraseña actual es incorrecta.
 
-        Acciones:
-            - Rellena el formulario con una contraseña actual incorrecta.
-            - Verifica que el formulario no sea válido.
+        :return: Verifica que el formulario genere un error.
+        :rtype: None
         """
 
         form_data = {
@@ -387,11 +350,10 @@ class ChangePasswordFormTest(TestCase):
 
     def test_new_passwords_do_not_match(self):
         """
-        Verifica que el formulario sea inválido si las nuevas contraseñas no coinciden.
+        Prueba que el formulario sea inválido si las nuevas contraseñas no coinciden.
 
-        Acciones:
-            - Rellena el formulario con contraseñas nuevas diferentes.
-            - Verifica que el formulario no sea válido.
+        :return: Verifica que el formulario genere un error.
+        :rtype: None
         """
 
         form_data = {
@@ -404,11 +366,10 @@ class ChangePasswordFormTest(TestCase):
 
     def test_new_password_same_as_current(self):
         """
-        Verifica que el formulario sea inválido si la nueva contraseña es igual a la actual.
+        Prueba que el formulario sea inválido si la nueva contraseña es igual a la actual.
 
-        Acciones:
-            - Rellena el formulario con una nueva contraseña igual a la actual.
-            - Verifica que el formulario no sea válido.
+        :return: Verifica que el formulario genere un error.
+        :rtype: None
         """
 
         form_data = {
@@ -421,11 +382,10 @@ class ChangePasswordFormTest(TestCase):
 
     def test_missing_current_password(self):
         """
-        Verifica que el formulario sea inválido si falta la contraseña actual.
+        Prueba que el formulario sea inválido si falta la contraseña actual.
 
-        Acciones:
-            - Rellena el formulario sin la contraseña actual.
-            - Verifica que el formulario no sea válido.
+        :return: Verifica que el formulario genere un error.
+        :rtype: None
         """
 
         form_data = {
@@ -438,11 +398,10 @@ class ChangePasswordFormTest(TestCase):
 
     def test_missing_new_password(self):
         """
-        Verifica que el formulario sea inválido si faltan las nuevas contraseñas.
+        Prueba que el formulario sea inválido si faltan las nuevas contraseñas.
 
-        Acciones:
-            - Rellena el formulario sin las nuevas contraseñas.
-            - Verifica que el formulario no sea válido.
+        :return: Verifica que el formulario genere un error.
+        :rtype: None
         """
 
         form_data = {
@@ -455,11 +414,10 @@ class ChangePasswordFormTest(TestCase):
 
     def test_short_new_password(self):
         """
-        Verifica que el formulario sea inválido si la nueva contraseña es demasiado corta.
+        Prueba que el formulario sea inválido si la nueva contraseña tiene menos de 8 caracteres.
 
-        Acciones:
-            - Rellena el formulario con una nueva contraseña que tiene menos de 8 caracteres.
-            - Verifica que el formulario no sea válido.
+        :return: Verifica que el formulario genere un error.
+        :rtype: None
         """
 
         form_data = {
