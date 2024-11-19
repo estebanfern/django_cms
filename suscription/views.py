@@ -1,5 +1,6 @@
 import json
 import locale
+import logging
 from io import BytesIO
 
 import openpyxl
@@ -22,11 +23,27 @@ from django.contrib.auth.decorators import login_required
 from cms.profile import base
 
 
+logger = logging.getLogger(__name__)
+
+
 # Create your views here.
 
 def my_subscriptions(request):
     user = request.user
     suscriptions = Suscription.objects.filter(user=user)
+    for suscription in suscriptions:
+        try:
+            if suscription.category.type == Category.TypeChoices.paid:
+                subscription = stripe.Subscription.retrieve(suscription.stripe_subscription_id)
+                date_end = subscription.current_period_end
+                date_end_at = make_aware(datetime.fromtimestamp(date_end))
+                locale.setlocale(locale.LC_TIME, 'es_PY.UTF-8')
+                formatted_period_end = date_end_at.strftime('%d de %B de %Y a las %H:%M')
+                suscription.period_end_display = formatted_period_end
+        except stripe.error.StripeError as e:
+            suscription.period_end_display = "No disponible"
+            logger.error(f"Error al obtener la suscripción de Stripe: {e}")
+
     return render(request, "subscription/subscriptions.html", {'subscriptions': suscriptions})
 
 def suscribe_category(request, category_id):
