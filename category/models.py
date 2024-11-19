@@ -1,4 +1,4 @@
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 class Category(models.Model):
@@ -51,7 +51,10 @@ class Category(models.Model):
         null=True,        # Permite valores nulos en la base de datos
         blank=True,       # Permite que el campo esté vacío en formularios
         verbose_name=('Costo'),
-        validators=[MinValueValidator(7000)]
+        validators=[
+            MinValueValidator(7000),
+            MaxValueValidator( 99999999)
+        ]
     )
     stripe_product_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='ID de Producto en Stripe')
     stripe_price_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='ID de Precio en Stripe')
