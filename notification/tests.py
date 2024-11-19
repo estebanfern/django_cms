@@ -14,8 +14,33 @@ from category.signals import cache_previous_category, post_save_category_handler
 User = get_user_model()
 
 class NotificationServiceTests(TestCase):
+    """
+    Clase de pruebas para el servicio de notificaciones.
+
+    Esta clase contiene pruebas unitarias para verificar el correcto funcionamiento de las
+    funcionalidades relacionadas con el servicio de notificaciones, como cambios de estado,
+    roles, mensajes de bienvenida y pagos relacionados con suscripciones y contenidos.
+
+    :param user: Usuario de prueba utilizado en las pruebas.
+    :type user: CustomUser
+    :param category: Categoría de prueba asociada con las suscripciones y contenidos.
+    :type category: Category
+    :param content: Contenido de prueba relacionado con el usuario y la categoría.
+    :type content: Content
+    :param suscription: Suscripción de prueba asociada al usuario y la categoría.
+    :type suscription: Suscription
+    """
+
     def setUp(self):
-        # Disconnect signals to avoid side effects during tests
+        """
+        Configura el entorno de pruebas.
+
+        Desconecta las señales para evitar efectos secundarios durante las pruebas
+        y crea datos de prueba para los usuarios, categorías, contenidos y suscripciones.
+
+        :raises: Puede generar excepciones relacionadas con la creación de datos de prueba.
+        """
+
         pre_save.disconnect(cache_previous_user, sender=CustomUser)
         post_save.disconnect(post_save_user_handler, sender=CustomUser)
         pre_save.disconnect(cache_previous_category, sender=Category)
@@ -57,7 +82,12 @@ class NotificationServiceTests(TestCase):
         )
 
     def tearDown(self):
-        # Reconnect signals after tests
+        """
+        Limpia el entorno de pruebas.
+
+        Reconecta las señales después de completar las pruebas para restaurar el estado original.
+        """
+
         pre_save.connect(cache_previous_user, sender=CustomUser)
         post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
@@ -68,6 +98,15 @@ class NotificationServiceTests(TestCase):
 
     @patch("notification.tasks.send_notification_task.delay")
     def test_change_state(self, mock_send_notification_task):
+        """
+        Prueba el cambio de estado de un contenido.
+
+        Verifica que se envíe una notificación al cambiar el estado del contenido.
+
+        :param mock_send_notification_task: Mock que simula la tarea de envío de notificaciones.
+        :type mock_send_notification_task: MagicMock
+        """
+
         changeState([self.user.email], self.content, "draft")
         mock_send_notification_task.assert_called_once()
         args, kwargs = mock_send_notification_task.call_args
@@ -76,6 +115,15 @@ class NotificationServiceTests(TestCase):
 
     @patch("notification.tasks.send_notification_task.delay")
     def test_change_role(self, mock_send_notification_task):
+        """
+        Prueba el cambio de roles para un usuario.
+
+        Verifica que se envíe una notificación al añadir un usuario a un grupo o rol.
+
+        :param mock_send_notification_task: Mock que simula la tarea de envío de notificaciones.
+        :type mock_send_notification_task: MagicMock
+        """
+
         from django.contrib.auth.models import Group
         group = Group.objects.create(name="Test Group")
         changeRole(self.user, [group], added=True)
@@ -86,6 +134,15 @@ class NotificationServiceTests(TestCase):
 
     @patch("notification.tasks.send_notification_task.delay")
     def test_welcome_user(self, mock_send_notification_task):
+        """
+        Prueba el envío de un mensaje de bienvenida.
+
+        Verifica que se envíe una notificación al registrar un nuevo usuario.
+
+        :param mock_send_notification_task: Mock que simula la tarea de envío de notificaciones.
+        :type mock_send_notification_task: MagicMock
+        """
+
         welcomeUser(self.user)
         mock_send_notification_task.assert_called_once()
         args, kwargs = mock_send_notification_task.call_args
@@ -94,6 +151,15 @@ class NotificationServiceTests(TestCase):
 
     @patch("notification.tasks.send_notification_task.delay")
     def test_expire_content(self, mock_send_notification_task):
+        """
+        Prueba la notificación de contenido vencido.
+
+        Verifica que se envíe una notificación cuando un contenido ha expirado.
+
+        :param mock_send_notification_task: Mock que simula la tarea de envío de notificaciones.
+        :type mock_send_notification_task: MagicMock
+        """
+
         expire_content(self.user, self.content)
         mock_send_notification_task.assert_called_once()
         args, kwargs = mock_send_notification_task.call_args
@@ -102,6 +168,15 @@ class NotificationServiceTests(TestCase):
 
     @patch("notification.tasks.send_notification_task.delay")
     def test_payment_success(self, mock_send_notification_task):
+        """
+        Prueba la notificación de pago exitoso.
+
+        Verifica que se envíe una notificación cuando un pago relacionado con una suscripción se procesa correctamente.
+
+        :param mock_send_notification_task: Mock que simula la tarea de envío de notificaciones.
+        :type mock_send_notification_task: MagicMock
+        """
+
         class FakeInvoice:
             amount_paid = 1000
             currency = "USD"
@@ -121,6 +196,15 @@ class NotificationServiceTests(TestCase):
 
     @patch("notification.tasks.send_notification_task.delay")
     def test_payment_failed(self, mock_send_notification_task):
+        """
+        Prueba la notificación de pago fallido.
+
+        Verifica que se envíe una notificación cuando un intento de pago relacionado con una suscripción falla.
+
+        :param mock_send_notification_task: Mock que simula la tarea de envío de notificaciones.
+        :type mock_send_notification_task: MagicMock
+        """
+
         class FakeInvoice:
             amount_due = 1000
             currency = "USD"
@@ -135,6 +219,15 @@ class NotificationServiceTests(TestCase):
 
     @patch("notification.tasks.send_notification_task.delay")
     def test_subscription_cancelled(self, mock_send_notification_task):
+        """
+        Prueba la notificación de cancelación de suscripción.
+
+        Verifica que se envíe una notificación cuando una suscripción ha sido cancelada.
+
+        :param mock_send_notification_task: Mock que simula la tarea de envío de notificaciones.
+        :type mock_send_notification_task: MagicMock
+        """
+
         subscription_cancelled(self.user, self.category)
         mock_send_notification_task.assert_called_once()
         args, kwargs = mock_send_notification_task.call_args

@@ -15,33 +15,20 @@ from unittest.mock import patch
 
 class ContentCreateViewTest(TestCase):
     """
-    Tests para la vista de creación de contenido (`ContentCreateView`).
+    Clase de pruebas para la vista de creación de contenido (`ContentCreateView`).
 
-    Hereda de:
-        - TestCase: Clase base para escribir tests unitarios en Django.
+    Prueba el acceso y las funcionalidades de creación de contenido, verificando permisos, validaciones del formulario
+    y comportamientos esperados en la vista.
 
-    Atributos:
-        user (CustomUser): Usuario de prueba con permisos para crear contenido.
-        category (Category): Categoría de prueba para asociar al contenido.
-
-    Métodos:
-        setUp: Configura los datos necesarios para los tests, incluyendo la creación de un usuario con permisos, una categoría y la sesión de usuario.
-        test_access_create_content_with_permission: Verifica que un usuario con los permisos adecuados puede acceder a la vista de creación de contenido.
-        test_access_create_content_without_permission: Verifica que un usuario sin los permisos adecuados recibe un error 403 al intentar acceder a la vista de creación de contenido.
-        test_form_valid_content_creation: Verifica que un formulario válido permite crear contenido y redirige correctamente.
-        test_form_invalid_content_creation: Verifica que un formulario con datos inválidos muestra el formulario de nuevo con errores indicados.
     """
 
     def setUp(self):
         """
-        Configura los datos necesarios para los tests.
+        Configura el entorno necesario para los tests de `ContentCreateView`.
 
-        Lógica:
-            - Crea un usuario de prueba con un permiso específico para crear contenido.
-            - Asigna el permiso al usuario y lo inicia sesión para los tests.
-            - Crea una categoría de prueba para asociar con el contenido.
-
+        Crea un usuario con permisos, una categoría de prueba, y establece la sesión del usuario.
         """
+
         pre_save.disconnect(cache_previous_user, sender=CustomUser)
         post_save.disconnect(post_save_user_handler, sender=CustomUser)
         pre_save.disconnect(cache_previous_category, sender=Category)
@@ -69,6 +56,10 @@ class ContentCreateViewTest(TestCase):
         self.category = Category.objects.create(name='Test Category')
 
     def tearDown(self):
+        """
+        Restablece las conexiones de señales después de cada test.
+        """
+
         pre_save.connect(cache_previous_user, sender=CustomUser)
         post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
@@ -162,21 +153,14 @@ class ContentCreateViewTest(TestCase):
 
 class ContentUpdateViewTest(TestCase):
     """
-    Tests para la vista de actualización de contenido (`ContentUpdateView`).
-
-    Hereda de:
-        - TestCase: Clase base para escribir tests unitarios en Django.
-
-    Atributos:
-        user (CustomUser): Usuario de prueba con permisos para actualizar contenido.
-        category (Category): Categoría de prueba para asociar al contenido.
-        content (Content): Contenido de prueba existente para actualizar.
+    Clase de pruebas para la vista de actualización de contenido (`ContentUpdateView`).
 
     Métodos:
-        setUp: Configura los datos necesarios para los tests, incluyendo la creación de un usuario con permisos, una categoría, y un contenido existente.
-        test_update_content_view: Verifica que un usuario con los permisos adecuados puede acceder a la vista de actualización de contenido.
-        test_form_valid_content_update: Verifica que un formulario válido permite actualizar el contenido y redirige correctamente.
-        test_form_invalid_content_update: Verifica que un formulario con datos inválidos muestra el formulario de nuevo con errores indicados.
+        - setUp: Configura los datos iniciales necesarios para las pruebas.
+        - tearDown: Restaura los estados después de las pruebas.
+        - test_update_content_view: Verifica que un usuario con permisos puede acceder a la vista de actualización.
+        - test_form_valid_content_update: Verifica que un formulario válido permite actualizar el contenido.
+        - test_form_invalid_content_update: Verifica que un formulario inválido muestra errores correctamente.
     """
 
     def setUp(self):
@@ -222,6 +206,14 @@ class ContentUpdateViewTest(TestCase):
         )
 
     def tearDown(self):
+        """
+        Restaura los estados del entorno después de cada prueba.
+
+        Acciones:
+            - Reconecta señales relacionadas.
+            - Llama al metodo `tearDown` de la clase padre.
+        """
+
         pre_save.connect(cache_previous_user, sender=CustomUser)
         post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
@@ -296,18 +288,23 @@ class ContentUpdateViewEditorTest(TestCase):
     """
     Tests para la vista de actualización de contenido por un editor (`ContentUpdateView`).
 
-    Hereda de:
-        - TestCase: Clase base para escribir tests unitarios en Django.
+    Propósito:
+        Verificar que los editores puedan actualizar el campo 'content' de un contenido en estado de revisión,
+        pero no otros campos como 'title' o 'summary'.
 
-    Atributos:
-        editor (CustomUser): Usuario de prueba con permisos de edición de contenido.
-        category (Category): Categoría de prueba para asociar al contenido.
-        content (Content): Contenido de prueba en estado de revisión para actualizar.
+    :ivar editor: Usuario de prueba con permisos de edición de contenido.
+    :type editor: CustomUser
+    :ivar category: Categoría de prueba asociada al contenido.
+    :type category: Category
+    :ivar content: Contenido de prueba en estado de revisión para actualizar.
+    :type content: Content
 
-    Métodos:
-        setUp: Configura los datos necesarios para los tests, incluyendo la creación de un usuario con permisos de editor, una categoría y un contenido en estado de revisión.
-        test_update_content_view_for_editor: Verifica que un editor puede acceder a la vista de actualización de contenido en estado revisión.
-        test_editor_cannot_update_other_fields: Verifica que un editor no puede actualizar campos distintos a 'content' en estado 'revision'.
+    Metodos:
+        - :meth:`setUp`: Configura los datos necesarios para las pruebas, incluyendo la creación de un usuario con permisos,
+          una categoría y un contenido existente en estado de revisión.
+        - :meth:`tearDown`: Restaura las señales desconectadas y limpia el entorno después de cada prueba.
+        - :meth:`test_update_content_view_for_editor`: Verifica que un editor puede acceder a la vista de actualización de contenido en estado de revisión.
+        - :meth:`test_editor_cannot_update_other_fields`: Verifica que un editor no puede modificar campos distintos a 'content' en estado de revisión.
     """
 
     def setUp(self):
@@ -355,6 +352,14 @@ class ContentUpdateViewEditorTest(TestCase):
         self.client.login(email='editor@example.com', password='testpassword123')
 
     def tearDown(self):
+        """
+        Restaura las señales y el entorno después de cada prueba.
+
+        Acciones:
+            - Reconecta señales relacionadas.
+            - Llama al método :meth:`tearDown` de la clase base.
+        """
+
         pre_save.connect(cache_previous_user, sender=CustomUser)
         post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
@@ -432,17 +437,21 @@ class ContentFormTest(TestCase):
     """
     Tests para el formulario de creación y actualización de contenido (`ContentForm`).
 
-    Hereda de:
-        - TestCase: Clase base para escribir tests unitarios en Django.
+    Propósito:
+        Validar el comportamiento del formulario `ContentForm` en diferentes escenarios, incluyendo la creación
+        de contenido válido y la restricción de campos deshabilitados para editores.
 
     Atributos:
-        user (CustomUser): Usuario de prueba.
-        category (Category): Categoría de prueba para asociar al contenido.
+        :ivar user: Usuario de prueba utilizado en los tests.
+        :type user: CustomUser
+        :ivar category: Categoría de prueba utilizada en los tests.
+        :type category: Category
 
     Métodos:
-        setUp: Configura los datos necesarios para los tests, incluyendo la creación de un usuario y una categoría de prueba.
-        test_content_form_creation_valid: Verifica que el formulario de creación de contenido es válido con los datos correctos.
-        test_form_disabled_fields_for_editor: Verifica que los campos que no deben ser modificados están deshabilitados cuando el contenido está en estado de revisión.
+        - :meth:`setUp`: Configura los datos necesarios para las pruebas, incluyendo la creación de un usuario y una categoría.
+        - :meth:`tearDown`: Restaura las señales y limpia el entorno después de cada prueba.
+        - :meth:`test_content_form_creation_valid`: Verifica que el formulario es válido cuando se proporcionan datos correctos.
+        - :meth:`test_form_disabled_fields_for_editor`: Verifica que ciertos campos están deshabilitados cuando el contenido está en estado de revisión.
     """
 
     def setUp(self):
@@ -469,6 +478,14 @@ class ContentFormTest(TestCase):
         self.category = Category.objects.create(name='Test Category')
 
     def tearDown(self):
+        """
+        Restaura las señales y el entorno después de cada prueba.
+
+        Acciones:
+            - Reconecta señales desconectadas durante la configuración inicial.
+            - Llama al metodo :meth:`tearDown` de la clase base.
+        """
+
         pre_save.connect(cache_previous_user, sender=CustomUser)
         post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
@@ -527,22 +544,27 @@ class ReactionTestCase(TestCase):
     """
     Tests para la funcionalidad de reacciones (like y dislike) en el contenido.
 
-    Hereda de:
-        - TestCase: Clase base para escribir tests unitarios en Django.
+    Propósito:
+        Validar que los usuarios puedan interactuar correctamente con la funcionalidad de reacciones,
+        incluyendo dar like, dislike, y cambiar entre ambos estados.
 
     Atributos:
-        user (CustomUser): Usuario de prueba.
-        category (Category): Categoría de prueba para asociar al contenido.
-        content (Content): Contenido de prueba al que se aplican las reacciones (like y dislike).
+        :ivar user: Usuario de prueba utilizado en los tests.
+        :type user: CustomUser
+        :ivar category: Categoría de prueba asociada al contenido.
+        :type category: Category
+        :ivar content: Contenido de prueba sobre el que se prueban las reacciones.
+        :type content: Content
 
     Métodos:
-        setUp: Configura los datos necesarios para los tests, incluyendo la creación de un usuario, una categoría y un contenido de prueba.
-        test_like_content: Verifica que un usuario pueda dar like a un contenido y se registre correctamente.
-        test_dislike_content: Verifica que un usuario pueda dar dislike a un contenido y se registre correctamente.
-        test_remove_like: Verifica que un usuario pueda quitar un like de un contenido.
-        test_remove_dislike: Verifica que un usuario pueda quitar un dislike de un contenido.
-        test_like_then_dislike: Verifica que al dar like a un contenido se elimina un dislike previamente registrado.
-        test_dislike_then_like: Verifica que al dar dislike a un contenido se elimina un like previamente registrado.
+        - :meth:`setUp`: Configura los datos necesarios para los tests, incluyendo un usuario, una categoría y un contenido.
+        - :meth:`tearDown`: Reconecta señales y limpia el entorno después de cada prueba.
+        - :meth:`test_like_content`: Verifica que un usuario pueda dar like a un contenido.
+        - :meth:`test_dislike_content`: Verifica que un usuario pueda dar dislike a un contenido.
+        - :meth:`test_remove_like`: Verifica que un usuario pueda quitar un like de un contenido.
+        - :meth:`test_remove_dislike`: Verifica que un usuario pueda quitar un dislike de un contenido.
+        - :meth:`test_like_then_dislike`: Verifica que al dar like se elimine un dislike previamente registrado.
+        - :meth:`test_dislike_then_like`: Verifica que al dar dislike se elimine un like previamente registrado.
     """
 
     def setUp(self):
@@ -586,12 +608,18 @@ class ReactionTestCase(TestCase):
 
     def tearDown(self):
         """
-            Restaura las señales después de la ejecución de cada test.
+        Restaura las señales después de la ejecución de cada test.
 
-            Lógica:
-                - Reconecta las señales que se desconectaron en `setUp`.
-                - Llama al método `tearDown` de la clase base para limpiar los datos de prueba.
+        Propósito:
+            Asegurar que las señales desconectadas en :meth:`setUp` se reconecten correctamente para evitar efectos secundarios.
+
+        Lógica:
+            - Reconecta todas las señales relacionadas con los modelos `CustomUser` y `Category`.
+            - Llama al metodo `tearDown` de la clase base para realizar limpieza adicional.
+
+        :return: None
         """
+
         pre_save.connect(cache_previous_user, sender=CustomUser)
         post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
@@ -749,45 +777,58 @@ class ReactionTestCase(TestCase):
 
 class KanbanBoardTest(TestCase):
     """
-    Pruebas para la vista de tablero Kanban y la API de actualización de estado de contenido (`update_content_state`).
+    Tests para la vista de tablero Kanban y la API de actualización de estado de contenido (`update_content_state`).
 
-    Hereda de:
-        - TestCase: Clase base para escribir tests unitarios en Django.
+    Propósito:
+        Validar los permisos y flujos de trabajo en el tablero Kanban, asegurando que los usuarios solo puedan realizar acciones
+        según los permisos asignados y las reglas del negocio.
 
     Atributos:
-        user (CustomUser): Usuario de prueba sin permisos específicos.
-        user_creator (CustomUser): Usuario con permiso para crear contenido.
-        user_editor (CustomUser): Usuario con permiso para editar contenido.
-        user_publisher (CustomUser): Usuario con permiso para publicar contenido.
-        user_is_active_editor (CustomUser): Usuario con permiso para cambiar el estado activo del contenido.
-        category_moderated (Category): Categoría de prueba que requiere moderación.
-        category_unmoderated (Category): Categoría de prueba sin necesidad de moderación.
-        content_draft (Content): Contenido de prueba en estado borrador.
-        content_inactive (Content): Contenido de prueba en estado inactivo.
-        content_other (Content): Contenido creado por un usuario diferente al usuario creador.
-        expired_content (Content): Contenido que ha expirado su fecha de publicación.
+        :ivar user: Usuario de prueba sin permisos específicos.
+        :type user: CustomUser
+        :ivar user_creator: Usuario con permiso para crear contenido.
+        :type user_creator: CustomUser
+        :ivar user_editor: Usuario con permiso para editar contenido.
+        :type user_editor: CustomUser
+        :ivar user_publisher: Usuario con permiso para publicar contenido.
+        :type user_publisher: CustomUser
+        :ivar user_is_active_editor: Usuario con permiso para cambiar el estado activo del contenido.
+        :type user_is_active_editor: CustomUser
+        :ivar category_moderated: Categoría de prueba que requiere moderación.
+        :type category_moderated: Category
+        :ivar category_unmoderated: Categoría de prueba sin necesidad de moderación.
+        :type category_unmoderated: Category
+        :ivar content_draft: Contenido de prueba en estado borrador.
+        :type content_draft: Content
+        :ivar content_inactive: Contenido de prueba en estado inactivo.
+        :type content_inactive: Content
+        :ivar content_other: Contenido creado por un usuario diferente al usuario creador.
+        :type content_other: Content
+        :ivar expired_content: Contenido que ha expirado su fecha de publicación.
+        :type expired_content: Content
 
     Métodos:
-        setUp: Configura los datos necesarios para los tests, incluyendo la creación de usuarios, permisos, categorías y contenidos de prueba.
-        tearDown: Reconecta las señales desconectadas en `setUp` y realiza la limpieza posterior a los tests.
-        test_user_without_permissions: Verifica que un usuario sin permisos no pueda acceder al tablero Kanban.
-        test_user_with_create_content_permission: Verifica que un usuario con permiso de creación pueda acceder al tablero Kanban y visualizar los contenidos correspondientes.
-        test_user_with_edit_content_permission: Verifica que un usuario con permiso de edición pueda acceder al tablero Kanban y visualizar los contenidos correspondientes.
-        test_user_with_publish_content_permission: Verifica que un usuario con permiso de publicación pueda acceder al tablero Kanban y visualizar los contenidos correspondientes.
-        test_user_with_edit_is_active_permission: Verifica que un usuario con permiso para editar el estado activo pueda acceder al tablero Kanban y visualizar los contenidos correspondientes.
-        test_invalid_http_method: Verifica que la API `update_content_state` no permita el metodo GET.
-        test_creator_move_draft_to_revision: Verifica que un creador pueda mover su contenido de borrador a revisión.
-        test_creator_move_draft_to_publish_unmoderated: Verifica que un creador pueda publicar contenido en una categoría no moderada.
-        test_creator_move_publish_to_inactive: Verifica que un creador pueda mover su propio contenido de publicado a inactivo.
-        test_creator_cannot_move_other_user_content: Verifica que un creador no pueda cambiar el estado de un contenido que no le pertenece.
-        test_editor_move_revision_to_to_publish: Verifica que un editor pueda mover contenido de revisión a "a publicar".
-        test_editor_move_revision_to_draft: Verifica que un editor pueda mover contenido de revisión a borrador.
-        test_publisher_move_to_publish_to_publish: Verifica que un publicador pueda mover contenido de "a publicar" a publicado.
-        test_publisher_move_to_publish_to_revision: Verifica que un publicador pueda mover contenido de "a publicar" a revisión.
-        test_is_active_editor_move_publish_to_inactive: Verifica que un usuario con permiso `edit_is_active` pueda mover contenido de publicado a inactivo.
-        test_creator_move_inactive_to_publish: Verifica que un creador pueda mover contenido inactivo a publicado si no ha expirado.
-        test_creator_cannot_move_inactive_to_publish_expired: Verifica que un creador no pueda mover contenido expirado de inactivo a publicado.
+        - :meth:`setUp`: Configura los datos necesarios para los tests, incluyendo usuarios, permisos, categorías y contenidos.
+        - :meth:`tearDown`: Restaura las señales y limpia los datos después de cada prueba.
+        - :meth:`test_user_without_permissions`: Verifica que un usuario sin permisos no pueda acceder al tablero Kanban.
+        - :meth:`test_user_with_create_content_permission`: Verifica que un usuario con permiso de creación pueda acceder al tablero.
+        - :meth:`test_user_with_edit_content_permission`: Verifica que un usuario con permiso de edición pueda acceder al tablero.
+        - :meth:`test_user_with_publish_content_permission`: Verifica que un usuario con permiso de publicación pueda acceder al tablero.
+        - :meth:`test_user_with_edit_is_active_permission`: Verifica que un usuario con permiso para editar el estado activo pueda acceder al tablero.
+        - :meth:`test_invalid_http_method`: Verifica que la API `update_content_state` no permita el método GET.
+        - :meth:`test_creator_move_draft_to_revision`: Verifica que un creador pueda mover su contenido de borrador a revisión.
+        - :meth:`test_creator_move_draft_to_publish_unmoderated`: Verifica que un creador pueda publicar contenido en una categoría no moderada.
+        - :meth:`test_creator_move_publish_to_inactive`: Verifica que un creador pueda mover su propio contenido de publicado a inactivo.
+        - :meth:`test_creator_cannot_move_other_user_content`: Verifica que un creador no pueda cambiar el estado de un contenido que no le pertenece.
+        - :meth:`test_editor_move_revision_to_to_publish`: Verifica que un editor pueda mover contenido de revisión a "a publicar".
+        - :meth:`test_editor_move_revision_to_draft`: Verifica que un editor pueda mover contenido de revisión a borrador.
+        - :meth:`test_publisher_move_to_publish_to_publish`: Verifica que un publicador pueda mover contenido de "a publicar" a publicado.
+        - :meth:`test_publisher_move_to_publish_to_revision`: Verifica que un publicador pueda mover contenido de "a publicar" a revisión.
+        - :meth:`test_is_active_editor_move_publish_to_inactive`: Verifica que un usuario con permiso `edit_is_active` pueda mover contenido de publicado a inactivo.
+        - :meth:`test_creator_move_inactive_to_publish`: Verifica que un creador pueda mover contenido inactivo a publicado si no ha expirado.
+        - :meth:`test_creator_cannot_move_inactive_to_publish_expired`: Verifica que un creador no pueda mover contenido expirado de inactivo a publicado.
     """
+
     def setUp(self):
         """
         Configura los datos necesarios para las pruebas.
@@ -866,10 +907,15 @@ class KanbanBoardTest(TestCase):
         """
         Restaura las señales y limpia los datos después de cada prueba.
 
+        Propósito:
+            Garantizar que las señales desconectadas en :meth:`setUp` sean reconectadas correctamente,
+            evitando efectos secundarios en otros tests.
+
         Lógica:
-            - Reconecta las señales desconectadas en `setUp`.
-            - Llama a `tearDown` de la clase base para realizar la limpieza adicional.
+            - Reconecta todas las señales relacionadas con los modelos `CustomUser` y `Category`.
+            - Llama a :meth:`tearDown` de la clase base para realizar limpieza adicional.
         """
+
         pre_save.connect(cache_previous_user, sender=CustomUser)
         post_save.connect(post_save_user_handler, sender=CustomUser)
         pre_save.connect(cache_previous_category, sender=Category)
@@ -1279,13 +1325,20 @@ class ReportModelTest(TestCase):
     Pruebas unitarias para el modelo `Report`, que asegura que los reportes se puedan crear y manejen adecuadamente
     los atributos y relaciones definidas en el modelo.
 
-    Métodos:
+    :methods:
         - setUp: Configura el entorno de prueba creando un usuario, una categoría y un contenido de prueba.
         - tearDown: Restaura las señales desconectadas para asegurar que las pruebas no interfieran con el funcionamiento normal.
-        - test_create_report: Verifica la creación correcta de un reporte asociado con un contenido,
-        comprobando que los atributos del reporte coincidan con los valores esperados.
+        - test_create_report: Verifica la creación correcta de un reporte asociado con un contenido, comprobando que los atributos del reporte coincidan con los valores esperados.
     """
+
     def setUp(self):
+        """
+        Configura el entorno necesario para las pruebas.
+
+        :actions:
+            - Desconecta la señal `post_save` de `Category` para evitar efectos colaterales.
+            - Crea un usuario, una categoría y un contenido de prueba.
+        """
         # Desconectar la señal post_save para Category
         post_save.disconnect(post_save_category_handler, sender=Category)
         
@@ -1313,10 +1366,28 @@ class ReportModelTest(TestCase):
         )
 
     def tearDown(self):
+        """
+        Restaura las señales desconectadas al finalizar las pruebas.
+
+        :actions:
+            - Reconecta la señal `post_save` para `Category` para restablecer su comportamiento normal.
+        """
         # Reconectar la señal después de la prueba
         post_save.connect(post_save_category_handler, sender=Category)
 
     def test_create_report(self):
+        """
+        Verifica la creación correcta de un reporte asociado con un contenido.
+
+        :actions:
+            - Crea una instancia del modelo `Report` asociada con un contenido de prueba.
+            - Comprueba que los atributos del reporte coincidan con los valores esperados.
+
+        :assertions:
+            - Verifica que `content` coincida con el contenido de prueba.
+            - Verifica que `reported_by` coincida con el usuario de prueba.
+            - Verifica que `email`, `name`, `reason` y `description` contengan los valores definidos.
+        """
         report = Report.objects.create(
             content=self.content,
             reported_by=self.user,
@@ -1340,14 +1411,19 @@ class ReportFormTest(TestCase):
     Pruebas unitarias para el formulario `ReportForm`, asegurando que se manejen correctamente los datos iniciales,
     los datos válidos e inválidos al crear un reporte.
 
-    Métodos:
+    :methods:
         - setUp: Configura el entorno de prueba creando un usuario de prueba para usar en los formularios.
-        - test_form_initial_data_for_authenticated_user: Verifica que los campos `name` y `email` se inicialicen
-        correctamente con los datos del usuario autenticado.
+        - test_form_initial_data_for_authenticated_user: Verifica que los campos `name` y `email` se inicialicen correctamente con los datos del usuario autenticado.
         - test_form_invalid_data: Verifica que el formulario sea inválido cuando los datos proporcionados no son correctos.
         - test_form_valid_data: Verifica que el formulario sea válido cuando se proporcionan datos correctos para crear un reporte.
     """
     def setUp(self):
+        """
+        Configura el entorno de prueba creando un usuario.
+
+        :actions:
+            - Crea un usuario con email, nombre y contraseña para usar en las pruebas del formulario.
+        """
         self.user = get_user_model().objects.create_user(
             email='formuser@example.com',
             name='Form User',
@@ -1355,11 +1431,28 @@ class ReportFormTest(TestCase):
         )
 
     def test_form_initial_data_for_authenticated_user(self):
+        """
+        Verifica que los campos `name` y `email` se inicialicen correctamente con los datos del usuario autenticado.
+
+        :actions:
+            - Inicializa el formulario `ReportForm` con un usuario autenticado.
+            - Comprueba que los campos `name` y `email` del formulario contengan los valores esperados.
+        """
+
         form = ReportForm(user=self.user)
         self.assertEqual(form.fields['name'].initial, 'Form User')
         self.assertEqual(form.fields['email'].initial, 'formuser@example.com')
 
     def test_form_invalid_data(self):
+        """
+        Verifica que el formulario sea inválido cuando los datos proporcionados no son correctos.
+
+        :actions:
+            - Proporciona datos inválidos (por ejemplo, un email con formato incorrecto).
+            - Verifica que el formulario no sea válido.
+            - Comprueba que los errores incluyan los campos esperados (`name` y `email`).
+        """
+
         form_data = {'name': '', 'email': 'invalidemail', 'reason': 'spam', 'description': 'Test description'}
         form = ReportForm(data=form_data)
         self.assertFalse(form.is_valid())
@@ -1367,6 +1460,14 @@ class ReportFormTest(TestCase):
         self.assertIn('email', form.errors)
     
     def test_form_valid_data(self):
+        """
+        Verifica que el formulario sea válido cuando se proporcionan datos correctos para crear un reporte.
+
+        :actions:
+            - Proporciona datos válidos para el formulario.
+            - Verifica que el formulario sea válido.
+        """
+
         form_data = {'name': 'Test User', 'email': 'testuser@example.com', 'reason': 'spam', 'description': 'Valid report'}
         form = ReportForm(data=form_data)
         self.assertTrue(form.is_valid())
@@ -1375,30 +1476,40 @@ class ReportPostViewTest(TestCase):
     """
     Pruebas unitarias para la vista `report_post`, que maneja la creación de reportes asociados a contenidos.
 
-    Métodos:
+    :methods:
         - setUp: Configura el entorno de prueba creando un usuario, categoría y contenido de prueba.
         - tearDown: Reconecta la señal `post_save` para `Category` después de cada prueba.
         - test_post_valid_report: Verifica que se pueda crear un reporte correctamente con datos válidos.
         - test_post_invalid_report: Verifica el manejo de datos inválidos, asegurando que el formulario no se acepte.
         - test_post_report_ajax: Verifica el comportamiento de la vista al realizar una solicitud AJAX, asegurando una respuesta adecuada.
     """
+
     def setUp(self):
+        """
+        Configura el entorno de prueba creando un usuario, categoría y contenido de prueba.
+
+        :actions:
+            - Desconecta la señal `post_save` para `Category` para evitar efectos secundarios.
+            - Crea un usuario de prueba, una categoría y un contenido asociado a dicha categoría.
+            - Establece la URL de la vista de reportes y autentica al usuario de prueba.
+        """
+
         # Desconectar la señal post_save para Category
         post_save.disconnect(post_save_category_handler, sender=Category)
-        
+
         # Crear un usuario de prueba
         self.user = get_user_model().objects.create_user(
             email='viewuser@example.com',
             name='View User',
             password='password123'
         )
-        
+
         # Crear una categoría de prueba
         self.category = Category.objects.create(
             name='Test Category',
             description='Descripción de prueba'  # Asegura que la descripción sea compatible si es requerida
         )
-        
+
         # Crear un contenido de prueba con autor y categoría
         self.content = Content.objects.create(
             title='Content for reporting',
@@ -1408,52 +1519,81 @@ class ReportPostViewTest(TestCase):
             state='draft',
             date_create=timezone.now()
         )
-        
+
         # URL para la vista de reportes
         self.url = reverse('report_post', args=[self.content.id])
-        
+
         # Autenticarse como el usuario de prueba
         self.client.login(email='viewuser@example.com', password='password123')
 
     def tearDown(self):
-        # Reconectar la señal después de la prueba
+        """
+        Reconecta la señal `post_save` para `Category` después de cada prueba.
+
+        :actions:
+            - Reconecta la señal `post_save` para garantizar que el entorno vuelva a su estado normal tras cada prueba.
+        """
+
         post_save.connect(post_save_category_handler, sender=Category)
 
     def test_post_valid_report(self):
-        # Enviar una solicitud POST válida para crear un reporte
+        """
+        Verifica que se pueda crear un reporte correctamente con datos válidos.
+
+        :actions:
+            - Envía una solicitud POST con datos válidos para crear un reporte.
+            - Verifica que la respuesta sea una redirección exitosa (código 302).
+            - Comprueba que el reporte se haya creado correctamente en la base de datos.
+        """
+
         response = self.client.post(self.url, {
             'name': 'Test User',
             'email': 'test@example.com',
             'reason': 'spam',
             'description': 'Testing report'
         })
-        
+
         # Verificar que se redirige correctamente y se crea el reporte
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Report.objects.filter(content=self.content).exists())
 
     def test_post_invalid_report(self):
-        # Enviar una solicitud POST inválida
+        """
+        Verifica el manejo de datos inválidos, asegurando que el formulario no se acepte.
+
+        :actions:
+            - Envía una solicitud POST con datos inválidos (por ejemplo, email incorrecto o campos vacíos).
+            - Verifica que la respuesta sea un error (código 400).
+            - Comprueba que se muestre el mensaje de error esperado en la respuesta.
+        """
         response = self.client.post(self.url, {
             'name': '',
             'email': 'invalidemail',
             'reason': 'spam',
             'description': ''
         })
-        
+
         # Verificar que se recibe un código de error y el mensaje esperado
         self.assertEqual(response.status_code, 400)
         self.assertIn('No se permite acceso directo', response.content.decode())
 
     def test_post_report_ajax(self):
-        # Enviar una solicitud POST usando AJAX
+        """
+        Verifica el comportamiento de la vista al realizar una solicitud AJAX, asegurando una respuesta adecuada.
+
+        :actions:
+            - Envía una solicitud POST usando AJAX para crear un reporte.
+            - Verifica que la respuesta sea un éxito (código 200) y contenga datos JSON indicando éxito.
+            - Comprueba que el reporte se haya creado correctamente en la base de datos.
+        """
+
         response = self.client.post(self.url, {
             'name': 'Test User',
             'email': 'test@example.com',
             'reason': 'spam',
             'description': 'Testing report'
         }, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        
+
         # Verificar que se recibe una respuesta JSON de éxito
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json().get('success'), True)

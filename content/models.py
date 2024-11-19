@@ -12,39 +12,45 @@ class Content (models.Model):
     """
     Modelo que representa un contenido en la base de datos.
 
-    Este modelo define las propiedades de un contenido, incluyendo su título, resumen, categoría, autor,
-    estado de publicación y fechas relevantes. También incluye validaciones personalizadas y opciones
-    de estado predefinidas.
+    Define las propiedades y comportamientos asociados a los contenidos creados en la plataforma,
+    como su título, estado, categoría, autor, estadísticas y validaciones.
 
-    Atributos:
-        title (CharField): Título del contenido, con un máximo de 255 caracteres.
-        summary (TextField): Resumen del contenido, con un máximo de 255 caracteres.
-        category (ForeignKey): Relación con el modelo Category, indicando la categoría del contenido.
-        autor (ForeignKey): Relación con el modelo CustomUser, indicando el autor del contenido.
-        is_active (BooleanField): Indica si el contenido está activo. Por defecto, es True.
-        date_create (DateTimeField): Fecha y hora de creación del contenido, se asigna automáticamente.
-        date_expire (DateTimeField): Fecha y hora de expiración del contenido.
-        state (CharField): Estado del contenido, con opciones limitadas definidas en `StateChoices`.
-
-    Clases Internas:
-        StateChoices (TextChoices): Enumeración de los posibles estados de un contenido:
-            - draft: Contenido en borrador.
-            - revision: Contenido en revisión.
-            - to_publish: Contenido a publicar.
-            - publish: Contenido publicado.
-            - inactive: Contenido inactivo.
-
-    Métodos:
-        clean: Valida que el estado del contenido sea uno de los definidos en StateChoices.
-        save: Sobrescribe el método de guardado para llamar a la validación personalizada antes de guardar.
-        __str__: Retorna una representación en cadena del objeto, mostrando su título y estado.
-        update_rating_avg: Actualiza el promedio de calificación del contenido.
-        get_state_name: Devuelve el nombre descriptivo del estado en español.
-
-    Meta:
-        verbose_name (str): Nombre singular del modelo para mostrar en el panel de administración.
-        verbose_name_plural (str): Nombre plural del modelo para mostrar en el panel de administración.
-        db_table (str): Nombre de la tabla en la base de datos.
+    :attribute title: Título del contenido.
+    :type title: CharField
+    :attribute summary: Resumen del contenido.
+    :type summary: TextField
+    :attribute category: Relación con el modelo `Category`.
+    :type category: ForeignKey
+    :attribute autor: Relación con el modelo `CustomUser`.
+    :type autor: ForeignKey
+    :attribute is_active: Indica si el contenido está activo.
+    :type is_active: BooleanField
+    :attribute date_create: Fecha de creación del contenido.
+    :type date_create: DateTimeField
+    :attribute date_expire: Fecha de expiración del contenido.
+    :type date_expire: DateTimeField
+    :attribute date_published: Fecha de publicación del contenido.
+    :type date_published: DateTimeField
+    :attribute content: Texto enriquecido con CKEditor para el contenido principal.
+    :type content: RichTextUploadingField
+    :attribute tags: Administrador de etiquetas para asociar palabras clave al contenido.
+    :type tags: TaggableManager
+    :attribute likes: Relación con los usuarios que han dado "me gusta" al contenido.
+    :type likes: ManyToManyField
+    :attribute dislikes: Relación con los usuarios que han dado "no me gusta" al contenido.
+    :type dislikes: ManyToManyField
+    :attribute rating_avg: Promedio de calificaciones del contenido.
+    :type rating_avg: FloatField
+    :attribute likes_count: Cantidad total de "me gusta".
+    :type likes_count: IntegerField
+    :attribute dislikes_count: Cantidad total de "no me gusta".
+    :type dislikes_count: IntegerField
+    :attribute views_count: Número total de visualizaciones.
+    :type views_count: IntegerField
+    :attribute shares_count: Número total de veces que el contenido fue compartido.
+    :type shares_count: IntegerField
+    :attribute important: Indica si el contenido está marcado como "destacado".
+    :type important: BooleanField
     """
 
     title = models.CharField(max_length=255, verbose_name='Título')
@@ -69,22 +75,23 @@ class Content (models.Model):
 
     class StateChoices(models.TextChoices):
         """
-        Enumeración de estados posibles para un contenido utilizando TextChoices.
+        Enumeración de estados posibles para un contenido.
 
-        Define las opciones disponibles para el campo `state` del contenido,
-        permitiendo seleccionar entre diferentes estados predefinidos.
+        Define las opciones disponibles para el campo `state` del contenido, asegurando que solo se utilicen
+        valores predefinidos.
 
-        Atributos:
-            draft (str): Estado del contenido en borrador.
-            revision (str): Estado del contenido en revisión.
-            to_publish (str): Estado del contenido a publicar.
-            publish (str): Estado del contenido publicado.
-            rejected (str): Estado del contenido rechazado.
-
-        Uso:
-            Esta enumeración se utiliza para limitar las opciones disponibles en el campo `state` del modelo Content,
-            garantizando que solo se seleccionen valores válidos y predefinidos.
+        :attribute draft: Contenido en estado de borrador.
+        :type draft: str
+        :attribute revision: Contenido en estado de revisión.
+        :type revision: str
+        :attribute to_publish: Contenido en estado "a publicar".
+        :type to_publish: str
+        :attribute publish: Contenido publicado.
+        :type publish: str
+        :attribute inactive: Contenido inactivo.
+        :type inactive: str
         """
+
         draft = 'draft', ('Borrador')
         revision = 'revision', ('Revisión')
         to_publish = 'to_publish', ('A publicar')
@@ -100,25 +107,23 @@ class Content (models.Model):
 
     def clean(self):
         """
-        Valida el estado del contenido asegurando que sea uno de los definidos en StateChoices.
+        Valida que el estado del contenido sea uno de los definidos en `StateChoices`.
 
-        Este método personaliza la validación del modelo para asegurarse de que el valor del campo `state`
-        sea uno de los estados permitidos por la enumeración StateChoices.
-
-        :raises ValidationError: Si el estado del contenido no es válido según las opciones definidas en StateChoices.
+        :raises ValidationError: Si el estado no pertenece a las opciones válidas.
         """
+
         # Validar que el estado sea uno de los definidos en StateChoices
         if self.state not in dict(Content.StateChoices.choices):
             raise ValidationError(f"Estado '{self.state}' no es válido.")
 
     def save(self, *args, **kwargs):
         """
-        Sobrescribe el método save para incluir validaciones personalizadas antes de guardar el contenido.
-        Este método llama a `clean()` para ejecutar validaciones personalizadas antes de guardar la instancia
-        del contenido en la base de datos, asegurando que los datos sean consistentes y válidos.
+        Sobrescribe el metodo `save` para incluir validaciones personalizadas antes de guardar.
 
         :param args: Argumentos posicionales adicionales.
-        :param kwargs: Argumentos de palabra clave adicionales.
+        :type args: list
+        :param kwargs: Argumentos nombrados adicionales.
+        :type kwargs: dict
         """
         self.clean()  # Llama a la validación personalizada
         super().save(*args, **kwargs)
@@ -131,13 +136,9 @@ class Content (models.Model):
 
     def __str__(self):
         """
-        Retorna una representación en cadena del objeto Content.
+        Devuelve una representación en cadena del contenido.
 
-        Esta función devuelve el título del contenido junto con su estado legible,
-        utilizando la descripción de la elección correspondiente.
-
-        :return: Una cadena con el formato "título (estado)", donde 'título' es el título del contenido y
-        'estado' es la descripción del estado del contenido.
+        :return: El título del contenido.
         :rtype: str
         """
         return f"{self.title}"
@@ -147,8 +148,7 @@ class Content (models.Model):
         """
         Actualiza el promedio de calificación del contenido.
 
-        Este método recalcula el promedio de todas las calificaciones asociadas al contenido y actualiza
-        el campo `rating_avg` en la base de datos.
+        Calcula el promedio de las calificaciones asociadas al contenido y actualiza el campo `rating_avg`.
         """
 
         avg_rating = self.rating_set.aggregate(Avg('rating'))['rating__avg']
@@ -157,13 +157,11 @@ class Content (models.Model):
 
     def get_state_name(self, state):
         """
-        Devuelve el nombre descriptivo del estado de un contenido en español.
+        Devuelve el nombre descriptivo del estado del contenido en español.
 
-        Si el estado no coincide con ninguna opción, devuelve "Desconocido".
-
-        :param state: El estado del contenido representado por las opciones de `Content.StateChoices`.
+        :param state: Estado del contenido (uno de los valores definidos en `StateChoices`).
         :type state: str
-        :return: El nombre descriptivo del estado del contenido en español.
+        :return: Nombre descriptivo del estado en español.
         :rtype: str
         """
         if state == Content.StateChoices.draft:
@@ -182,19 +180,25 @@ class Content (models.Model):
 
 class Report(models.Model):
     """
-    Representa un reporte de contenido en la plataforma.
+    Modelo que representa un reporte asociado a un contenido.
 
-    Campos:
-        content (ForeignKey): Referencia al contenido reportado.
-        reported_by (ForeignKey): Usuario que reportó el contenido. Opcional.
-        email (EmailField): Correo electrónico de quien realiza el reporte.
-        name (CharField): Nombre de quien realiza el reporte.
-        reason (CharField): Motivo del reporte, elegido entre varias opciones predeterminadas.
-        description (TextField): Descripción del motivo del reporte.
-        created_at (DateTimeField): Fecha y hora en la que se creó el reporte.
+    Captura los detalles sobre un reporte realizado por un usuario o visitante,
+    incluyendo el motivo y una descripción.
 
-    Métodos:
-        __str__(): Retorna una representación legible del reporte, indicando el nombre o usuario que reporta y el contenido reportado.
+    :attribute content: Contenido reportado.
+    :type content: ForeignKey
+    :attribute reported_by: Usuario que realizó el reporte. Es opcional.
+    :type reported_by: ForeignKey
+    :attribute email: Correo electrónico del reportante.
+    :type email: EmailField
+    :attribute name: Nombre del reportante.
+    :type name: CharField
+    :attribute reason: Motivo del reporte.
+    :type reason: CharField
+    :attribute description: Descripción del motivo del reporte.
+    :type description: TextField
+    :attribute created_at: Fecha de creación del reporte.
+    :type created_at: DateTimeField
     """
 
     REASON_CHOICES = [
@@ -213,4 +217,10 @@ class Report(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=('Fecha de creación'))
 
     def __str__(self):
+        """
+        Devuelve una representación legible del reporte.
+
+        :return: Una cadena que describe el reporte, indicando el reportante y el contenido.
+        :rtype: str
+        """
         return f"Reporte de {self.email if self.email else self.reported_by} sobre {self.content.title}"

@@ -14,23 +14,20 @@ class RatingTestCase(TestCase):
     """
     Pruebas para la funcionalidad de calificación de contenido.
 
-    Hereda de:
-        - TestCase: Clase base para escribir tests unitarios en Django.
+    :Attributes:
+        - **user** (:class:`CustomUser`): Usuario de prueba que realiza las calificaciones.
+        - **category** (:class:`Category`): Categoría de prueba para asociar al contenido.
+        - **content** (:class:`Content`): Contenido de prueba al que se le aplicarán las calificaciones.
+        - **url** (str): URL para realizar las solicitudes de calificación de contenido.
 
-    Atributos:
-        user (CustomUser): Usuario de prueba que realiza las calificaciones.
-        category (Category): Categoría de prueba para asociar al contenido.
-        content (Content): Contenido de prueba al que se le aplicarán las calificaciones.
-        url (str): URL para realizar las solicitudes de calificación de contenido.
-
-    Métodos:
-        setUp: Configura los datos necesarios para los tests, incluyendo la creación de un usuario, categoría y contenido de prueba.
-        tearDown: Reconecta las señales desconectadas y realiza la limpieza posterior a los tests.
-        test_rate_content_unauthenticated: Verifica que un usuario no autenticado no pueda calificar un contenido.
-        test_rate_content_authenticated_valid: Verifica que un usuario autenticado pueda calificar un contenido con un valor válido (1-5).
-        test_update_existing_rating: Verifica que un usuario pueda actualizar su calificación previa en lugar de crear una nueva.
-        test_rate_content_invalid_rating: Verifica que se pueda registrar una calificación fuera del rango esperado (sin validación de rango).
-        test_missing_rating_value: Verifica que se devuelva un error si no se proporciona un valor de calificación.
+    :Methods:
+        - :meth:`setUp`: Configura los datos necesarios para los tests, incluyendo la creación de un usuario, categoría y contenido de prueba.
+        - :meth:`tearDown`: Reconecta las señales desconectadas y realiza la limpieza posterior a los tests.
+        - :meth:`test_rate_content_unauthenticated`: Verifica que un usuario no autenticado no pueda calificar un contenido.
+        - :meth:`test_rate_content_authenticated_valid`: Verifica que un usuario autenticado pueda calificar un contenido con un valor válido (1-5).
+        - :meth:`test_update_existing_rating`: Verifica que un usuario pueda actualizar su calificación previa en lugar de crear una nueva.
+        - :meth:`test_rate_content_invalid_rating`: Verifica que se pueda registrar una calificación fuera del rango esperado (sin validación de rango).
+        - :meth:`test_missing_rating_value`: Verifica que se devuelva un error si no se proporciona un valor de calificación.
     """
 
     def setUp(self):

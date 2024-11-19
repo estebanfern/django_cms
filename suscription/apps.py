@@ -4,12 +4,15 @@ class SuscriptionConfig(AppConfig):
     """
     Configuración de la aplicación de suscripción.
 
-    Esta clase define la configuración predeterminada para la aplicación 'suscription'.
+    Define la configuración predeterminada para la aplicación `suscription`, incluyendo el campo
+    de clave primaria y el nombre visible en el panel de administración.
 
-    :var default_auto_field: Especifica el campo predeterminado de clave primaria para los modelos de la aplicación.
+    :var default_auto_field: Especifica el tipo de campo predeterminado para claves primarias.
     :type default_auto_field: str
-    :var name: Nombre de la aplicación de Django.
+    :var name: Nombre interno de la aplicación dentro del proyecto Django.
     :type name: str
+    :var verbose_name: Nombre descriptivo que aparece en el panel de administración.
+    :type verbose_name: str
     """
 
     default_auto_field = 'django.db.models.BigAutoField'
