@@ -97,7 +97,7 @@ def welcomeUser(user):
     template = "email/notification.html"
     subject = "¡Bienvenido a nuestra aplicación!"
 
-    message = f"¡Hola {user.name}! Gracias por registrarte en nuestra aplicación. Esperamos que disfrutes de tu experiencia."
+    message = f"¡Hola {user.name}! 🎉 Te damos la más cálida bienvenida a nuestra comunidad. Estamos emocionados de tenerte con nosotros y esperamos que disfrutes de todo lo que hemos preparado para ti. ¡A disfrutar!"
 
     context = {
         "message": message,
