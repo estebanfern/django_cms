@@ -13,18 +13,20 @@ def home_view(request):
     """
     Vista principal para mostrar contenidos publicados y activos.
 
-    :param request: La solicitud HTTP recibida.
+    :param request: Solicitud HTTP recibida.
     :type request: HttpRequest
 
     Lógica:
-        - Obtiene el filtro de categoría y de búsqueda desde los parámetros de la URL.
-        - Filtra los contenidos activos y publicados, ordenándolos por fecha de publicación.
-        - Si se especifica una categoría, filtra los contenidos por esa categoría.
-        - Si se proporciona una consulta de búsqueda, filtra los contenidos por título o por nombre del autor.
-        - Si se selecciona la opción de favoritos, muestra solo los contenidos de las categorías a las que el usuario está suscrito.
+        - Filtra los contenidos activos, publicados y disponibles antes de la fecha actual.
+        - Aplica filtros adicionales según la categoría seleccionada, favoritos del usuario,
+          y búsqueda por título o nombre del autor.
+        - Divide los contenidos marcados como importantes en grupos de 5.
         - Configura la paginación para mostrar un máximo de 10 contenidos por página.
 
-    :return: Renderiza la plantilla 'inicio.html' con los contenidos filtrados y paginados.
+    :raises Http404: Si no se encuentra la categoría especificada en el filtro.
+
+    :return: Renderiza la plantilla 'inicio.html' con los contenidos filtrados, la información de la categoría,
+             la consulta de búsqueda y los contenidos importantes agrupados.
     :rtype: HttpResponse
     """
 
@@ -88,5 +90,15 @@ def home_view(request):
     return render(request, 'inicio.html', {'page_obj': page_obj, 'category': category, 'query': query, 'importants': importants})
 
 def divide_in_groups(lista, tamaño):
+    """
+    Divide una lista en grupos de un tamaño específico.
+
+    :param lista: La lista que se desea dividir en grupos.
+    :type lista: list
+    :param tamaño: El tamaño de cada grupo.
+    :type tamaño: int
+    :return: Un generador que produce sublistas de tamaño especificado.
+    :rtype: generator
+    """
     for i in range(0, len(lista), tamaño):
         yield lista[i:i + tamaño]

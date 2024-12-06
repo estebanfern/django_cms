@@ -15,9 +15,10 @@ def cache_previous_category(sender, instance, *args, **kwargs):
     """
     Almacena el estado original de una categoría antes de que se realicen cambios.
 
-    Este método se ejecuta antes de guardar cualquier instancia de `Category`, permitiendo almacenar una copia del estado anterior de la categoría en la propiedad `__original_category` del objeto `instance`.
+    Este metodo se ejecuta antes de guardar cualquier instancia de `Category`, permitiendo
+    almacenar una copia del estado anterior de la categoría en la propiedad `__original_category`.
 
-    :param sender: La clase del modelo que está enviando la señal (`Category` en este caso).
+    :param sender: La clase del modelo que está enviando la señal (`Category`).
     :type sender: class
     :param instance: La instancia de la categoría que se está guardando.
     :type instance: Category
@@ -26,6 +27,7 @@ def cache_previous_category(sender, instance, *args, **kwargs):
     :param kwargs: Argumentos con nombre adicionales.
     :type kwargs: dict
     """
+
     original_category = None
     if instance.id:
         original_category = Category.objects.get(pk=instance.id)
@@ -35,24 +37,20 @@ def cache_previous_category(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=Category)
 def post_save_category_handler(sender, instance, created, **kwargs):
     """
-        Maneja eventos después de guardar una instancia de categoría, incluyendo la creación de productos y precios en Stripe y el manejo de suscripciones.
+    Maneja eventos después de guardar una instancia de categoría.
 
-        Este método se ejecuta después de que una instancia de `Category` ha sido guardada. Dependiendo de los cambios realizados (como el cambio de tipo de categoría a pago o el cambio de precio), actualiza la información en Stripe y maneja las suscripciones asociadas.
+    Realiza acciones como la creación de productos y precios en Stripe, manejo de suscripciones,
+    y notificaciones según los cambios en las propiedades de la categoría.
 
-        - Si la categoría es nueva y de tipo pago, se crea el producto y el precio en Stripe.
-        - Si la categoría cambia de tipo a pago, se notifican los cambios y se maneja la actualización en Stripe.
-        - Si el precio cambia, se actualiza el precio en Stripe.
-        - Si se cambia el estado activo de la categoría, se notifica y se actualiza en Stripe.
-
-        :param sender: La clase del modelo que está enviando la señal (`Category`).
-        :type sender: class
-        :param instance: La instancia de la categoría que fue guardada.
-        :type instance: Category
-        :param created: Booleano que indica si la instancia fue creada (True) o actualizada (False).
-        :type created: bool
-        :param kwargs: Argumentos con nombre adicionales.
-        :type kwargs: dict
-        """
+    :param sender: La clase del modelo que está enviando la señal (`Category`).
+    :type sender: class
+    :param instance: La instancia de la categoría que fue guardada.
+    :type instance: Category
+    :param created: Booleano que indica si la instancia fue creada (`True`) o actualizada (`False`).
+    :type created: bool
+    :param kwargs: Argumentos con nombre adicionales.
+    :type kwargs: dict
+    """
 
     # Si se creo una categoría de pago
     if created and instance.type == Category.TypeChoices.paid:
@@ -212,7 +210,8 @@ def cache_category_before_delete(sender, instance, *args, **kwargs):
     """
     Almacena una copia de la categoría antes de eliminarla.
 
-    Este método se ejecuta antes de eliminar una instancia de `Category`, permitiendo almacenar una copia del objeto en la propiedad `__pre_delete_category` para su uso en `post_delete`.
+    Este metodo se ejecuta antes de eliminar una instancia de `Category`, permitiendo almacenar
+    una copia del objeto en la propiedad `__pre_delete_category` para su uso posterior.
 
     :param sender: La clase del modelo que está enviando la señal (`Category`).
     :type sender: class
@@ -223,6 +222,7 @@ def cache_category_before_delete(sender, instance, *args, **kwargs):
     :param kwargs: Argumentos con nombre adicionales.
     :type kwargs: dict
     """
+
     instance.__pre_delete_category = Category.objects.get(pk=instance.id)
 
 
@@ -230,9 +230,10 @@ def cache_category_before_delete(sender, instance, *args, **kwargs):
 @receiver(post_delete, sender=Category)
 def handle_category_after_delete(sender, instance, **kwargs):
     """
-    Maneja la lógica después de eliminar una categoría, incluyendo la desactivación del producto en Stripe.
+    Maneja la lógica después de eliminar una categoría.
 
-    Este método se ejecuta después de que una instancia de `Category` ha sido eliminada. Utiliza la copia de la categoría almacenada en `pre_delete` para realizar las acciones necesarias, como desactivar el producto en Stripe.
+    Realiza acciones como desactivar el producto en Stripe utilizando la copia
+    de la categoría almacenada en `pre_delete`.
 
     :param sender: La clase del modelo que está enviando la señal (`Category`).
     :type sender: class
@@ -241,6 +242,7 @@ def handle_category_after_delete(sender, instance, **kwargs):
     :param kwargs: Argumentos con nombre adicionales.
     :type kwargs: dict
     """
+
     # Acceder a la copia guardada antes de la eliminación
     original_category = instance.__pre_delete_category
 

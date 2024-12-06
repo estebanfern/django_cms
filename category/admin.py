@@ -9,17 +9,27 @@ from django.urls import reverse
 
 class CategoryAdmin(admin.ModelAdmin):
     """
-    Configuración personalizada para la administración del modelo Category en el panel de administración de Django.
+    Configuración personalizada para la administración del modelo `Category`.
 
-    Atributos:
-        form (ModelForm): Formulario personalizado utilizado para editar categorías.
-        list_display (tuple): Campos que se mostrarán en la lista de categorías.
-        list_filter (tuple): Filtros disponibles en la lista de categorías.
-        search_fields (tuple): Campos por los cuales se puede buscar en la lista de categorías.
-        fields (tuple): Campos a mostrar en el formulario de creación y edición.
-        ordering (tuple): Orden por defecto de la lista de categorías.
-        actions (list): Lista de acciones personalizadas para el modelo.
+    Esta clase define las configuraciones y acciones personalizadas para gestionar categorías
+    en el panel de administración de Django.
+
+    :attribute form: Formulario personalizado utilizado para editar categorías.
+    :type form: ModelForm
+    :attribute list_display: Campos que se mostrarán en la lista de categorías.
+    :type list_display: tuple
+    :attribute list_filter: Filtros disponibles en la lista de categorías.
+    :type list_filter: tuple
+    :attribute search_fields: Campos por los cuales se puede buscar en la lista de categorías.
+    :type search_fields: tuple
+    :attribute fields: Campos a mostrar en el formulario de creación y edición.
+    :type fields: tuple
+    :attribute ordering: Orden por defecto de la lista de categorías.
+    :type ordering: tuple
+    :attribute actions: Lista de acciones personalizadas para el modelo.
+    :type actions: list
     """
+
     form = CategoryForm
 
     # Mostrar estos campos en la lista de categorías
@@ -192,16 +202,17 @@ class CategoryAdmin(admin.ModelAdmin):
     @admin.action(description='Eliminar categorías seleccionadas')
     def delete_selected_categories(self, request, queryset):
         """
-        Acción personalizada para eliminar categorías seleccionadas en el panel de administración.
+        Acción personalizada para eliminar categorías seleccionadas.
 
-        Verifica si las categorías tienen contenidos y/o suscripciones asociados antes de eliminarlas.
-        Si hay contenidos y/o suscripciones asociados, muestra un mensaje de error; de lo contrario, elimina las categorías seleccionadas.
+        Antes de eliminar, verifica si las categorías tienen contenidos o suscripciones asociados.
+        Si existen, muestra un mensaje de error; de lo contrario, procede a la eliminación.
 
         :param request: Objeto de solicitud HTTP.
         :type request: HttpRequest
-        :param queryset: QuerySet que contiene las categorías seleccionadas para la acción.
+        :param queryset: Categorías seleccionadas para la acción.
         :type queryset: QuerySet
         """
+
         if not request.user.has_perm('app.delete_category'):
             self.message_user(request, "No tienes permiso para eliminar categorías.", level=messages.ERROR)
             return
@@ -245,8 +256,19 @@ class CategoryAdmin(admin.ModelAdmin):
 
     def delete_view (self, request, object_id, extra_context=None):
         """
-        Sobrescribe la vista de eliminación para impedir eliminar categorias con contenidos y suscripciones asociados.
+        Sobrescribe la vista de eliminación para evitar eliminar categorías con contenidos
+        o suscripciones asociados.
+
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param object_id: ID de la categoría que se va a eliminar.
+        :type object_id: str
+        :param extra_context: Contexto adicional para la vista. Por defecto es None.
+        :type extra_context: dict, opcional
+        :return: Redirige al listado de categorías si no se puede eliminar, o ejecuta la eliminación.
+        :rtype: HttpResponse
         """
+
         category = self.get_object(request, object_id)
         subscription = Suscription.objects.filter(category=category).first()
 
@@ -264,18 +286,37 @@ class CategoryAdmin(admin.ModelAdmin):
 
     def response_delete(self, request, obj_display, obj_id):
         """
-        Sobrescribe el método response_delete para mostrar el mensaje de éxito
-        después de que la categoria haya sido eliminado.
+        Sobrescribe el metodo `response_delete` para mostrar un mensaje de éxito
+        tras eliminar una categoría.
+
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param obj_display: Nombre de la categoría eliminada.
+        :type obj_display: str
+        :param obj_id: ID de la categoría eliminada.
+        :type obj_id: int
+        :return: Redirige al listado de categorías con un mensaje de éxito.
+        :rtype: HttpResponse
         """
+
         messages.success(request, f'La categoria "{obj_display}" se ha eliminado correctamente.')
 
         return HttpResponseRedirect(reverse('admin:category_category_changelist'))
 
     def response_add(self, request, obj, post_url_continue=None):
         """
-        Sobrescribe el método response_add para mostrar un mensaje de éxito personalizado
-        después de crear un grupo.
+        Sobrescribe el metodo `response_add` para mostrar un mensaje de éxito tras añadir una categoría.
+
+        :param request: Objeto de solicitud HTTP.
+        :type request: HttpRequest
+        :param obj: Objeto de categoría añadido.
+        :type obj: Category
+        :param post_url_continue: URL para continuar editando tras añadir. Por defecto es None.
+        :type post_url_continue: str, opcional
+        :return: Redirige al listado de categorías con un mensaje de éxito.
+        :rtype: HttpResponse
         """
+
         # Mensaje de éxito personalizado
         messages.success(request, f'La categoria "{obj.name}" se ha creado exitosamente.')
 

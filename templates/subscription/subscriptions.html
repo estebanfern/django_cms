@@ -63,6 +63,9 @@
                     Precio: {% if sub.category.type == 'Pago' %} Gs. {{sub.category.price|format_miles}} {% else %} <span class="badge text-bg-success">Gratuita</span> {% endif %}
                   </li>
                   <li class="list-group-item">Estado: {{sub.state|format_sub_state}}</li>
+                  {% if sub.period_end_display %}
+                    <li class="list-group-item">Fin del periodo de la facturacion: {{sub.period_end_display}}</li>
+                  {% endif %}
                 </ul>
                 <div class="card-footer text-center">
                   {% if sub.category.id in user_suscriptions  %}
