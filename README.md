@@ -1,4 +1,4 @@
-![Logo](https://media.licdn.com/dms/image/v2/D4D3DAQGkaNxZbj9YDQ/image-scale_191_1128/image-scale_191_1128/0/1682435019060/facultad_polit_cnica_una_cover?e=1725339600&v=beta&t=RvjnSps0ck_19iHZhgNCrd1L5VMayrtOftZ_7hC6Hlk)
+![Logo](static/poli.jpg)
 
 # Tabla de contenidos
 1. [ Variables de Entorno ](#variables-de-entorno)
@@ -33,6 +33,10 @@ AWS_S3_REGION_NAME=nyc3
 DEFAULT_PROFILE_PHOTO=profile_pics/perfil.png
 EMAIL_HOST_USER=cms@mail.com
 EMAIL_HOST_PASSWORD=secret-password
+CMS_DOCS_URL=https://docs.is2equipo10.me
+STRIPE_SECRET_KEY=secret-key
+DOCKER_HOST=172.17.0.1
+ENDPOINT_SECRET=secret-endpoint
 ```
 
 # Desarrollo
