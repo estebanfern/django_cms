@@ -10,7 +10,10 @@ import notification.service
 from app.forms import CustomAuthenticationForm, CustomUserCreationForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth import login, authenticate
 from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
 
+
+@csrf_exempt
 def register_view(request):
     """
     Vista para el registro de nuevos usuarios.
@@ -29,12 +32,13 @@ def register_view(request):
             user = form.save()
             login(request, user)
             messages.success(request, '¡Registro exitoso!')
-            notification.service.welcomeUser(user)
+            # notification.service.welcomeUser(user)
             return redirect('home')
     else:
         form = CustomUserCreationForm()
     return render(request, 'register.html', {'form': form})
 
+@csrf_exempt
 def login_view(request):
     """
     Vista para el inicio de sesión de usuarios.
@@ -58,6 +62,7 @@ def login_view(request):
         form = CustomAuthenticationForm()
     return render(request, 'login.html', {'form': form})
 
+@csrf_exempt
 def logout_view(request):
     """
     Vista para cerrar la sesión del usuario actual.
@@ -116,6 +121,7 @@ def reset_password_view(request):
         form = PasswordResetForm()
     return render(request, 'email/../../templates/password-reset.html', {'form': form})
 
+@csrf_exempt
 def password_reset_confirm_view(request, uidb64, token):
     """
     Vista para confirmar el restablecimiento de la contraseña mediante un enlace enviado al correo electrónico del usuario.

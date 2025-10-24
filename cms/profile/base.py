@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'storages',
     'app',
     'crispy_forms',
     'crispy_bootstrap5',
@@ -141,21 +140,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'app.CustomUser'
 
 # Media files (Images, Videos, etc)
-AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID', default='')
-AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY', default='')
-AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME', default='')
-AWS_S3_ENDPOINT_URL = config('AWS_S3_ENDPOINT_URL', default='')
-AWS_S3_OBJECT_PARAMETERS = {
-    'CacheControl': 'max-age=86400',
-}
-AWS_MEDIA_LOCATION = 'media'
-AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='')
-AWS_DEFAULT_ACL = 'public-read'
-AWS_QUERYSTRING_AUTH = False
-AWS_S3_CONNECTION_TIMEOUT = 60
-MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com/{AWS_MEDIA_LOCATION}/"
-PUBLIC_MEDIA_LOCATION = 'media'
-DEFAULT_FILE_STORAGE = 'cms.store_backends.PublicMediaStorage'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_PROFILE_PHOTO = config('DEFAULT_PROFILE_PHOTO', default='profile_pics/perfil.png')
 
 # Static files (CSS, JavaScript, Images)
@@ -259,3 +245,5 @@ STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default="stripe-secret-key")
 
 # Configuracion para escuchar eventos de Stripe
 ENDPOINT_SECRET = config('ENDPOINT_SECRET', default="stripe-endpoint-secret")
+
+STRIPE_ENABLED = config('STRIPE_ENABLED', default=False, cast=bool)

@@ -1,0 +1,6 @@
+projectKey=django_cms
+serverUrl=http://localhost:9000
+serverVersion=25.10.0.114319
+dashboardUrl=http://localhost:9000/dashboard?id=django_cms
+ceTaskId=a46fbca8-b8e0-4937-8ea2-158a8a0f3f5d
+ceTaskUrl=http://localhost:9000/api/ce/task?id=a46fbca8-b8e0-4937-8ea2-158a8a0f3f5d

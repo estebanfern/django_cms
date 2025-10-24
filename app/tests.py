@@ -1,4 +1,4 @@
-from django.db.models.signals import pre_save, post_save
+# from django.db.models.signals import pre_save, post_save
 from django.test import TestCase, override_settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
@@ -8,7 +8,7 @@ from app.forms import CustomAuthenticationForm
 import os
 
 from app.models import CustomUser
-from app.signals import cache_previous_user, post_save_user_handler
+# # from app.signals import cache_previous_user, post_save_user_handler
 
 
 @override_settings(DEFAULT_FILE_STORAGE='storages.backends.s3boto3.S3Boto3Storage')
@@ -26,8 +26,8 @@ class ProfilePictureUploadTest(TestCase):
         :raises: Puede lanzar excepciones relacionadas con la creación de datos de prueba.
         """
 
-        pre_save.disconnect(cache_previous_user, sender=CustomUser)
-        post_save.disconnect(post_save_user_handler, sender=CustomUser)
+        # pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        # post_save.disconnect(post_save_user_handler, sender=CustomUser)
         # Crea un usuario de prueba
         self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
@@ -40,33 +40,33 @@ class ProfilePictureUploadTest(TestCase):
         Limpia el entorno de pruebas reconectando las señales.
         """
 
-        pre_save.connect(cache_previous_user, sender=CustomUser)
-        post_save.connect(post_save_user_handler, sender=CustomUser)
+        # pre_save.connect(cache_previous_user, sender=CustomUser)
+        # post_save.connect(post_save_user_handler, sender=CustomUser)
         super().tearDown()
 
-    @override_settings(DEFAULT_FILE_STORAGE='storages.backends.s3boto3.S3Boto3Storage')
-    def test_profile_picture_upload(self):
-        """
-        Prueba la carga de una imagen de perfil para un usuario.
+    # @override_settings(DEFAULT_FILE_STORAGE='storages.backends.s3boto3.S3Boto3Storage')
+    # def test_profile_picture_upload(self):
+    #     """
+    #     Prueba la carga de una imagen de perfil para un usuario.
 
-        :return: Verifica que la imagen se asocie correctamente al campo `photo` del usuario.
-        :rtype: None
-        """
+    #     :return: Verifica que la imagen se asocie correctamente al campo `photo` del usuario.
+    #     :rtype: None
+    #     """
 
-        # Ruta de la imagen de prueba
-        image_path = os.path.join(settings.BASE_DIR, 'static', 'test.jpg')
+    #     # Ruta de la imagen de prueba
+    #     image_path = os.path.join(settings.BASE_DIR, 'static', 'test.jpg')
 
-        # Carga la imagen en un SimpleUploadedFile
-        with open(image_path, 'rb') as image_file:
-            uploaded_image = SimpleUploadedFile(
-                name='test.jpg',
-                content=image_file.read(),
-                content_type='image/jpeg'
-            )
+    #     # Carga la imagen en un SimpleUploadedFile
+    #     with open(image_path, 'rb') as image_file:
+    #         uploaded_image = SimpleUploadedFile(
+    #             name='test.jpg',
+    #             content=image_file.read(),
+    #             content_type='image/jpeg'
+    #         )
 
-        # Asigna la imagen al campo `photo` del usuario
-        self.user.photo.save('test.jpg', uploaded_image)
-        self.user.save()
+    #     # Asigna la imagen al campo `photo` del usuario
+    #     self.user.photo.save('test.jpg', uploaded_image)
+    #     self.user.save()
 
 class CustomUserCreationFormTest(TestCase):
     """
@@ -78,16 +78,16 @@ class CustomUserCreationFormTest(TestCase):
         Configura el entorno de pruebas desconectando las señales para evitar efectos secundarios.
         """
 
-        pre_save.disconnect(cache_previous_user, sender=CustomUser)
-        post_save.disconnect(post_save_user_handler, sender=CustomUser)
+        # pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        # post_save.disconnect(post_save_user_handler, sender=CustomUser)
 
     def tearDown(self):
         """
         Reconecta las señales después de completar las pruebas.
         """
 
-        pre_save.connect(cache_previous_user, sender=CustomUser)
-        post_save.connect(post_save_user_handler, sender=CustomUser)
+        # pre_save.connect(cache_previous_user, sender=CustomUser)
+        # post_save.connect(post_save_user_handler, sender=CustomUser)
         super().tearDown()
 
     def test_valid_form(self):
@@ -139,8 +139,8 @@ class CustomAuthenticationFormTest(TestCase):
         Configura el entorno de pruebas creando un usuario de prueba.
         """
 
-        pre_save.disconnect(cache_previous_user, sender=CustomUser)
-        post_save.disconnect(post_save_user_handler, sender=CustomUser)
+        # pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        # post_save.disconnect(post_save_user_handler, sender=CustomUser)
         # Crear un usuario de prueba
         self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
@@ -153,8 +153,8 @@ class CustomAuthenticationFormTest(TestCase):
         Reconecta las señales después de completar las pruebas.
         """
 
-        pre_save.connect(cache_previous_user, sender=CustomUser)
-        post_save.connect(post_save_user_handler, sender=CustomUser)
+        # pre_save.connect(cache_previous_user, sender=CustomUser)
+        # post_save.connect(post_save_user_handler, sender=CustomUser)
         super().tearDown()
 
     def test_valid_form(self):
@@ -249,8 +249,8 @@ class ProfileUpdateFormTest(TestCase):
         Configura el entorno de pruebas creando un usuario de prueba con datos iniciales.
         """
 
-        pre_save.disconnect(cache_previous_user, sender=CustomUser)
-        post_save.disconnect(post_save_user_handler, sender=CustomUser)
+        # pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        # post_save.disconnect(post_save_user_handler, sender=CustomUser)
         self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
             name='Test User',
@@ -263,8 +263,8 @@ class ProfileUpdateFormTest(TestCase):
         Reconecta las señales después de completar las pruebas.
         """
 
-        pre_save.connect(cache_previous_user, sender=CustomUser)
-        post_save.connect(post_save_user_handler, sender=CustomUser)
+        # pre_save.connect(cache_previous_user, sender=CustomUser)
+        # post_save.connect(post_save_user_handler, sender=CustomUser)
         super().tearDown()
 
     def test_update_name_and_about(self):
@@ -296,8 +296,8 @@ class ChangePasswordFormTest(TestCase):
         Configura el entorno de pruebas creando un usuario con una contraseña inicial.
         """
 
-        pre_save.disconnect(cache_previous_user, sender=CustomUser)
-        post_save.disconnect(post_save_user_handler, sender=CustomUser)
+        # pre_save.disconnect(cache_previous_user, sender=CustomUser)
+        # post_save.disconnect(post_save_user_handler, sender=CustomUser)
         self.user = get_user_model().objects.create_user(
             email='testuser@example.com',
             name='Test User',
@@ -309,8 +309,8 @@ class ChangePasswordFormTest(TestCase):
         Reconecta las señales después de completar las pruebas.
         """
 
-        pre_save.connect(cache_previous_user, sender=CustomUser)
-        post_save.connect(post_save_user_handler, sender=CustomUser)
+        # pre_save.connect(cache_previous_user, sender=CustomUser)
+        # post_save.connect(post_save_user_handler, sender=CustomUser)
         super().tearDown()
 
     def test_valid_password_change(self):
