@@ -11,6 +11,7 @@ from suscription.models import Suscription
 
 
 def changeState (recipient_list, content, oldState):
+    return
     """
     Cambia el estado de un contenido y notifica a los destinatarios.
 
@@ -50,6 +51,7 @@ def changeState (recipient_list, content, oldState):
 
 
 def changeRole(user, groups, added):
+    return
     """
     Notifica a un usuario sobre cambios en sus roles.
 
@@ -84,6 +86,7 @@ def changeRole(user, groups, added):
     send_notification_task.delay(subject, [user.email], context, template)
 
 def welcomeUser(user):
+    return
     """
     Envía un correo de bienvenida a un nuevo usuario.
 
@@ -107,6 +110,7 @@ def welcomeUser(user):
 
 
 def expire_content(autor, content):
+    return
     """
     Notifica al autor cuando su contenido ha expirado.
 
@@ -130,6 +134,7 @@ def expire_content(autor, content):
     send_notification_task.delay(subject, [autor.email], context, template)
 
 def payment_success(user, category, invoice):
+    return
     """
     Envía una notificación de éxito de pago al usuario.
 
@@ -173,6 +178,7 @@ def payment_success(user, category, invoice):
 
 
 def payment_failed(user, category, invoice,first_payment = None):
+    return
     """
     Envía una notificación de fallo de pago al usuario.
 
@@ -224,6 +230,7 @@ def payment_failed(user, category, invoice,first_payment = None):
 
 
 def subscription_cancelled(user, category):
+    return
     """
     Envía una notificación al usuario de la cancelación de su suscripción.
 
@@ -250,6 +257,7 @@ def subscription_cancelled(user, category):
 
 
 def subscription_pending_cancellation(user, category,subscription):
+    return
     """
     Informa al usuario que su suscripción se cancelará al final del ciclo de facturación.
 
@@ -286,6 +294,7 @@ def subscription_pending_cancellation(user, category,subscription):
 
 
 def category_changed_to_paid(category):
+    return
     """
     Notifica a los usuarios que la categoría ahora es de pago.
 
@@ -317,6 +326,7 @@ def category_changed_to_paid(category):
 
 
 def category_changed_to_not_paid(category):
+    return
     """
     Notifica a los usuarios que la categoría ha cambiado a gratuita o accesible sin pago.
 
@@ -356,6 +366,7 @@ def category_changed_to_not_paid(category):
 
 
 def category_price_changed(category, old_category_paid=None):
+    return
     """
     Notifica a los usuarios que el precio de la categoría ha cambiado.
 
@@ -408,6 +419,7 @@ def category_price_changed(category, old_category_paid=None):
 
 
 def category_state_changed(category):
+    return
     """
     Notifica a los usuarios cuando el estado de la categoría ha cambiado (activada o desactivada).
 
@@ -455,6 +467,7 @@ def category_state_changed(category):
 
 
 def category_name_changed(category, old_name):
+    return
     """
     Informa a los usuarios que el nombre de la categoría ha cambiado.
 
@@ -481,6 +494,7 @@ def category_name_changed(category, old_name):
 
 
 def user_deactivated(user):
+    return
     """
     Envía una notificación al usuario cuando su cuenta ha sido desactivada.
 
@@ -502,6 +516,7 @@ def user_deactivated(user):
 
 
 def user_email_changed(user, old_email):
+    return
     """
     Informa al usuario sobre el cambio de su dirección de correo electrónico.
 
